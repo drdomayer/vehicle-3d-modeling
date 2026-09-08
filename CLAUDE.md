@@ -98,6 +98,14 @@ branches and never let them diverge for more than one session.
   cage script) imported into the repo on branch `claude/remote-work-setup-yx9v18`;
   remote/local working rules added. Still to do on local: run the cage script
   in Blender via MCP and confirm which DIMS are TODO.
+- 2026-09-08 (local): `01_CAD/scripts/cage_986.py` изпълнен в Blender 5.2 през
+  Blender MCP. Колекция `CAGE_986` се строи чисто (22 обекта: 4 гуми, 4 clearance
+  ринга, 4 wheel-centre empties, OEM + TARGET envelope, windshield centreline,
+  2 roll hoops, 2 side-intake empties, headlamp 500 mm plane, CAGE_INFO).
+  Проверени bbox: X от -3286 до +1114 mm, Y ±925, Z 0–1290. Overhang сумата
+  затваря: 1035 + 2416 + 870 = 4321. 8 DIMS са TODO (виж по-долу).
+  Открит бъг: `clearance_*` ринговете са на Z = od/2 + buffer (338 mm) вместо
+  концентрично на колелото (320 mm) — `make_wheel` слага z = radius.
 - Next: run `01_CAD/scripts/cage_986.py` in Blender (via MCP or Text Editor),
   verify it against the-blueprints.com 986 drawing (to be purchased, €22),
   then start the first surface: **front fender**, not the nose.

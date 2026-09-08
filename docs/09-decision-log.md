@@ -2,6 +2,10 @@
 
 Формат: дата — решение — причина. Добавяй отгоре. Не трий стари редове.
 
+- 2026-09-08 — Два режима на работа: **remote** (claude.ai/code) само за docs и
+  скриптове, слива се в `main` в края на всяка сесия; **local** (Mac + Blender
+  MCP) за всичко в Blender, `git pull` преди / `git push` след. „Current status“
+  в `CLAUDE.md` се обновява при всяка сесия. Правилата са в `CLAUDE.md`.
 - 2026-09-08 — Репо `drdomayer/vehicle-3d-modeling` създадено; работата минава
   към Claude Code + Blender MCP. Blender 5.2 + MCP addon инсталирани.
 - 2026-09-08 — Дизайнът се прави от собственика в Blender; без нает surface

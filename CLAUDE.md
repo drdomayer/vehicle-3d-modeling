@@ -59,11 +59,45 @@ do the body design himself. Height ~190 cm — cabin fit is a hard constraint.
    by a professional. Do not let the owner skip a fit-test on a single printed
    panel before printing the rest.
 
+## Remote vs local sessions
+
+Two kinds of Claude Code sessions work in this repo. Keep them on separate
+branches and never let them diverge for more than one session.
+
+**Remote (claude.ai/code, cloud container)**
+- Scope: docs, `CLAUDE.md`, Blender Python scripts, `.gitignore`, README,
+  reference images. No Blender is available, so no `.blend` work and no MCP.
+- Works on a `claude/...` branch. At the end of every session: commit, push,
+  and **merge into `main`** (PR or fast-forward) so local always starts from
+  the latest state. Do not leave remote work unmerged across sessions.
+- Never touch `02_DESIGN/**/*.blend` from remote (binary, non-mergeable).
+
+**Local (owner's MacBook, Blender + Blender MCP)**
+- Scope: everything that needs Blender: cage generation via MCP, measurements,
+  clearance checks, splitting, STL/3MF export, `.blend` files, screenshots.
+- **Before starting: `git pull` on `main`.** Never start Blender work on a
+  stale checkout.
+- **After finishing (or before closing Blender): commit and `git push`.**
+  Commit at every finished stage, not only at the end of the day.
+- `.blend` files are committed only from local. If a `.blend` is being edited,
+  do not pull a branch that also changes it — resolve by taking the local copy.
+
+**Both modes, every session**
+- Update the **Current status** section below at the end of the session: date,
+  what was done, what is next. This is the hand-over between remote and local.
+- Record every decision in `docs/09-decision-log.md` (newest on top).
+- Conflicts in `CLAUDE.md`/`docs/` are resolved by keeping both entries in
+  chronological order, never by dropping one side.
+
 ## Current status (update this section as work progresses)
 
 - 2026-09-08: Repo created. Blender 5.2 installed on MacBook Pro M1 Pro 32 GB,
   Blender MCP addon installed and running on port 9876. Claude Desktop MCP
   config being set up. No donor yet. No scan yet. No CAD yet.
+- 2026-09-08 (remote): project scaffold (CLAUDE.md, docs 00–09, references,
+  cage script) imported into the repo on branch `claude/remote-work-setup-yx9v18`;
+  remote/local working rules added. Still to do on local: run the cage script
+  in Blender via MCP and confirm which DIMS are TODO.
 - Next: run `01_CAD/scripts/cage_986.py` in Blender (via MCP or Text Editor),
   verify it against the-blueprints.com 986 drawing (to be purchased, €22),
   then start the first surface: **front fender**, not the nose.

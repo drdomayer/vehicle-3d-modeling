@@ -183,7 +183,7 @@ def add_blueprint_side(coll, y_plane=-1.0, alpha=0.6):
     ob.empty_display_size = mm(w_px * s_mm)                      # image width in metres
     ob.empty_image_offset = (0.0, 0.0)                           # origin = bottom-left pixel corner
     ob.use_empty_image_alpha = True; ob.color = (1, 1, 1, alpha)
-    ob.empty_image_side = "FRONT"; ob.show_empty_image_perspective = False
+    ob.empty_image_side = "DOUBLE_SIDED"; ob.show_empty_image_perspective = True  # visible in any view
     ob.rotation_euler = (math.radians(90), 0, 0)                 # local X → +X (forward), local Y → +Z (up)
     x0 = mm(-fx * s_mm)                                          # pixel column 0 → world x
     z0 = mm(-(h_px - BLUEPRINT_SIDE["px_ground_row"]) * s_mm)    # bottom pixel row → world z (below ground)

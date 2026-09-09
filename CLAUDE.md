@@ -123,6 +123,10 @@ branches and never let them diverge for more than one session.
   windshield header, hoop x/z, door lines, side intake — всички `approx` ±15 mm.
   Клетката: 27 обекта, само `hoop_y` е TODO; чертежът е image empty
   `BLUEPRINT_side_ccby` на y = −1.0 m. Screenshot: `04_ENGINEERING/cage/cage_986_side_blueprint.png`.
+- 2026-09-09 (local, 3): `01_CAD/scripts/block_986.py` — приблизителен 3D обем на
+  986 (`BLOCK_986_approx` в `UNDERLAY_986`): силует от чертежа × 1780 × предположен
+  план, superellipse сечения, изрязани ниши. 4319 × 1780, z 130–1063. Underlay за
+  обем, ±30–50 mm; не е повърхност за фланци. Screenshots в `04_ENGINEERING/cage/`.
 - Next: собственикът започва учебна стъпка 1 в Blender: **капак на огледало**
   (после корпус за Hella модул, после преден калник — не носът). Клетката е готова
   като подложка. Отворено: `hoop_y`, roof fold envelope, engine-lid opening — от скана.
@@ -130,7 +134,8 @@ branches and never let them diverge for more than one session.
 ## How to work in this repo
 
 - `01_CAD/scripts/` — Blender Python. The cage must always be regenerable from
-  script; never hand-edit cage objects.
+  script; never hand-edit cage objects. `block_986.py` (run after `cage_986.py`)
+  rebuilds the approximate 986 volume underlay; edit its assumption constants, not the mesh.
 - `02_DESIGN/exterior/` — `.blend` files, one per panel family
   (`front_clamshell.blend`, `rear_deck.blend`, …). Commit at every finished stage.
 - `03_PRINT/` — STL/3MF split for the printer + a PDF exploded view per panel:

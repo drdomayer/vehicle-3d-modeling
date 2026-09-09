@@ -2,6 +2,13 @@
 
 Формат: дата — решение — причина. Добавяй отгоре. Не трий стари редове.
 
+- 2026-09-09 — Чертеж от the-blueprints.com (€22) **не се купува**. Безплатни
+  източници покриват нуждата: официален workshop manual (Group 0a размери, Group 5
+  structure dimensions) + CC BY профил от getoutlines.com, калибриран по междуосието.
+  Manual-ите стоят локално извън git (`04_ENGINEERING/reference/manuals/`, .gitignore).
+- 2026-09-09 — Числа в клетката по manual-а: междуосие 2415 (не 2416), дължина 4315
+  RoW, клирънс 95 RoW. Hardpoints стъкло/hoop/врати/intake от чертежа са `approx`
+  (±15 mm) до скана; `hoop_y` остава TODO.
 - 2026-09-09 — Cage screenshots (ортографски профил/отгоре) живеят в
   `04_ENGINEERING/cage/`; клетката не се пази като `.blend` (регенерира се от
   `cage_986.py`). Image-to-3D (Hyper3D/Hunyuan) се ползва най-много като 3D

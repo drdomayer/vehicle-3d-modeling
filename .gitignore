@@ -16,3 +16,6 @@ Thumbs.db
 # *.obj
 # *.ply
 # *.3mf
+
+# workshop manuals (large, copyrighted) — downloaded, not committed
+04_ENGINEERING/reference/manuals/

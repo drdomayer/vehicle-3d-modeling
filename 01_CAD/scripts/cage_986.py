@@ -17,35 +17,55 @@ import math
 
 # ---------------------------------------------------------------- dimensions (mm)
 DIMS = {
-    # donor — published
-    "wheelbase":        (2416, "published"),
-    "length_oem":       (4321, "published"),
-    "width_oem":        (1781, "published"),
+    # donor — published (Porsche workshop manual Group 0a "Dimensions and weights", 1996/1999 editions)
+    "wheelbase":        (2415, "published"),
+    "length_oem":       (4315, "published"),  # RoW; USA bumpers 4340
+    "width_oem":        (1780, "published"),
     "height_oem":       (1290, "published"),
-    # donor — approximate, verify on blueprint / scan
-    "front_overhang":   (1035, "approx"),
-    "rear_overhang":    ( 870, "approx"),
-    "track_front":      (1465, "published"),  # Porsche 1997 US brochure (16" wheels)
-    "track_rear":       (1528, "published"),  # Porsche 1997 US brochure (16" wheels)
-    "tire_od":          ( 640, "approx"),   # OEM 16" 205/55+225/50 ≈ 632; 17" 205/50+255/40 ≈ 637; 18" ≈ 637–643
+    "track_front":      (1465, "published"),  # 16"/18" wheels; 17" = 1455
+    "track_rear":       (1528, "published"),  # 16"; 17" = 1508; 18" = 1504
+    "ground_clear_oem": (  95, "published"),  # RoW at permissible gross weight; USA 105
+    # donor — from CC-BY blueprint (getoutlines.com, 986 2003 S, scaled on wheelbase; ±15 mm)
+    "front_overhang":   (1007, "approx"),     # blueprint 1028 (USA bumper) − (4340−4315)
+    "rear_overhang":    ( 893, "approx"),
+    "tire_od":          ( 640, "approx"),     # 16" ≈ 632; 17" ≈ 637; 18" 225/40+265/35 ≈ 637–643
     "tire_w_front":     ( 225, "approx"),
     "tire_w_rear":      ( 265, "approx"),
-    "ground_clear_oem": ( 105, "published"),  # "Min. ground clearance 105 mm" — Porsche 1997 US brochure
-    # windshield / hoops — TODO until blueprint + scan
-    "cowl_x":           (-1180, "TODO"),    # windshield base, x from front axle (negative = rearward)
-    "cowl_z":           (  930, "TODO"),
-    "ws_top_x":         (-1620, "TODO"),
-    "ws_top_z":         ( 1240, "TODO"),
-    "hoop_x":           (-1950, "TODO"),    # roll hoop centre plane
-    "hoop_top_z":       ( 1150, "TODO"),
-    "hoop_y":           (  380, "TODO"),    # lateral offset of each hoop from centreline
-    "side_intake_x":    (-2000, "TODO"),    # leading edge of side intake
+    "cowl_x":           (-420, "approx"),     # windshield base (glass meets hood), x from front axle
+    "cowl_z":           ( 970, "approx"),
+    "ws_top_x":         (-1055, "approx"),    # windshield header, outer top edge
+    "ws_top_z":         (1255, "approx"),
+    "hoop_x":           (-1760, "approx"),    # roll hoop tube centre plane
+    "hoop_top_z":       (1235, "approx"),
+    "door_front_x":     (-440, "approx"),     # door shut line at A-pillar
+    "door_rear_x":      (-1635, "approx"),    # door shut line at B-pillar
+    "side_intake_x":    (-2080, "approx"),    # leading edge of side intake (trailing edge ≈ -1900; z ≈ 535–700)
+    # donor — TODO until scan
+    "hoop_y":           ( 380, "TODO"),       # tube lateral offset; body screw points below are wider
+    # donor — published structure points (workshop manual Group 5 "Structure dimensions", p. 5-11..5-13)
+    "rollbar_mount_front_y_total": (1132.0, "published"),   # P10 L–R, roll-over bar front screw points (M8)
+    "rollbar_mount_rear_y_total":  (1104.5, "published"),   # P13 L–R, roll-over bar rear screw points (M8)
+    "softtop_pos_point_y_total":   ( 954.5, "published"),   # P21 L–R, convertible-top positioning points (M6)
+    "softtop_lock_y_total":        (1110.0, "published"),   # P22 L–R, convertible-top lock points (M6)
+    "jack_front_y_total":          (1330.0, "published"),   # P8 L–R
+    "jack_rear_y_total":           (1375.0, "published"),   # P11 L–R
+    "jack_front_to_rear_x":        (1375.0, "published"),   # P8 → P11 longitudinal
     # STATEV 001 targets (design envelope)
     "target_length":    (4400, "target"),
     "target_width":     (1850, "target"),
     "target_height":    (1260, "target"),
     "target_clearance": ( 120, "target"),
     "oem_buffer":       (  18, "target"),   # air to any OEM structure until scanned
+}
+
+# Side-view blueprint (CC BY 4.0, getoutlines.com) — pixel calibration measured 2026-09-09:
+# rear wheel centre px (220, 237), front wheel centre px (801.5, 237), ground row 314, image 1055×321.
+BLUEPRINT_SIDE = {
+    "path": "04_ENGINEERING/reference/getoutlines_986_2003_ccby.gif",
+    "px_front_wc": (801.5, 237.0),
+    "px_rear_wc":  (220.0, 237.0),
+    "px_ground_row": 314.0,
+    "px_size": (1055, 321),
 }
 
 COLL_NAME = "CAGE_986"
@@ -142,6 +162,37 @@ def make_line(name, coll, p1, p2, color):
     return ob
 
 
+def add_blueprint_side(coll, y_plane=-1.0, alpha=0.6):
+    """Side-view blueprint as an image empty in the XZ plane, scaled so wheel centres match the cage."""
+    import os
+    root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) if "__file__" in globals() else None
+    cand = [BLUEPRINT_SIDE["path"]]
+    if root:
+        cand.insert(0, os.path.join(root, BLUEPRINT_SIDE["path"]))
+    if bpy.data.filepath:
+        cand.append(os.path.join(os.path.dirname(bpy.data.filepath), BLUEPRINT_SIDE["path"]))
+    path = next((c for c in cand if os.path.exists(c)), None)
+    if not path:
+        print("blueprint not found:", cand); return None
+    img = bpy.data.images.load(path, check_existing=True)
+    fx, fz = BLUEPRINT_SIDE["px_front_wc"]; rx, _ = BLUEPRINT_SIDE["px_rear_wc"]
+    w_px, h_px = BLUEPRINT_SIDE["px_size"]
+    s_mm = DIMS["wheelbase"][0] / (fx - rx)                      # mm per pixel
+    ob = bpy.data.objects.new("BLUEPRINT_side_ccby", None)
+    ob.empty_display_type = "IMAGE"; ob.data = img
+    ob.empty_display_size = mm(w_px * s_mm)                      # image width in metres
+    ob.empty_image_offset = (0.0, 0.0)                           # origin = bottom-left pixel corner
+    ob.use_empty_image_alpha = True; ob.color = (1, 1, 1, alpha)
+    ob.empty_image_side = "FRONT"; ob.show_empty_image_perspective = False
+    ob.rotation_euler = (math.radians(90), 0, 0)                 # local X → +X (forward), local Y → +Z (up)
+    x0 = mm(-fx * s_mm)                                          # pixel column 0 → world x
+    z0 = mm(-(h_px - BLUEPRINT_SIDE["px_ground_row"]) * s_mm)    # bottom pixel row → world z (below ground)
+    ob.location = (x0, y_plane, z0)
+    coll.objects.link(ob)
+    ob["statev_cage"] = True; ob["note"] = f"CC BY 4.0 getoutlines.com; {s_mm:.3f} mm/px; wheel centres calibrated"
+    return ob
+
+
 # ---------------------------------------------------------------- build
 def build():
     scene = bpy.context.scene
@@ -202,16 +253,23 @@ def build():
     # --- windshield / hoops placeholders (TODO — from blueprint & scan)
     cowl = (d("cowl_x"), 0, d("cowl_z"))
     top = (d("ws_top_x"), 0, d("ws_top_z"))
-    ws = make_line("WINDSHIELD_centreline_TODO", c_hard, cowl, top, RED)
-    tag(ws, "cowl_x", "FIXED element, position TODO")
+    ws = make_line("WINDSHIELD_centreline", c_hard, cowl, top, RED)
+    tag(ws, "cowl_x", "FIXED element; x/z from blueprint (±15 mm) until scan")
     hy = d("hoop_y")
     for s, y in (("L", hy), ("R", -hy)):
-        h = make_line(f"ROLLHOOP_{s}_TODO", c_hard, (d("hoop_x"), y, 0.6), (d("hoop_x"), y, d("hoop_top_z")), RED)
-        tag(h, "hoop_x", "FIXED element, position TODO")
-    si = make_empty("SIDE_INTAKE_L_TODO", c_hard, (d("side_intake_x"), W / 2, 0.55), 0.1)
-    tag(si, "side_intake_x", "functional engine intake; keep ahead of rear wheel")
-    si2 = make_empty("SIDE_INTAKE_R_TODO", c_hard, (d("side_intake_x"), -W / 2, 0.55), 0.1)
-    tag(si2, "side_intake_x", "functional engine intake; keep ahead of rear wheel")
+        h = make_line(f"ROLLHOOP_{s}", c_hard, (d("hoop_x"), y, 0.6), (d("hoop_x"), y, d("hoop_top_z")), RED)
+        tag(h, "hoop_x", "FIXED element; x/z from blueprint, y TODO (body mounts: 1132/1104.5 total)")
+    for s, y in (("L", 1), ("R", -1)):
+        for nm, key in (("DOOR_FRONT", "door_front_x"), ("DOOR_REAR", "door_rear_x")):
+            ln = make_line(f"{nm}_{s}", c_hard, (d(key), y * W / 2, 0.35), (d(key), y * W / 2, 0.95), RED)
+            tag(ln, key, "door shut line — FIXED; from blueprint (±15 mm)")
+    si = make_empty("SIDE_INTAKE_L", c_hard, (d("side_intake_x"), W / 2, 0.62), 0.1)
+    tag(si, "side_intake_x", "functional engine intake leading edge; z 535–700; keep ahead of rear wheel")
+    si2 = make_empty("SIDE_INTAKE_R", c_hard, (d("side_intake_x"), -W / 2, 0.62), 0.1)
+    tag(si2, "side_intake_x", "functional engine intake leading edge; z 535–700; keep ahead of rear wheel")
+
+    # --- side-view blueprint underlay
+    add_blueprint_side(c_env)
 
     # --- headlamp minimum height reference plane (legal: >= 500 mm centre)
     hl = make_box("HEADLAMP_MIN_500mm_plane", c_hard, (fo - 0.3, 0, 0.5), (0.6, Wt, 0.002), RED)

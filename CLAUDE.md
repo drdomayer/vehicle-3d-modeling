@@ -46,7 +46,7 @@ do the body design himself. Height ~190 cm — cabin fit is a hard constraint.
 1. **Packaging first.** Never design a panel independent of the scanned/known
    mechanical envelope. Render → "does it fit?" is forbidden; envelope → geometry
    → design → engineering → prototype is the order.
-2. Wheelbase 2416 mm and wheel centres are fixed. Windshield frame, rake and
+2. Wheelbase 2415 mm (workshop manual) and wheel centres are fixed. Windshield frame, rake and
    roll hoops are fixed. Door cut lines fixed. Side intake stays ahead of the
    rear wheel and feeds the engine.
 3. 15–20 mm clearance to all OEM structure until the real car is scanned.
@@ -115,10 +115,17 @@ branches and never let them diverge for more than one session.
   се пази като `.blend` — регенерира се от скрипта. Hyper3D/Hunyuan image-to-3D
   в MCP addon-а са изключени (може да се включат от N-панела, ако потрябва 3D
   скица-подложка от ref-05; резултатът не е панел за печат).
-- Next: (1) купи чертежа 986 от the-blueprints.com (€22) → аз го слагам като
-  3 Reference Images в клетката, мащаб по междуосие 2416, и попълвам TODO DIMS;
-  (2) собственикът започва учебна стъпка 1 в Blender: **капак на огледало**
-  (после корпус за Hella модул, после преден калник — не носът).
+- 2026-09-09 (local, продължение): без покупка на чертеж. Свалени официалният 986
+  workshop manual (Group 0a General + Group 5 Body, OCR, локално извън git) и CC BY
+  профил от getoutlines.com. От manual-а: междуосие 2415, дължина 4315 RoW, клирънс
+  95 RoW, следа по размер джанта, structure dimensions (roll-bar/soft-top screw
+  points). От чертежа (4.153 mm/px, калибриран по колелата): навеси 1007/893, cowl,
+  windshield header, hoop x/z, door lines, side intake — всички `approx` ±15 mm.
+  Клетката: 27 обекта, само `hoop_y` е TODO; чертежът е image empty
+  `BLUEPRINT_side_ccby` на y = −1.0 m. Screenshot: `04_ENGINEERING/cage/cage_986_side_blueprint.png`.
+- Next: собственикът започва учебна стъпка 1 в Blender: **капак на огледало**
+  (после корпус за Hella модул, после преден калник — не носът). Клетката е готова
+  като подложка. Отворено: `hoop_y`, roof fold envelope, engine-lid opening — от скана.
 
 ## How to work in this repo
 

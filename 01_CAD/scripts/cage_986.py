@@ -161,7 +161,7 @@ def make_line(name, coll, p1, p2, color):
     return ob
 
 
-def add_blueprint_side(coll, y_plane=-1.0, alpha=0.6):
+def add_blueprint_side(coll, y_plane=-1.0, alpha=0.3):
     """Side-view blueprint as an image empty in the XZ plane, scaled so wheel centres match the cage."""
     import os
     root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) if "__file__" in globals() else None

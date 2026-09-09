@@ -142,7 +142,7 @@ def build():
     coll.objects.link(ob)
     for p in me.polygons:
         p.use_smooth = True
-    ob.color = (0.55, 0.6, 0.65, 0.35)
+    ob.color = (0.35, 0.50, 0.42, 1.0)   # opaque, distinct from the grey cage; set alpha < 1 for see-through
     ob["statev_underlay"] = True
     ob["note"] = ("approx volume: side silhouette + plan half-width + front/rear section, all from CC-BY "
                   "blueprints (+-30 mm). NOT the real surface; no flanges/clearances from this")

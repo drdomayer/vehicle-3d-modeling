@@ -25,12 +25,12 @@ DIMS = {
     # donor — approximate, verify on blueprint / scan
     "front_overhang":   (1035, "approx"),
     "rear_overhang":    ( 870, "approx"),
-    "track_front":      (1465, "approx"),
-    "track_rear":       (1528, "approx"),
-    "tire_od":          ( 640, "approx"),   # 18" 225/40 + 265/35 ≈ 637–643
+    "track_front":      (1465, "published"),  # Porsche 1997 US brochure (16" wheels)
+    "track_rear":       (1528, "published"),  # Porsche 1997 US brochure (16" wheels)
+    "tire_od":          ( 640, "approx"),   # OEM 16" 205/55+225/50 ≈ 632; 17" 205/50+255/40 ≈ 637; 18" ≈ 637–643
     "tire_w_front":     ( 225, "approx"),
     "tire_w_rear":      ( 265, "approx"),
-    "ground_clear_oem": ( 150, "approx"),
+    "ground_clear_oem": ( 105, "published"),  # "Min. ground clearance 105 mm" — Porsche 1997 US brochure
     # windshield / hoops — TODO until blueprint + scan
     "cowl_x":           (-1180, "TODO"),    # windshield base, x from front axle (negative = rearward)
     "cowl_z":           (  930, "TODO"),

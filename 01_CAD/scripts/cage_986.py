@@ -107,8 +107,12 @@ def make_box(name, coll, center, size, color, wire=True):
     return ob
 
 
-def make_wheel(name, coll, x, y, od, width, color):
-    bpy.ops.mesh.primitive_cylinder_add(radius=od / 2, depth=width, location=(x, y, od / 2))
+def make_wheel(name, coll, x, y, od, width, color, z=None):
+    """Cylinder with axis along Y. z defaults to od/2 (tyre on the ground); pass z
+    explicitly for rings that must stay concentric with the wheel centre."""
+    if z is None:
+        z = od / 2
+    bpy.ops.mesh.primitive_cylinder_add(radius=od / 2, depth=width, location=(x, y, z))
     ob = bpy.context.active_object
     ob.name = name
     ob.rotation_euler = (math.radians(90), 0, 0)  # axis along Y
@@ -191,7 +195,7 @@ def build():
     for name, x, y in (("FL", 0, tf), ("FR", 0, -tf), ("RL", -wb, tr), ("RR", -wb, -tr)):
         e = make_empty(f"WC_{name}", c_hard, (x, y, od / 2), 0.12)
         tag(e, "wheelbase", "wheel centre — FIXED hardpoint")
-        ring = make_wheel(f"clearance_{name}", c_hard, x, y, od + 2 * buf, (d("tire_w_rear") if "R" in name[0] else d("tire_w_front")) + 2 * buf, RED)
+        ring = make_wheel(f"clearance_{name}", c_hard, x, y, od + 2 * buf, (d("tire_w_rear") if "R" in name[0] else d("tire_w_front")) + 2 * buf, RED, z=od / 2)
         ring.display_type = "WIRE"
         tag(ring, "oem_buffer", "static tyre + buffer; NOT full suspension travel/steer envelope")
 

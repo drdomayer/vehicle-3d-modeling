@@ -106,9 +106,19 @@ branches and never let them diverge for more than one session.
   затваря: 1035 + 2416 + 870 = 4321. 8 DIMS са TODO (виж по-долу).
   Открит бъг: `clearance_*` ринговете са на Z = od/2 + buffer (338 mm) вместо
   концентрично на колелото (320 mm) — `make_wheel` слага z = radius.
-- Next: run `01_CAD/scripts/cage_986.py` in Blender (via MCP or Text Editor),
-  verify it against the-blueprints.com 986 drawing (to be purchased, €22),
-  then start the first surface: **front fender**, not the nose.
+- 2026-09-09 (local): Blender MCP връзката потвърдена от Claude Code (Desktop
+  app, Code tab). Бъгът с `clearance_*` ринговете оправен — `make_wheel` вече
+  приема `z`, ринговете са концентрични на колелото (Z = 320 mm, OD 676 =
+  640 + 2×18). Клетката прегенерирана през MCP: 22 обекта, 8 TODO DIMS
+  непроменени. Ортографски screenshots (профил = Blender FRONT view, отгоре =
+  TOP) записани в `04_ENGINEERING/cage/cage_986_{side,top}.png`. Клетката не
+  се пази като `.blend` — регенерира се от скрипта. Hyper3D/Hunyuan image-to-3D
+  в MCP addon-а са изключени (може да се включат от N-панела, ако потрябва 3D
+  скица-подложка от ref-05; резултатът не е панел за печат).
+- Next: (1) купи чертежа 986 от the-blueprints.com (€22) → аз го слагам като
+  3 Reference Images в клетката, мащаб по междуосие 2416, и попълвам TODO DIMS;
+  (2) собственикът започва учебна стъпка 1 в Blender: **капак на огледало**
+  (после корпус за Hella модул, после преден калник — не носът).
 
 ## How to work in this repo
 

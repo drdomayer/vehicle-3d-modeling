@@ -40,8 +40,7 @@ DIMS = {
     "door_front_x":     (-440, "approx"),     # door shut line at A-pillar
     "door_rear_x":      (-1635, "approx"),    # door shut line at B-pillar
     "side_intake_x":    (-2080, "approx"),    # leading edge of side intake (trailing edge ≈ -1900; z ≈ 535–700)
-    # donor — TODO until scan
-    "hoop_y":           ( 380, "TODO"),       # tube lateral offset; body screw points below are wider
+    "hoop_y":           ( 350, "approx"),     # tube centre plane: seat centreline ±357 (4-view plan), mounts at ±566/552 minus half tube-span; ±40 mm
     # donor — published structure points (workshop manual Group 5 "Structure dimensions", p. 5-11..5-13)
     "rollbar_mount_front_y_total": (1132.0, "published"),   # P10 L–R, roll-over bar front screw points (M8)
     "rollbar_mount_rear_y_total":  (1104.5, "published"),   # P13 L–R, roll-over bar rear screw points (M8)
@@ -258,7 +257,7 @@ def build():
     hy = d("hoop_y")
     for s, y in (("L", hy), ("R", -hy)):
         h = make_line(f"ROLLHOOP_{s}", c_hard, (d("hoop_x"), y, 0.6), (d("hoop_x"), y, d("hoop_top_z")), RED)
-        tag(h, "hoop_x", "FIXED element; x/z from blueprint, y TODO (body mounts: 1132/1104.5 total)")
+        tag(h, "hoop_x", "FIXED element; x/z from side blueprint, y from plan view ±40 (body mounts: 1132/1104.5 total)")
     for s, y in (("L", 1), ("R", -1)):
         for nm, key in (("DOOR_FRONT", "door_front_x"), ("DOOR_REAR", "door_rear_x")):
             ln = make_line(f"{nm}_{s}", c_hard, (d(key), y * W / 2, 0.35), (d(key), y * W / 2, 0.95), RED)

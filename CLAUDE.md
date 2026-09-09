@@ -127,6 +127,13 @@ branches and never let them diverge for more than one session.
   986 (`BLOCK_986_approx` в `UNDERLAY_986`): силует от чертежа × 1780 × предположен
   план, superellipse сечения, изрязани ниши. 4319 × 1780, z 130–1063. Underlay за
   обем, ±30–50 mm; не е повърхност за фланци. Screenshots в `04_ENGINEERING/cage/`.
+- 2026-09-09 (local, 4): 4-изгледен CC BY чертеж (getoutlines 1996, 509×519) свален
+  и обработен: `01_CAD/scripts/extract_blueprint_986.py` (Pillow, извън Blender) →
+  `01_CAD/scripts/data/986_plan_section.json` (план на полуширината по x, сечения
+  отпред/отзад, ±30 mm). `block_986.py` вече ползва измерен план + сечение вместо
+  предположения. `hoop_y` = 350 approx (седалки в плана ±357, mounts ±566/552) — вече
+  **няма TODO в DIMS**; всичко approx/published до скана. Screenshots
+  `04_ENGINEERING/cage/block_986_{persp,top,front}.png`.
 - Next: собственикът започва учебна стъпка 1 в Blender: **капак на огледало**
   (после корпус за Hella модул, после преден калник — не носът). Клетката е готова
   като подложка. Отворено: `hoop_y`, roof fold envelope, engine-lid opening — от скана.

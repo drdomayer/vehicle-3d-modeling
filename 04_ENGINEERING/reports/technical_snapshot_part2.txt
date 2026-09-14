@@ -1,0 +1,109 @@
+====================================================================================================
+STATEV 001 — TECHNICAL SNAPSHOT, PART 2. The items missing from part 1.
+====================================================================================================
+
+A. MAXIMUM BODY WIDTH AT THE AXLES (the arch cut makes the station reading misleading)
+   front axle   at the station itself : half   744.7  (cut by the arch)
+   front axle   +-260 mm around it    : half   874.8  width  1749.5
+   front axle   above the arch, Z>560 : half   874.8  width  1749.5
+   rear axle    at the station itself : half   895.6  (cut by the arch)
+   rear axle    +-260 mm around it    : half   925.0  width  1850.0
+   rear axle    above the arch, Z>560 : half   925.0  width  1850.0
+
+B. PROFILE AT A REGULAR 250 mm INTERVAL
+    specX    top Z  beltline Z  half-width    width  lowest Z
+     -950    460.0       452.6       417.8    835.7     120.0
+     -700    630.0       621.9       728.0   1456.1     120.0
+     -450    706.9       699.2       845.3   1690.5     120.0
+     -200    740.0       708.5       854.4   1708.8     120.0
+       50    785.0       724.6       747.2   1494.5     120.0
+      300    883.7       742.3       826.7   1653.3     120.0
+      550    704.6       704.6       853.6   1707.3     120.0
+      800    726.8       726.8       856.3   1712.7     120.0
+     1050    775.4       775.4       859.2   1718.5     120.0
+     1300    780.7       780.7       871.8   1743.6     120.0
+     1550    790.8       790.8       889.9   1779.9     120.0
+     1800    905.5       905.5       911.8   1823.6     120.0
+     2050    984.5       984.5       925.0   1850.0     120.0
+     2300    857.1       857.1       924.5   1849.0     120.0
+     2550    806.4       760.0       897.5   1795.0     120.0
+     2800    752.6       714.6       923.9   1847.8     120.0
+     3050    646.6       625.7       838.0   1676.0     120.0
+     3300    752.6       618.4       663.0   1326.0     120.0
+
+C. COCKPIT / BELTLINE / DIFFUSER HEIGHTS
+   cockpit upper line (beltline) Z   831.3   averaged over specX 420..1760
+   windshield base Z               970.0   donor
+   step base-to-beltline           138.7
+   diffuser region Z               120.0 .. 399.6   half-width 891.3
+   lowest point of the body        120.0
+
+E. OUR BODY vs THE DONOR 986 OUTER SKIN  (donor plan +-30 mm)
+    specX  ours half  donor half    delta   note
+     -900      522.1       519.6     +2.5   ours is wider
+     -600      782.8       770.0    +12.8   ours is wider
+     -300      880.8       842.6    +38.2   ours is wider
+        0      744.7       850.0   -105.3   INSIDE the donor skin
+      300      826.7       854.4    -27.7   INSIDE the donor skin
+      600      852.5       845.5     +7.0   ours is wider
+      900      858.1       848.7     +9.4   ours is wider
+     1200      862.4       845.5    +16.9   ours is wider
+     1500      889.9       849.1    +40.8   ours is wider
+     1800      911.8       863.3    +48.5   ours is wider
+     2100      925.0       881.3    +43.7   ours is wider
+     2400      901.4       889.3    +12.1   ours is wider
+     2700      924.7       871.4    +53.2   ours is wider
+     3000      860.0       783.1    +76.9   ours is wider
+     3300      663.0       423.5   +239.5   ours is wider
+   donor body ends at specX -1027 (nose) .. 3330 (tail); ours runs -950 .. 3420
+
+F. DESIGN ELEMENTS — measured as regions of the body mesh, not separate objects
+   element                    specX                 Y               Z             L x W x H  status
+   NOSE                  -950..-667         -728..728        120..630      283 x 1456 x 510  editable
+   FRONT_FENDER_L         -633..247          381..881        120..756       881 x 500 x 636  editable
+   FRONT_FENDER_R         -633..248        -881..-381        120..756       881 x 500 x 636  editable
+   HOOD/COWL              -633..350         -379..379        120..920       983 x 757 x 800  editable
+   DOOR_SIDE_L            455..1600          380..896        120..793      1145 x 516 x 673  editable
+   DOOR_SIDE_R            455..1619        -896..-380        120..796      1165 x 516 x 676  editable
+   ROCKER_L               330..1800          380..862        120..324      1470 x 482 x 204  editable
+   BUTTRESS_L            1600..2479          407..846        763..984       879 x 439 x 222  editable
+   BUTTRESS_R            1600..2479        -846..-407        761..984       879 x 439 x 224  editable
+   REAR_FENDER_L         1901..2867          393..925        120..984       965 x 532 x 864  editable
+   REAR_FENDER_R         1912..2876        -925..-393        120..984       964 x 532 x 864  editable
+   DECK                  1800..3133         -491..491        120..877      1333 x 981 x 757  editable
+   TAIL                  3067..3420         -826..826        120..753      353 x 1653 x 633  editable
+   ROLL_HOOPS                  1760         -350..350       600..1235            donor tube  LOCKED, donor
+   WINDSHIELD             420..1055       donor frame       970..1255                 donor  LOCKED, donor
+   DOOR_SHUT_LINES     440 and 1635                 -               -         aperture 1195  LOCKED, donor
+   WHEEL_CENTRES         0 and 2415   +-732.5 / +-764   323.5 / 337.5                     -  LOCKED, donor
+
+==============================================================================
+WHAT PART 2 ADDS TO THE THREE FAULTS ALREADY FOUND
+==============================================================================
+
+4. THE NOSE IS 105 mm NARROWER THAN THE DONOR AT THE FRONT AXLE
+   specX     0  ours 745  donor 850  -105
+   specX   300  ours 827  donor 854   -28
+   Everywhere else we are wider than the 986; at and just behind the front axle
+   we are narrower. The front fender does not cover the donor's own fender line
+   there. Since the front fender is bolt-on and thrown away this is not a
+   collision, but it does mean the front reads pinched next to the wheel — which
+   is the "generic, too soft" front in the renders.
+
+5. THE BELTLINE STEP AT THE COWL IS 139 mm
+   cockpit beltline Z 831, windshield base Z 970.
+   The screen starts 139 mm above the top of the door. On a 986 that step is
+   small; here the glass will look planted on top of the body rather than growing
+   out of it. This is the same fault as the cowl cliff, measured from the cabin
+   side.
+
+6. THE TAIL RISE IS 106 mm, NOT 38
+   At a 250 mm interval: specX 3050 top Z 647, specX 3300 top Z 753.
+   Part 1 sampled at 3200 and 3420 and read +38. On the regular grid it is +106.
+   The tail dips then climbs again, which is worse than a plain blunt end.
+
+7. WE OVERHANG THE DONOR BY 239 mm AT specX 3300
+   The donor body has tapered to half-width 424 there; ours is 663. Our tail is
+   a far bigger volume than the 986's. Not wrong in itself, but it is the single
+   largest departure from the donor's architecture anywhere on the car, and it is
+   at exactly the place the rear reads heavy.

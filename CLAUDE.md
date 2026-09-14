@@ -134,7 +134,16 @@ branches and never let them diverge for more than one session.
   предположения. `hoop_y` = 350 approx (седалки в плана ±357, mounts ±566/552) — вече
   **няма TODO в DIMS**; всичко approx/published до скана. Screenshots
   `04_ENGINEERING/cage/block_986_{persp,top,front}.png`.
-- Next: собственикът започва учебна стъпка 1 в Blender: **капак на огледало**
+- 2026-09-14 (local): приет STATEV 001 dimensional spec v0.1 (`docs/10-statev-001-spec-v01.md`).
+  `01_CAD/scripts/statev_skeleton.py` строи колекция `STATEV_001` — 72 обекта: 15 сечения
+  S00–S14 като curves, 14 надлъжни rails, envelope кутии за фарове/DRL/маска/радиатор/intake/
+  перки/deck/ламели/стопове/дифузьор/ауспух, STATEV 19" колела на донорската следа.
+  `check_statev_vs_donor.py` дава конфликтен доклад: 3 fatal (главини Y, фар извън каросерията,
+  intake не съвпада с реалния отвор), 3 за проверка (преден навес срещу crash beam, S00–S03/S06
+  навътре от OEM обшивката, перките пред roll hoops), 1 отворен (покрив/капак — само от скана).
+  Screenshots: `04_ENGINEERING/statev_v01/skeleton_{side,top,front,persp}.png`. **Без loft.**
+- Next: собственикът гледа wireframe-а и казва кои сечения да се коригират; трите fatal се
+  решават с числа. Чак след това loft. Успоредно: учебна стъпка 1 — **капак на огледало**
   (после корпус за Hella модул, после преден калник — не носът). Клетката е готова
   като подложка. Отворено: `hoop_y`, roof fold envelope, engine-lid opening — от скана.
 

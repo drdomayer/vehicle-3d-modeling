@@ -50,9 +50,9 @@ DIMS = {
     "jack_rear_y_total":           (1375.0, "published"),   # P11 L–R
     "jack_front_to_rear_x":        (1375.0, "published"),   # P8 → P11 longitudinal
     # STATEV 001 targets (design envelope)
-    "target_length":    (4400, "target"),
+    "target_length":    (4370, "target"),   # v0.1 spec 2026-09-14 (was 4400)
     "target_width":     (1850, "target"),
-    "target_height":    (1260, "target"),
+    "target_height":    (1285, "target"),   # v0.1 spec; real height is set by the donor screen/hoops
     "target_clearance": ( 120, "target"),
     "oem_buffer":       (  18, "target"),   # air to any OEM structure until scanned
 }

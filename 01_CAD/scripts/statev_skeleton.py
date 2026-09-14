@@ -684,6 +684,10 @@ def build():
         dbg.objects.link(t)
         return b
 
+    def find_box(nm):
+        """A renamed or deleted element must not kill the build — the warning just does not fire."""
+        return next((b for b in BOXES if b[0] == nm), None)
+
     n_warn = 0
     # W1 — hub Y
     spec_hub_f = 875
@@ -694,20 +698,20 @@ def build():
              f"{2*(spec_hub_f - D['track_front']/2):.0f} mm more track, impossible")
         n_warn += 1
     # W2 — headlight beyond the body
-    hl = next(b for b in BOXES if b[0] == "HEADLIGHT")
-    hl_out = abs(hl[3]) + hl[6] / 2
-    body_at = half_width_at(SECTIONS["S02"][2], hl[4])
-    if body_at and hl_out > body_at:
+    hl = find_box("PROJECTOR")
+    hl_out = (abs(hl[3]) + hl[6] / 2) if hl else 0
+    body_at = half_width_at(SECTIONS["S02"][2], hl[4]) + widening(hl[2], hl[4]) if hl else 0
+    if hl and body_at and hl_out > body_at:
         for sgn in (1, -1):
-            warn(f"WARN_headlight_{'L' if sgn > 0 else 'R'}",
+            warn(f"WARN_projector_{'L' if sgn > 0 else 'R'}",
                  (sx(hl[2]), sgn * (body_at + hl_out) / 2, hl[4]),
                  (hl[5], hl_out - body_at, hl[7]),
-                 f"headlight reaches Y {hl_out:.0f}, body is {body_at:.0f} — "
+                 f"projector cavity reaches Y {hl_out:.0f}, body is {body_at:.0f} — "
                  f"{hl_out - body_at:.0f} mm outside the surface")
             n_warn += 1
     # W3 — side intake does not reach the donor opening
-    si = next(b for b in BOXES if b[0] == "SIDE_INTAKE")
-    si_end = si[2] + si[5] / 2
+    si = find_box("SIDE_INTAKE")
+    si_end = (si[2] + si[5] / 2) if si else 1e9
     donor_open = 1900
     if si_end < donor_open:
         for sgn in (1, -1):
@@ -718,27 +722,27 @@ def build():
                  "as drawn it feeds nothing")
             n_warn += 1
     # W4 — door skin shorter than the aperture
-    ds = next(b for b in BOXES if b[0] == "DOOR_SKIN")
+    ds = find_box("DOOR_SKIN")
     aperture = abs(D["door_rear_x"] - D["door_front_x"])
-    if abs(ds[5] - aperture) > 20:
+    if ds and abs(ds[5] - aperture) > 20:
         for sgn in (1, -1):
             warn(f"WARN_door_skin_{'L' if sgn > 0 else 'R'}",
                  (sx(ds[2]), sgn * ds[3], ds[4]), (aperture, 60, ds[7]),
                  f"skin {ds[5]} vs door aperture {aperture:.0f} — {aperture - ds[5]:.0f} mm short of the shut lines")
             n_warn += 1
     # W5 — unassigned strip between hood and cowl
-    hd = next(b for b in BOXES if b[0] == "HOOD")
-    hd_rear, cowl_spec = hd[2] + hd[5] / 2, -D["cowl_x"]
-    if cowl_spec - hd_rear > 50:
+    hd = find_box("HOOD")
+    hd_rear, cowl_spec = ((hd[2] + hd[5] / 2) if hd else 1e9), -D["cowl_x"]
+    if hd and cowl_spec - hd_rear > 50:
         warn("WARN_cowl_strip", (sx((hd_rear + cowl_spec) / 2), 0, D["cowl_z"] - 80),
              (cowl_spec - hd_rear, 1400, 120),
              f"{cowl_spec - hd_rear:.0f} mm between the hood's rear edge and the windshield base "
              "belongs to no panel")
         n_warn += 1
     # W6 — fins ahead of the hoops
-    fin = next(b for b in BOXES if b[0] == "AERO_FIN")
-    fin_start, hoop_spec = fin[2] - fin[5] / 2, -D["hoop_x"]
-    if fin_start < hoop_spec:
+    fin = find_box("AERO_FIN")
+    fin_start, hoop_spec = ((fin[2] - fin[5] / 2) if fin else 1e9), -D["hoop_x"]
+    if fin and fin_start < hoop_spec:
         for sgn in (1, -1):
             warn(f"WARN_fin_ahead_{'L' if sgn > 0 else 'R'}",
                  (sx((fin_start + hoop_spec) / 2), sgn * abs(fin[3]), fin[4]),

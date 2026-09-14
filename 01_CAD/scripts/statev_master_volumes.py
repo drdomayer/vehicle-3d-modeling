@@ -151,8 +151,8 @@ SHOULDER_W_BELOW = 42.0   # tight below: this is what makes it read as a crease,
 SHOULDER_W_ABOVE = 95.0   # soft release above
 
 # 2. Tension over the front wheel: a shoulder that starts low ahead of it, peaks above it, releases
-FENDER_GAIN = 20.0
-FENDER_X, FENDER_XW = -40.0, 470.0
+FENDER_GAIN = 34.0        # the fender must read as its own volume the nose flows into
+FENDER_X, FENDER_XW = -30.0, 380.0    # tighter, so it is a fender and not a general swelling
 FENDER_Z, FENDER_ZW = 545.0, 120.0
 
 # 3. The rocker as its own element: the body tucks in below a defined sill line between the arches
@@ -167,6 +167,11 @@ FLANK_Z_LO, FLANK_Z_HI = 300.0, 660.0      # the band held near constant width
 FLANK_PULL = 0.88                          # how strongly it is pulled to the station maximum
 FLANK_EASE_TOP = 34.0                      # short: a crisp shoulder edge, not a roll
 FLANK_SHOULDER = 16.0                      # extra mass in the shoulder just above the flank
+
+# 1b. Belt dip. Between the wheels the 986 reads visually compressed; my sections were flat there,
+# which is the "flat platform" in the side view. This lowers the top of the body through the door.
+BELT_DIP_X0, BELT_DIP_PEAK, BELT_DIP_X1 = 430.0, 1050.0, 1700.0
+BELT_DIP = 48.0
 
 # 4. The tail drawn out instead of ending in a wall
 TAIL_START, TAIL_END_X = 2800.0, 3420.0
@@ -219,6 +224,8 @@ def character(spec_x, z):
         ends = min(smoothstep(FLANK_X0, FLANK_X0 + 300, spec_x),
                    1.0 - smoothstep(FLANK_X1 - 300, FLANK_X1, spec_x))
         add += FLANK_SHOULDER * ends * math.exp(-((z - (FLANK_Z_HI + 40)) / 85.0) ** 2)
+    # waist between the nose and the front fender, so the fender reads as a separate volume
+    add -= 16.0 * math.exp(-((spec_x - (-560)) / 190.0) ** 2) * math.exp(-((z - 430) / 190.0) ** 2)
     # nose blade: thin the section above the mouth so the upper line is sharp
     if NOSE_BLADE_X0 <= spec_x <= NOSE_BLADE_X1 and z > NOSE_BLADE_Z:
         run = min(smoothstep(NOSE_BLADE_X1, NOSE_BLADE_X1 - 140, spec_x), 1.0)
@@ -257,8 +264,16 @@ def zone_shape(spec_x, z, hw, z_top):
     return hw * f
 
 
+# Behind the hoops the deck height is the spine, not whatever the section's last control point says.
+# The old code did crown = max(crown, z_top + 10), so a section point at Z 900 forced the crown to
+# 910 while the spine asked for 880 — a flat plate across the top. That is the "separate plate" read.
 def ring(spec_x):
     prof = sorted(section_profile(spec_x), key=lambda p: p[0])
+    deck = spine_z(DECK_SPINE, spec_x)
+    if deck is not None:
+        keep = [(z, y) for z, y in prof if z <= deck - 40]
+        if len(keep) >= 3:
+            prof = keep
     z_floor = prof[0][0]
     z_top, hw_top = prof[-1]
     # Crown handover. HOOD_SPINE ends at the cowl (specX 420, Z 970) and DECK_SPINE starts at the
@@ -275,6 +290,10 @@ def ring(spec_x):
         a = smoothstep(x0, x0 + 320, spec_x)          # release out of the cowl
         b = smoothstep(x1 - 320, x1, spec_x)          # gather into the deck
         crown = z0 * (1 - a) + belt * (a - b) + z1 * b
+    if BELT_DIP_X0 <= spec_x <= BELT_DIP_X1:
+        f = (smoothstep(BELT_DIP_X0, BELT_DIP_PEAK, spec_x)
+             * (1.0 - smoothstep(BELT_DIP_PEAK, BELT_DIP_X1, spec_x)) * 4.0)
+        crown -= BELT_DIP * min(1.0, f)
     narrow, drop = tail_factor(spec_x)
     crown = max(crown - drop, z_top + 10)
     shaped = [(z, zone_shape(spec_x, z, hw, z_top) + character(spec_x, z)) for z, hw in prof]

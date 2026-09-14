@@ -478,28 +478,45 @@ def build():
 
     D = donor_dims()
 
-    # ---- wheel arch apertures: two arcs per wheel, at the inboard and outboard edge of the opening
+    # ---- wheel arch apertures. The visible arch line is a curve ON the body surface, not an arc at
+    # a constant Y: as the arch climbs, the fender narrows, so the line has to follow it. The inboard
+    # edge is inside the wheelhouse and is drawn as a plain arc — it is not a visible line.
     import math as _a
     for side_key, (spec_x, radius, open_w, tod, twid) in ARCHES.items():
         half_track = (D["track_front"] if side_key == "FRONT" else D["track_rear"]) / 2.0
+        y_cap = half_track + open_w / 2                      # aperture half-width from the spec
+        y_in = half_track - open_w / 2
         for suffix, sgn in (("_L", 1), ("_R", -1)):
-            for edge, off in (("in", -open_w / 2), ("out", open_w / 2)):
-                pts = []
-                for i in range(25):                      # 180 deg over the top, front -> rear
-                    a = _a.pi * i / 24
-                    pts.append((mm(sx(spec_x) + radius * _a.cos(a)),
-                                mm(sgn * (half_track + sgn * 0 + off) if sgn > 0 else sgn * half_track - off),
-                                mm(tod / 2 + radius * _a.sin(a))))
+            out_pts, in_pts, ys = [], [], []
+            for i in range(37):
+                ang = _a.pi * i / 36                          # front -> over the top -> rear
+                ax = spec_x - radius * _a.cos(ang)            # spec X walks with the arc
+                z = tod / 2 + radius * _a.sin(ang)
+                prof = section_profile(ax)
+                hw = half_width_at(prof, z)
+                if hw is None:                                # above the section data: hold its top
+                    hw = prof[-1][1]
+                y = min(hw - 12, y_cap)                       # 12 mm inboard of the surface
+                ys.append(y)
+                out_pts.append((mm(sx(ax)), mm(sgn * y), mm(z)))
+                in_pts.append((mm(sx(ax)), mm(sgn * y_in), mm(z)))
+            for edge, pts in (("out", out_pts), ("in", in_pts)):
                 ob = poly_curve(f"ARCH_{side_key}{suffix}_{edge}", subs["02_BODY"], pts,
                                 (0.20, 0.70, 0.90, 1.0))
-                ob["status"] = "spec"
+                ob["status"] = "DECIDED" if edge == "out" else "derived"
                 ob["spec_x_mm"] = spec_x
                 ob["arch_radius_mm"] = radius
                 ob["arch_opening_width_mm"] = open_w
                 ob["radial_gap_to_tyre_mm"] = round(radius - tod / 2, 1)
                 ob["axial_gap_each_side_mm"] = round((open_w - twid) / 2.0, 1)
-                ob["note"] = ("wheel arch aperture edge. Radius is from the wheel centre; the tyre "
-                              "needs this gap at full bump AND full steer - only the scan settles it")
+                if edge == "out":
+                    ob["outer_edge_y_range_mm"] = [round(min(ys), 1), round(max(ys), 1)]
+                    ob["note"] = ("visible arch line, solved onto the body surface at every angle. "
+                                  "Where the fender narrows, the line comes inboard with it — it is "
+                                  "NOT a constant-Y arc. Final validation needs the real lofted "
+                                  "surface at full bump and full steer.")
+                else:
+                    ob["note"] = "inboard edge of the aperture, inside the wheelhouse — not a visible line"
 
     # ---- DRL / position blade, lying on the body's shoulder line
     for suffix, sgn in (("_L", 1), ("_R", -1)):

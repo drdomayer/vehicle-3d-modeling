@@ -115,16 +115,32 @@ rec("fatal", "hub Y", "the spec puts the wheel centres at Y ±875 (front) / ±90
     "Wheel centres are a locked hardpoint; the skeleton uses the donor track. "
     "The spec's own text agrees: hub Y comes from the scan.")
 
-# body vs tyre at the axle sections
-for sec, lbl, half_track, width in (("S05", "front", d("track_front") / 2, 235),
-                                    ("S11", "rear", d("track_rear") / 2, 275)):
-    prof = SECTIONS[sec][2]
-    body = max_hw(SECTIONS[sec][0], prof)
+# body vs tyre. NOTE on what is and is not a conflict: below the arch line the tyre is SUPPOSED to
+# sit outside the body — that is what a wheel arch is, and every car has the rocker inboard of the
+# tread. The meaningful tests are (a) the section's widest point reaches past the tyre so the fender
+# covers the wheel, and (b) the arch aperture itself clears the tyre — that is the next block.
+print("  fender cover (section max vs tyre outer face):")
+for sec, lbl, half_track, width, arch_r, od in (
+        ("S05", "front", d("track_front") / 2, 235, 350, PACKAGE["tyre_front_od"]),
+        ("S11", "rear", d("track_rear") / 2, 275, 365, PACKAGE["tyre_rear_od"])):
+    spec_x, _, prof = SECTIONS[sec]
+    body = max_hw(spec_x, prof)
     outer = half_track + width / 2
-    print(f"  {sec} {lbl}: body max half-width {body} vs tyre outer face {outer:.1f} -> "
-          f"{body - outer:+.1f} mm of body outboard of the tyre")
+    crown_z = od / 2 + arch_r                      # top of the arch aperture
+    hw_crown = hw_at(prof, crown_z)
+    hw_crown = None if hw_crown is None else hw_crown + WIDEN(spec_x, crown_z)
+    print(f"    {sec} {lbl}: body max {body:.1f} vs tyre outer {outer:.1f} -> {body - outer:+.1f} | "
+          f"at the arch crown Z {crown_z:.0f} the body is "
+          f"{'above the section data' if hw_crown is None else f'{hw_crown:.1f}'}")
     if body - outer < 0:
-        rec("fatal", f"{sec} tyre", f"the tyre sticks {outer - body:.1f} mm outside the body envelope.")
+        rec("fatal", f"{sec} fender cover", f"the tyre sticks {outer - body:.1f} mm beyond the widest "
+            "point of the body — the fender does not cover the wheel.")
+    if hw_crown is not None and hw_crown < outer:
+        rec("check", f"{sec} arch crown", f"at the top of the arch (Z {crown_z:.0f}) the fender is only "
+            f"{hw_crown:.1f} wide while the tyre's outer face is {outer:.1f}. The arch line follows the "
+            "surface inboard there, so the aperture narrows at its crown — acceptable, but it means the "
+            "fender does not crown over the wheel. If that is not the intended look, add width to "
+            f"{sec} around Z {crown_z:.0f}.")
 
 # ---------------------------------------------------------------- 3b. wheel arch apertures
 print("\n[wheel arches]")

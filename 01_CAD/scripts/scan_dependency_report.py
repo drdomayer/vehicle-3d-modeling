@@ -133,5 +133,76 @@ def main():
     print("gates REAR_DECK, which gates ENGINE_COVER, REAR_SPOILER and the whole rear group.")
 
 
+# ---------------------------------------------------------------- capture plan
+# Every "scan must supply" line above, grouped by what you physically do to the car to get it.
+# Ordered so nothing has to be undone and re-done. The car is disassembled progressively.
+SESSIONS = [
+    ("S1  CAR COMPLETE, ROOF DOWN, ON ITS WHEELS", [
+        "full exterior skin with all OEM panels on — the reference every panel is measured against",
+        "door shut lines, sill, quarter surfaces where the overlay will bond",
+        "tape measure control dims: wheelbase, both tracks, width over the arches, windshield height",
+        "photograph every badge, seam and trim line before anything comes off",
+    ]),
+    ("S2  ROOF IN FOUR POSITIONS  ← do this before touching anything else", [
+        "roof CLOSED",
+        "roof HALF — mid travel, the widest point of the sweep",
+        "roof OPEN and stowed",
+        "clamshell lid RAISED, looking into the stowage well",
+        "film the full cycle from the side and from above as well as scanning",
+        "WHY FIRST: this gates REAR_DECK, which gates ENGINE_COVER, REAR_SPOILER and the whole rear",
+    ]),
+    ("S3  DOORS AND GLASS", [
+        "door fully open — hinge positions, check strap, swing arc",
+        "glass fully up and fully down — drop path and seal line",
+        "door outer surface on its own, for the overlay skin",
+    ]),
+    ("S4  FRONT BUMPER AND FENDERS OFF", [
+        "crash beam and its brackets — the STATEV nose sits 57 mm behind the OEM bumper face",
+        "bumper and fender mounting points",
+        "radiators, condensers, ducting, and the free space in front of them",
+        "wheelhouse liners and the space behind them for the fender channel",
+    ]),
+    ("S5  ENGINE LID AND REAR BUMPER OFF", [
+        "engine lid aperture and hinge",
+        "engine bay top surface — how low the louvred panel can sit",
+        "rear bumper mounts and crash structure",
+        "exhaust hangers and silencer position",
+        "the real side-intake opening: shape, not just its X, and what is behind it",
+    ]),
+    ("S6  UNDERSIDE, CAR RAISED", [
+        "underbody and rear subframe for the diffuser",
+        "sill profile where a bonded flange can land, and jack point access",
+        "front and rear suspension at static ride height",
+    ]),
+    ("S7  SUSPENSION AT TRAVEL EXTREMES  (needs the car supported)", [
+        "front wheels at full left and full right lock — the real steering envelope",
+        "suspension at full compression and full extension if it can be safely forced",
+        "WHY: the kingpin axis is unknown, so today's steering sweep is a worst case guess",
+    ]),
+    ("S8  INTERIOR", [
+        "seat in the position a 190 cm driver actually uses",
+        "dashboard, console, steering position",
+        "headroom to the windshield header and to the hoops",
+    ]),
+]
+
+
+def capture_plan():
+    print("\n" + "=" * 100)
+    print("CAPTURE PLAN — what to scan, in what order, and why")
+    print("=" * 100)
+    for title, items in SESSIONS:
+        print(f"\n{title}")
+        for i in items:
+            print(f"   - {i}")
+    print("\n" + "-" * 100)
+    print("Rules that save a second trip:")
+    print("  - S2 first. If the roof data is missing or wrong, the whole rear is blocked again.")
+    print("  - Scan each session BEFORE removing the next set of parts. Nothing goes back on.")
+    print("  - Every session gets tape-measure control dimensions, so the scan can be checked.")
+    print("  - Photograph everything you unbolt, in place, before it moves.")
+
+
 if __name__ == "__main__":
     main()
+    capture_plan()

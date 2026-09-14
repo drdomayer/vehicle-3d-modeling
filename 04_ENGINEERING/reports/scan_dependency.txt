@@ -139,3 +139,61 @@ scanned. The design intent is complete and regenerable; the interfaces are not k
 
 The single item that unblocks the most: the roof fold envelope in four positions. It
 gates REAR_DECK, which gates ENGINE_COVER, REAR_SPOILER and the whole rear group.
+
+====================================================================================================
+CAPTURE PLAN — what to scan, in what order, and why
+====================================================================================================
+
+S1  CAR COMPLETE, ROOF DOWN, ON ITS WHEELS
+   - full exterior skin with all OEM panels on — the reference every panel is measured against
+   - door shut lines, sill, quarter surfaces where the overlay will bond
+   - tape measure control dims: wheelbase, both tracks, width over the arches, windshield height
+   - photograph every badge, seam and trim line before anything comes off
+
+S2  ROOF IN FOUR POSITIONS  ← do this before touching anything else
+   - roof CLOSED
+   - roof HALF — mid travel, the widest point of the sweep
+   - roof OPEN and stowed
+   - clamshell lid RAISED, looking into the stowage well
+   - film the full cycle from the side and from above as well as scanning
+   - WHY FIRST: this gates REAR_DECK, which gates ENGINE_COVER, REAR_SPOILER and the whole rear
+
+S3  DOORS AND GLASS
+   - door fully open — hinge positions, check strap, swing arc
+   - glass fully up and fully down — drop path and seal line
+   - door outer surface on its own, for the overlay skin
+
+S4  FRONT BUMPER AND FENDERS OFF
+   - crash beam and its brackets — the STATEV nose sits 57 mm behind the OEM bumper face
+   - bumper and fender mounting points
+   - radiators, condensers, ducting, and the free space in front of them
+   - wheelhouse liners and the space behind them for the fender channel
+
+S5  ENGINE LID AND REAR BUMPER OFF
+   - engine lid aperture and hinge
+   - engine bay top surface — how low the louvred panel can sit
+   - rear bumper mounts and crash structure
+   - exhaust hangers and silencer position
+   - the real side-intake opening: shape, not just its X, and what is behind it
+
+S6  UNDERSIDE, CAR RAISED
+   - underbody and rear subframe for the diffuser
+   - sill profile where a bonded flange can land, and jack point access
+   - front and rear suspension at static ride height
+
+S7  SUSPENSION AT TRAVEL EXTREMES  (needs the car supported)
+   - front wheels at full left and full right lock — the real steering envelope
+   - suspension at full compression and full extension if it can be safely forced
+   - WHY: the kingpin axis is unknown, so today's steering sweep is a worst case guess
+
+S8  INTERIOR
+   - seat in the position a 190 cm driver actually uses
+   - dashboard, console, steering position
+   - headroom to the windshield header and to the hoops
+
+----------------------------------------------------------------------------------------------------
+Rules that save a second trip:
+  - S2 first. If the roof data is missing or wrong, the whole rear is blocked again.
+  - Scan each session BEFORE removing the next set of parts. Nothing goes back on.
+  - Every session gets tape-measure control dimensions, so the scan can be checked.
+  - Photograph everything you unbolt, in place, before it moves.

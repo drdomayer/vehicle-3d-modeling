@@ -40,7 +40,8 @@ D = _sk["donor_dims"]()
 ROOT = "STATEV_MASTER"
 ZONES = {"STATEV_FRONT": (-1000, 340), "STATEV_SIDE": (340, 1900), "STATEV_REAR": (1900, 3500)}
 
-N_HALF = 30
+N_HALF = 40
+SUBDIV = 6        # sub-stations between master sections; 6 gives ~85 rings over the car
 CROWN_FACTOR = 0.10
 
 # ---- void families. Each is a list of (spec_x, half_depth_into_body, z_lo, z_hi) stations.
@@ -111,26 +112,51 @@ def resample(poly, n):
     return out
 
 
+def smoothstep(a, b, x):
+    if a == b:
+        return 0.0 if x < a else 1.0
+    t = min(1.0, max(0.0, (x - a) / (b - a)))
+    return t * t * (3.0 - 2.0 * t)
+
+
+ZONE_BLEND = 420      # mm over which one zone's character hands over to the next
+
+
 def zone_shape(spec_x, z, hw, z_top):
-    """Per-zone character, so the front, the door and the haunch are not one surface.
-    Small, deliberate, and driven by the surface spec — not styling invented here."""
+    """Per-zone character, BLENDED. The first version switched character with if/elif at specX 340
+    and 1900, which put a step in the surface exactly where the shoulder line crosses — that is
+    where the kinks in the stage-01 side view came from. All three characters are now evaluated
+    and mixed with smoothstep weights, so nothing changes abruptly at a zone boundary."""
     t = 0.0 if z_top <= 130 else (z - 120) / (z_top - 120)
-    if spec_x < 340:                                   # FRONT: tense, flat-topped, shoulder held high
-        return hw * (1.0 + 0.020 * math.sin(math.pi * t) - 0.030 * t ** 3)
-    if spec_x < 1900:                                  # SIDE: upper half draws in, lower stays full
-        return hw * (1.0 - 0.045 * max(0.0, t - 0.55) / 0.45)
-    return hw * (1.0 + 0.030 * math.sin(math.pi * min(1.0, t * 1.15)))   # REAR: muscular, asymmetric
+    f_front = 1.0 + 0.020 * math.sin(math.pi * t) - 0.030 * t ** 3          # tense, flat-topped
+    f_side = 1.0 - 0.045 * max(0.0, t - 0.55) / 0.45                        # upper half draws in
+    # muscular over the wheel, then released toward the tail rather than ending in a vertical wall
+    peak = math.exp(-((spec_x - 2415) / 700.0) ** 2)                        # centred on the rear axle
+    f_rear = 1.0 + (0.030 + 0.038 * peak) * math.sin(math.pi * min(1.0, t * 1.15))
+    w_side = smoothstep(340 - ZONE_BLEND, 340 + ZONE_BLEND, spec_x)
+    w_rear = smoothstep(1900 - ZONE_BLEND, 1900 + ZONE_BLEND, spec_x)
+    f = f_front * (1 - w_side) + f_side * (w_side - w_rear) + f_rear * w_rear
+    return hw * f
 
 
 def ring(spec_x):
     prof = sorted(section_profile(spec_x), key=lambda p: p[0])
     z_floor = prof[0][0]
     z_top, hw_top = prof[-1]
+    # Crown handover. HOOD_SPINE ends at the cowl (specX 420, Z 970) and DECK_SPINE starts at the
+    # hoop plane (1760, Z 960). Between them is the cabin, where the top of the body is the beltline.
+    # The first version fell straight from 970 to the beltline in one millimetre — a step exactly
+    # where the shoulder line crosses, and the single biggest kink in the stage-01 side view.
     crown = spine_z(HOOD_SPINE, spec_x)
     if crown is None:
         crown = spine_z(DECK_SPINE, spec_x)
     if crown is None:
-        crown = z_top + hw_top * CROWN_FACTOR
+        x0, z0 = HOOD_SPINE[-1]
+        x1, z1 = DECK_SPINE[0]
+        belt = z_top + hw_top * CROWN_FACTOR
+        a = smoothstep(x0, x0 + 320, spec_x)          # release out of the cowl
+        b = smoothstep(x1 - 320, x1, spec_x)          # gather into the deck
+        crown = z0 * (1 - a) + belt * (a - b) + z1 * b
     crown = max(crown, z_top + 10)
     half = [(0.0, z_floor)] + [(zone_shape(spec_x, z, hw, z_top), z) for z, hw in prof] + [(0.0, crown)]
     half = resample(half, N_HALF)
@@ -237,13 +263,30 @@ def build():
     order = sorted(v[0] for v in SECTIONS.values())
     stations = []
     for i in range(len(order) - 1):
-        stations += [order[i] + (order[i + 1] - order[i]) * k / 3.0 for k in range(3)]
+        stations += [order[i] + (order[i + 1] - order[i]) * k / SUBDIV for k in range(SUBDIV)]
     stations.append(order[-1])
 
+    # Faceting comes from the control data, not from shading. Smooth each ring point ALONG X
+    # before building, so the fix is in the geometry rather than a smooth modifier over a bad shape.
+    raw = [ring(x) for x in stations]
+    npts = len(raw[0])
+    smooth_rings = []
+    for i, r in enumerate(raw):
+        row = []
+        for k in range(npts):
+            acc_y = acc_z = wsum = 0.0
+            for d, wgt in ((-2, 1), (-1, 4), (0, 6), (1, 4), (2, 1)):
+                j = min(len(raw) - 1, max(0, i + d))
+                acc_y += raw[j][k][0] * wgt
+                acc_z += raw[j][k][1] * wgt
+                wsum += wgt
+            row.append((acc_y / wsum, acc_z / wsum))
+        smooth_rings.append(row)
+
     verts, faces, rings = [], [], []
-    for spec_x in stations:
+    for spec_x, r in zip(stations, smooth_rings):
         idx = []
-        for y, z in ring(spec_x):
+        for y, z in r:
             idx.append(len(verts))
             verts.append((mm(sx(spec_x)), mm(y), mm(z)))
         rings.append(idx)
@@ -304,25 +347,55 @@ def build():
     print(f"  skin volume after booleans:  {fix_normals(skin):.3f} m3, "
           f"{len(skin.data.polygons)} faces")
 
-    # ---- 3. buttresses, as their own masses
+    # ---- 3. buttresses, lofted as blades rather than boxes.
+    # The first version was literally a cube. A buttress reads as: rising -> tightening -> blade ->
+    # merging into the deck, so it is built from stations along X with a varying height and width.
     b = BUTTRESS
+    buttresses = []
     for sgn in (1, -1):
-        bpy.ops.mesh.primitive_cube_add(size=1.0,
-                                        location=(mm(sx((b["x0"] + b["x1"]) / 2)), mm(sgn * b["y"]),
-                                                  mm((b["z_lo"] + b["z_hi"]) / 2)))
-        bt = bpy.context.active_object
-        bt.name = PFX + f"BUTTRESS_VOLUME_{'L' if sgn > 0 else 'R'}"
-        bt.scale = (mm(b["x1"] - b["x0"]), mm(b["w"]), mm(b["z_hi"] - b["z_lo"]))
-        for c in bt.users_collection:
-            c.objects.unlink(bt)
-        subs["STATEV_REAR"].objects.link(bt)
-        mat = bpy.data.materials.get("STATEV_BODY")
-        if mat:
-            bt.data.materials.clear()
-            bt.data.materials.append(mat)
-        bt.color = (0.045, 0.115, 0.075, 1.0)
-        bt["status"] = "MASTER_VOLUME"
-        bt["note"] = "buttress mass; sits below the hoop tops so the hoops read as their own structure"
+        verts, faces, brings = [], [], []
+        for f in [i / 10.0 for i in range(11)]:
+            x = b["x0"] + (b["x1"] - b["x0"]) * f
+            rise = math.sin(math.pi * min(1.0, f * 1.35)) ** 0.7        # low -> peak -> release
+            z_top = b["z_lo"] + (b["z_hi"] - b["z_lo"]) * rise
+            wid = b["w"] * (0.45 + 0.55 * math.sin(math.pi * min(1.0, 0.25 + f * 0.9)))
+            z_base = b["z_lo"] - 260      # reaches down INTO the haunch so the union merges
+            quad = [(b["y"] - wid / 2, z_base), (b["y"] + wid / 2, z_base),
+                    (b["y"] + wid / 2 * 0.55, z_top), (b["y"] - wid / 2 * 0.55, z_top)]
+            if sgn < 0:
+                quad.reverse()
+            idx = []
+            for y, z in quad:
+                idx.append(len(verts))
+                verts.append((mm(sx(x)), mm(sgn * y), mm(z)))
+            brings.append(idx)
+        for a2, b2 in zip(brings[:-1], brings[1:]):
+            for i in range(4):
+                j = (i + 1) % 4
+                faces.append((a2[i], a2[j], b2[j], b2[i]))
+        faces.append(tuple(reversed(brings[0])))
+        faces.append(tuple(brings[-1]))
+        bme = bpy.data.meshes.new("BUTTRESS")
+        bme.from_pydata(verts, [], faces)
+        bme.update()
+        bt = bpy.data.objects.new(PFX + f"BUTTRESS_VOLUME_{'L' if sgn > 0 else 'R'}", bme)
+        subs["_WORK"].objects.link(bt)
+        for pf in bme.polygons:
+            pf.use_smooth = True
+        fix_normals(bt)
+        buttresses.append(bt)
+    # union the blades into the skin so the buttress reads as the body rising, not a box placed on it
+    bpy.ops.object.select_all(action="DESELECT")
+    skin.select_set(True)
+    bpy.context.view_layer.objects.active = skin
+    for bt in buttresses:
+        m = skin.modifiers.new(bt.name, "BOOLEAN")
+        m.operation, m.object, m.solver = "UNION", bt, "EXACT"
+        bpy.ops.object.modifier_apply(modifier=m.name)
+        fix_normals(skin)
+    for bt in buttresses:
+        bpy.data.objects.remove(bt, do_unlink=True)
+    print(f"  buttresses merged into the skin: {len(skin.data.polygons)} faces")
 
     # ---- 4. split the skin into zones
     bpy.ops.object.select_all(action="DESELECT")

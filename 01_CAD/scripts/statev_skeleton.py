@@ -228,7 +228,12 @@ HOOD_SPINE_NOTE = ("last point = donor cowl (windshield base), locked. Nose tip 
 # the 986 soft top folds into. The locked rule is: model the ORIGINAL roof envelope first, then shape
 # the deck around it. We cannot — the fold path is unknown until the car is scanned in all four roof
 # positions. Treat every Z here as the maximum the design wants, not as a value that has been cleared.
-DECK_SPINE = [(1760, 960), (2100, 950), (2600, 880), (3200, 700)]
+# Lowered 2026-09-14 after comparing against the real 986 side profile. At 960 the deck read as a
+# separate tower behind the cabin. On the donor the deck is a low continuation of the body, and the
+# roll hoops are slim things standing clear of it — that is the architecture we build on.
+# NOTE: this moves away from "the closed roof meets the deck in one line" until the scan gives us
+# the real closed-roof line. The two cannot both be satisfied on guessed numbers.
+DECK_SPINE = [(1760, 880), (2100, 862), (2600, 800), (3200, 665)]
 DECK_STATUS = "BLOCKED: roof fold envelope unknown — scan the roof closed / half / open / clamshell up"
 
 # Airflow systems: name -> (inlet element, path, outlet element). Every opening on the car must

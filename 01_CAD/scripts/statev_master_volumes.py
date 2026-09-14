@@ -71,7 +71,10 @@ REAR_UNDERCUT = [(2350, 0, 90, 300), (2600, 70, 90, 330), (2950, 95, 90, 340),
                  (3250, 60, 90, 320), (3400, 0, 90, 280)]
 
 CABIN_Y, CABIN_Z = 700, 640
-BUTTRESS = dict(x0=1760, x1=2600, y=600, w=210, z_lo=800, z_hi=1090)
+# Lowered from z_hi 1090 to 985 and widened 210 -> 300, starting 160 mm further forward. At 1090
+# they read as two towers competing with the roll hoops. The hoops themselves are donor structure at
+# Z 1235 and cannot move — making them read lighter means lowering OUR volume around them, not theirs.
+BUTTRESS = dict(x0=1600, x1=2640, y=585, w=300, z_lo=760, z_hi=985)
 
 
 def section_profile(spec_x):
@@ -168,7 +171,7 @@ FLANK_SHOULDER = 16.0                      # extra mass in the shoulder just abo
 # 4. The tail drawn out instead of ending in a wall
 TAIL_START, TAIL_END_X = 2800.0, 3420.0
 TAIL_NARROW = 0.86        # half-width multiplier reached at the very tail
-TAIL_DROP = 90.0          # mm the crown falls over the same run
+TAIL_DROP = 140.0         # mm the crown falls over the same run; the tail sits lower
 
 # 5. Buttress crest (used in the blade loft): top width as a fraction of base
 BUTTRESS_TOP_FRAC = 0.20
@@ -479,7 +482,7 @@ def build():
         verts, faces, brings = [], [], []
         for f in [i / 10.0 for i in range(11)]:
             x = b["x0"] + (b["x1"] - b["x0"]) * f
-            rise = math.sin(math.pi * min(1.0, f * 1.35)) ** 0.7        # low -> peak -> release
+            rise = math.sin(math.pi * min(1.0, f * 1.20)) ** 1.15       # longer, gentler climb
             z_top = b["z_lo"] + (b["z_hi"] - b["z_lo"]) * rise
             wid = b["w"] * (0.45 + 0.55 * math.sin(math.pi * min(1.0, 0.25 + f * 0.9)))
             z_base = b["z_lo"] - 260      # reaches down INTO the haunch so the union merges

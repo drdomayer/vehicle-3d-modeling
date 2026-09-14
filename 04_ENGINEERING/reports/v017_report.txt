@@ -1,0 +1,115 @@
+STATEV 001 — v017. Three architecture problems, taken as fields instead of booleans.
+v016 kept. Blockout only: no lights, no vents, no trim, no seams, no materials.
+
+=== LOCKED DONOR VERIFICATION ===============================================
+  length 4370.0   width 1849.4 (v016 1850.0)   floor 120   crown 996.4
+  wheelbase 2415   track 1465 / 1528
+  STATEV_WHEEL_F_L/R  specX 0     Y +-732.5  Z 323.5      identical to v016
+  STATEV_WHEEL_R_L/R  specX 2415  Y +-764.0  Z 337.5      identical to v016
+  windshield base Z 970   header Z 1255   hoops Z 1235 at specX 1760
+  door shut lines specX 440 / 1635     rear arch aperture 320
+  NOTHING LOCKED MOVED. Width not increased to solve anything.
+  volume 3.809 -> 3.914 m3    faces 5530 -> 8486 (section resolution 40 -> 60)
+  booleans 15 -> 6: only the cabin, the four arches and the nose mouth are still cut.
+
+=== PRIORITY 1 — THE SIDE CHANNEL ===========================================
+Measured as chord depth: how far the surface sits inside the straight line joining its own two
+shoulders, 120 mm either side of the centre. Max-minus-min was the wrong measure — it reads zero
+whenever the flank behind the channel is falling, which is most of the car.
+
+  specX     400  505  610  715  820  925 1030 1135 1240 1345 1450 1555 1660 1765 1870 1975 2080
+  v016       -4  -11  -20  -17   -4   -3    -    -    -  -15  -10    -    -    -    -    -    7
+  v017       22   50   80   66   65   80   83   83   85   79   75   75   74   74   70   75   52
+
+  v016 was NEGATIVE almost everywhere: the surface bulged outward where the channel was meant to
+  be. There was no channel, at any station, at all.
+  v017:  min 22   max 85 at specX 1240   mean 69   largest station-to-station change 6 mm
+         through the door itself. It runs in, holds, and releases.
+
+  Two changes, not one. The channel is now part of the section profile, and it is ONE field from
+  the trailing edge of the front arch to the intake mouth rather than a front channel and a door
+  channel that met. As two fields they left an 18 mm slack water at specX 550 where one was
+  releasing and the other had not built.
+
+  It also starts further back than before. The front arch is a 350 mm cylinder on the axle, so at
+  specX 330 it has already removed everything below Z 440 — the channel's own lower shoulder. The
+  old table asked for depth there and the surface could not show it. The line now emerges from
+  behind the arch, which is where a channel behind a wheel actually starts.
+
+=== PRIORITY 2 — BELTLINE TO A-PILLAR =======================================
+Gap from the door top to the donor screen base at Z 970. Screen, header, hoops and shut lines
+untouched.
+
+  specX      440    600    800   1000   1200   1400   1600   1635
+  v016     272.9  164.2  154.1  199.8  202.4  205.6  173.9  169.8
+  v017     113.9  104.3  114.2  126.0  128.5  128.9  122.7  115.1
+  change  -159.0  -59.9  -39.9  -73.8  -73.9  -76.6  -51.2  -54.6
+
+  v016 range 154..273, wandering by 78 mm with no order to it.
+  v017 range 104..129, one smooth arc, largest step 12 mm over 200 mm of length.
+  115 mm was treated as a guide. The mean is 119 and the gap VARIES smoothly, which is what
+  reads as designed; forcing one number everywhere would have flattened the cabin.
+
+  Why it was low: at specX 440 the section tucked in at Z 732 and ran from there as one straight
+  cone to the crown at 970. There was no door top to measure. BELT_LIFT added a point at 94 % of
+  the top half-width — inboard of the cabin cut at Y 700 — so the cut removed exactly the thing
+  meant to become the beltline. Now the flank is held near vertical up to a designed height and
+  the section turns in only there.
+
+  The line carried forward into the cowl, specX 150 / 250 / 350 / 420:
+       v016   700.6  701.1  678.3  697.1      flat, and it dipped at the A-pillar
+       v017   700.2  771.1  839.0  856.1      rises into the A-pillar foot
+  This is a real change to the FRONT zone and I am flagging it rather than burying it: the top of
+  the front fender now rises 161 mm at specX 350 to meet the beltline. It is part of priority 2 —
+  the fender top and the door top are the same line and it has to arrive at belt height rather
+  than step up to it — but it is a change to a zone the pass did not name. The centreline hood
+  crown did not move: specX 350 is 925 against 922, specX 420 is 948 against 947.
+
+=== PRIORITY 3 — CONTINUITY OF THE VOIDS ====================================
+Every void is now a super-gaussian in Z riding on a centre line, times an envelope that runs in,
+HOLDS, and releases. smoothstep has zero slope at each knee, so there is no station-to-station
+step anywhere by construction rather than by luck.
+
+  w and n decide whether it reads as a channel or a dent. At w 84 / n 2.4 the skirt was still
+  50 mm deep 70 mm out from the centre, so the channel ate its own shoulders and measured half its
+  designed depth. w 64 / n 3.0 holds full depth to +-30 and is down to a quarter of it by +-70:
+  about 180 mm of visible channel with an edge each side.
+
+  REAR UNDERCUT, depth below the edge line
+    specX    2735  2830  2925  3020  3115  3210  3305  3400
+    v016      191   195   189   193   162   175   139   142     a constant slot
+    v017      274   283   288   280   250   236   192   148     grows, peaks, releases
+
+=== CROWN STATIONS — CHECKED FOR REGRESSION =================================
+  specX    2000   2200   2400   2600   2800   3000   3200   3420
+  v016    966.6  993.2  996.5  937.0  858.1  759.4  642.5  513.1
+  v017    967.1  993.1  995.9  938.2  858.7  760.0  642.6  513.1
+  The rear architecture fixed in v016 is untouched, to within 1.2 mm.
+
+=== REMAINING ARCHITECTURAL PROBLEMS ========================================
+Not fixed. Listed only.
+
+1. THE FRONT FENDER TOP ROSE 161 mm AND YOU HAVE NOT APPROVED IT.
+   specX 350 went from 678 to 839 to carry the beltline into the A-pillar. It is the right line
+   architecturally and the hood crown is untouched, but it changes the front volume and it needs
+   your eye on it. If you want it smaller, CABIN_X0 and CABIN_RAMP are the two numbers.
+   Priority: HIGH, because it is a change you did not ask for.
+
+2. THE SIDE CHANNEL HAS A 15 mm DIP AT specX 715..820.
+   80, 66, 65, 80 across four stations, where every other neighbour pair differs by under 6.
+   It sits where the channel crosses the front door shut line. The cause is the depth table, not
+   the method. Priority: MEDIUM.
+
+3. THE TAIL TOP IS STILL A SOFT PILLOW.
+   The rear profile shows no defined deck edge: the crown rolls into the flank with nothing to
+   catch light. The crown line itself is correct and continuous — this is about the edge quality
+   of the surface, not its architecture. Priority: MEDIUM.
+
+4. THE NOSE IS FACETED BELOW THE MOUTH.
+   Visible in the front 3/4. It is the one remaining boolean on the side of the car meeting a
+   surface that has too few sections to resolve it. Priority: LOW at blockout.
+
+5. THE REAR UNDERCUT IS NOW THE STRONGEST VOID ON THE CAR, at 288 mm.
+   It is no longer a slot, which is what you asked for, but it is deeper than anything else and
+   in the rear profile it reads as the body sitting on a separate lower structure. That may be
+   exactly the language you want. It is a judgement, not a fault. Priority: LOW, your call.

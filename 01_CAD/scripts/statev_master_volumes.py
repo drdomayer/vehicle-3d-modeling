@@ -42,29 +42,49 @@ ZONES = {"STATEV_FRONT": (-1000, 340), "STATEV_SIDE": (340, 1900), "STATEV_REAR"
 
 MAX_HALF_WIDTH = 925.0    # 1850 overall. A soft cap: only the widest band near the rear axle is
                           # touched, so the shoulder line everywhere else is left alone.
-N_HALF = 40
+N_HALF = 60
 SUBDIV = 6        # sub-stations between master sections; 6 gives ~85 rings over the car
 CROWN_FACTOR = 0.10
 
-# ---- void families. Each is a list of (spec_x, half_depth_into_body, z_lo, z_hi) stations.
-#      The cutter is lofted through them and sits outboard, so the difference eats INTO the side.
-# Depths increased now that the cutter is sized from the real surface. These are open channels,
-# not surface dents: the channel behind the front wheel has to read in side and front 3/4.
-FENDER_CHANNEL = [(120, 0, 415, 570), (190, 70, 400, 590), (260, 108, 393, 598),
-                  (330, 122, 390, 600), (400, 108, 393, 598), (470, 70, 400, 590),
-                  (540, 0, 420, 560)]
-# Clear start, growth, maximum, release. Not one constant depth along its length.
-DOOR_CHANNEL = [(540, 0, 475, 595), (700, 42, 458, 612), (860, 62, 448, 625),
-                (1020, 78, 440, 635), (1180, 92, 432, 644), (1340, 104, 426, 651),
-                (1500, 114, 420, 657), (1660, 122, 414, 660), (1820, 128, 408, 660),
-                (1960, 118, 404, 652), (2080, 82, 414, 628), (2170, 0, 440, 580)]
-# z_lo is 90, below the body floor at 120, on purpose: a cutter face coplanar with the body floor
-# makes the EXACT solver collapse the whole mesh. Never let a cutter boundary sit exactly on one.
-# The front mouth. This was in the element list but never in the cutter families, which is why the
-# nose came out as a solid rounded prow instead of a blade over an opening.
-# (spec_x, half_depth_into_body, z_lo, z_hi)
-# Mouth top lowered from ~405 to ~345: at the old height only 15 mm of body sat above it, so there
-# was no blade to read. 80 mm of material above the opening is what makes it "blade over a mouth".
+# ---- negative spaces as CONTINUOUS FIELDS, not boolean station cuts.
+#
+# Every one of these used to be a lofted cutter driven through a boolean. That produced a hard edge
+# wherever the cutter met the skin, a depth that jumped from station to station, and — four times
+# running on the door — no depth at all through the middle while the boolean reported success.
+# They are now part of the section profile, the same way the rear buttress was fixed: the surface
+# is built with the void already in it, so there is nothing to subtract and nothing to fail.
+#
+# Each field is a super-gaussian in Z riding on a centre line, times a longitudinal envelope that
+# runs in from x0, peaks at xp and releases to x1. The exponent n > 2 gives a flat-bottomed channel
+# with defined shoulders rather than a round dent, and the whole thing stays C1 continuous in both
+# directions: smoothstep has zero slope at each end, so there is no station-to-station step anywhere.
+# w and n together decide whether it reads as a channel or a dent. At w 84 / n 2.4 the skirt of the
+# gaussian was still 50 mm deep 70 mm out from the centre, so the channel ate its own shoulders and
+# measured half its designed depth. w 64 / n 3.0 holds full depth to +-30 and is down to a quarter
+# of it by +-70: about 180 mm of visible channel with an edge at each side.
+VOID_FIELDS = {
+    # ONE line from behind the front wheel to the intake mouth, not two channels that meet.
+    # Measured as two separate fields they left an 18 mm slack water at specX 550 where the front
+    # one was releasing and the door one had not built. A side line that dies and restarts halfway
+    # along the door is worse than no side line, so it is a single field with a depth that varies
+    # along its length: shallow as it leaves the arch, deepest right behind it, easing through the
+    # door, gathering again into the intake.
+    # It starts at the TRAILING EDGE OF THE FRONT ARCH, not over the wheel. The front arch is a
+    # 350 mm cylinder on the axle, so at specX 330 it has already removed everything below Z 440 —
+    # the channel's own lower shoulder. Asking for depth there produced a number the surface could
+    # not show: the line simply merged into the arch opening. It now emerges from behind it.
+    "SIDE_CHANNEL": dict(depth=[(340, 70), (520, 132), (800, 116), (1200, 108),
+                                (1600, 108), (1900, 114), (2240, 120)],
+                         x0=340.0, xa=480.0, xb=1900.0, x1=2240.0, w=64.0, n=3.0,
+                         centre=[(340, 500), (620, 512), (800, 524),
+                                 (1200, 536), (1600, 548), (2240, 560)]),
+    # the intake mouth the side line runs into. Ahead of the rear wheel, as the donor requires.
+    "SIDE_INTAKE": dict(depth=124.0, x0=1780.0, xa=1940.0, xb=2110.0, x1=2300.0, w=72.0, n=2.8,
+                        centre=[(1780, 554), (2070, 536), (2300, 518)]),
+}
+REAR_UNDERCUT_FIELD = dict(depth=108.0, x0=2260.0, xa=2560.0, xb=3150.0, x1=3400.0, trans=72.0,
+                           edge=[(2260, 322), (2960, 336), (3400, 300)])
+
 NOSE_MOUTH = [(-965, 0, 200, 330), (-930, 155, 185, 345), (-850, 215, 180, 350),
               (-770, 195, 185, 342), (-700, 95, 200, 325), (-655, 0, 215, 310)]
 
@@ -78,17 +98,34 @@ REAR_UNDERCUT = [(2350, 0, 90, 300), (2600, 70, 90, 330), (2950, 95, 90, 340),
 
 CABIN_Y, CABIN_Z = 700, 640
 
-# Beltline. Measured at the A-pillar the door top was 731 against a screen base of 970 — a 239 mm
-# step, and the glass read as planted on the body. (The 150 mm quoted earlier compared the beltline
-# at the REAR of the cabin with the screen at the FRONT: two different places.)
+# Beltline. The A-pillar measured 217 mm below the screen base while the rear of the cabin was at
+# 139 — the line was not just low, it wandered. The cause was visible in the section: at specX 440
+# the body tucked in at Z 732 and from there ran as one long straight cone to the crown at 970, so
+# there was no door top at all. BELT_LIFT added a point inboard of the cabin cut, which the cut then
+# removed. Lifting the whole cabin would have hidden that rather than fixed it.
 #
-# My call: not a uniform lift of the whole door. One continuous line that starts tight at the
-# A-pillar, develops through the door and climbs into the haunch, meeting DECK_SPINE at the hoop
-# plane so cowl -> door -> deck is a single move. Step at the A-pillar lands near 115 mm rather
-# than the donor's 70-100: our body sits lower than a 986's and matching the donor number exactly
-# would make the cabin read tall against it.
-BELT_LIFT = [(420, 0), (470, 110), (560, 126), (800, 122), (1100, 112),
-             (1400, 100), (1635, 86), (1780, 48), (1920, 0)]
+# What is built now is the door top itself: through the cabin the flank is held near vertical up to
+# a DESIGNED height, and the section turns in only there. BELT_Z is that height — one continuous
+# line from the A-pillar, dipping gently through the door, rising to meet DECK_SPINE at the hoop
+# plane, so cowl -> A-pillar -> door -> deck is a single move.
+#
+# The gap to the 970 screen base lands at 86 at the A-pillar and around 118 in the middle of the
+# door. 115 mm was a guide, not a target: a gap that VARIES smoothly is what reads as designed,
+# and forcing one number everywhere would have flattened the cabin.
+# The belt shelf starts well AHEAD of the screen base and ramps in over 155 mm. Two reasons, and
+# the second is the design one. Mechanically, the rings are smoothed along X over roughly +-100 mm
+# before the mesh is built, so a shelf that appears abruptly at the screen base is averaged away
+# with the cowl in front of it — at 420 the door top came out 40 mm low however high BELT_Z asked
+# for. Architecturally, the top of the front fender and the top of the door are the same line: it
+# should arrive at the A-pillar already at belt height, not step up to it. The cabin APERTURE is
+# untouched at specX 420 — this moves our surface, not the donor opening.
+CABIN_X0, CABIN_X1 = 285.0, 1780.0
+CABIN_RAMP = 155.0
+BELT_Z = [(420, 880), (560, 864), (800, 859), (1000, 853), (1200, 850),
+          (1400, 853), (1600, 861), (1780, 872)]
+CABIN_FLANK_LO = 470.0      # from just above the rocker up to BELT_Z the door side is near vertical
+CABIN_FLANK_PULL = 0.92
+
 # Lowered from z_hi 1090 to 985 and widened 210 -> 300, starting 160 mm further forward. At 1090
 # they read as two towers competing with the roll hoops. The hoops themselves are donor structure at
 # Z 1235 and cannot move — making them read lighter means lowering OUR volume around them, not theirs.
@@ -289,6 +326,54 @@ def zone_shape(spec_x, z, hw, z_top):
     return hw * f
 
 
+def envelope(V, spec_x):
+    """Longitudinal shape of a void: run in from x0, HOLD full depth from xa to xb, release to x1.
+    A single peak instead of a plateau meant the channel was at its designed depth at exactly one
+    station and tapering everywhere else, and it left a 9 mm gap at specX 1860 where the door
+    channel had released and the intake had not yet built. smoothstep has zero slope at both knees,
+    so the plateau joins the ramps without a break in curvature."""
+    if not (V["x0"] <= spec_x <= V["x1"]):
+        return 0.0
+    return min(smoothstep(V["x0"], V["xa"], spec_x),
+               1.0 - smoothstep(V["xb"], V["x1"], spec_x))
+
+
+def void_field(spec_x, z):
+    """Millimetres to take OFF the half-width here. The deepest of the overlapping channels wins
+    rather than their sum, so where the door channel runs into the intake the two read as one
+    continuous opening that deepens, not as two dents added together."""
+    worst = 0.0
+    for V in VOID_FIELDS.values():
+        e = envelope(V, spec_x)
+        if e <= 0.0:
+            continue
+        zc = table_z(V["centre"], spec_x)
+        dep = V["depth"] if isinstance(V["depth"], float) else table_z(V["depth"], spec_x)
+        worst = max(worst, dep * e * math.exp(-abs((z - zc) / V["w"]) ** V["n"]))
+    U = REAR_UNDERCUT_FIELD
+    e = envelope(U, spec_x)
+    if e > 0.0:
+        ez = table_z(U["edge"], spec_x)
+        worst = max(worst, U["depth"] * e * (1.0 - smoothstep(ez - U["trans"], ez, z)))
+    return worst
+
+
+def cabin_flank(spec_x, z, hw, hw_max):
+    """Hold the door side near vertical from just above the rocker up to the belt line, so the top
+    of the door is a real shelf at a designed height instead of a point on a cone to the crown.
+    This is what connects the beltline to the A-pillar; nothing here touches the donor screen."""
+    if not (CABIN_X0 <= spec_x <= CABIN_X1 + 140):
+        return hw
+    bz = table_z(BELT_Z, spec_x)
+    if z < CABIN_FLANK_LO or z > bz:
+        return hw
+    ends = min(smoothstep(CABIN_X0, CABIN_X0 + CABIN_RAMP, spec_x),
+               1.0 - smoothstep(CABIN_X1 - 60, CABIN_X1 + 140, spec_x))
+    inb = min(smoothstep(CABIN_FLANK_LO, CABIN_FLANK_LO + 90, z),
+              1.0 - smoothstep(bz - 58, bz, z))
+    return hw + (hw_max - hw) * CABIN_FLANK_PULL * ends * inb
+
+
 # Behind the hoops the deck height is the spine, not whatever the section's last control point says.
 # The old code did crown = max(crown, z_top + 10), so a section point at Z 900 forced the crown to
 # 910 while the spine asked for 880 — a flat plate across the top. That is the "separate plate" read.
@@ -321,6 +406,12 @@ def ring(spec_x):
         crown -= BELT_DIP * min(1.0, f)
     narrow, drop = tail_factor(spec_x)
     crown = max(crown - drop, z_top + 10)
+    # Inside the cabin the crown is cut away entirely, so it costs nothing to hold it above the
+    # door top — and it has to be held, or BELT_DIP drags the centreline below the shelf and the
+    # section turns back DOWN after it. That was the whole of the 14 mm the door top was losing
+    # through the middle of the door.
+    if CABIN_X0 <= spec_x <= CABIN_X1:
+        crown = max(crown, table_z(BELT_Z, spec_x) + 12)
     # Buttress as PROFILE, not as a boolean union. Two sequential unions and then a single
     # two-shell union both collapsed the skin; and a shape that belongs to the body should come
     # from the loft, not be glued on. The section simply stays wide up to the blade top at Y +-620,
@@ -334,17 +425,43 @@ def ring(spec_x):
         rise = math.exp(-((spec_x - 2415.0) / 620.0) ** 2)
         b_top = deck + b["height"] * rise
 
-    lift = table_z(BELT_LIFT, spec_x) if BELT_LIFT[0][0] <= spec_x <= BELT_LIFT[-1][0] else 0.0
-    if lift > 1.0:
-        prof = prof + [(z_top + lift, hw_top * 0.94)]     # carry the body up beside the aperture
+    # Carry the section up to the belt line through the cabin. The old code added ONE point at
+    # 94% of the top half-width, which is inboard of the cabin cut at Y 700 — the cut then removed
+    # exactly the thing that was supposed to become the door top.
+    if CABIN_X0 <= spec_x <= CABIN_X1 and table_z(BELT_Z, spec_x) > z_top + 20:
+        bz = table_z(BELT_Z, spec_x)
+        for i in range(1, 6):
+            prof = prof + [(z_top + (bz - z_top) * i / 5.0, hw_top)]
         z_top, hw_top = prof[-1]
     shaped = [(z, zone_shape(spec_x, z, hw, z_top) + character(spec_x, z)) for z, hw in prof]
     hw_max = max(y for _, y in shaped)
     pts = []
     for z, y in shaped:
-        y = flank(spec_x, z, y, hw_max) * narrow
+        y = flank(spec_x, z, y, hw_max)
+        y = cabin_flank(spec_x, z, y, hw_max) * narrow
+        # The voids come LAST, after every field that pulls the surface outward. Applied earlier
+        # they were pulled straight back out again by flank(), which is a second reason the door
+        # channel measured nothing through the middle.
+        y -= void_field(spec_x, z)
         pts.append((min(MAX_HALF_WIDTH, max(20.0, y)), z))
     half = [(0.0, z_floor)] + pts
+    # The door top, carried inboard past the cabin cut. Without this the shelf stopped around
+    # Y 810 and the aperture edge at Y 700 sat on the ramp up to the crown, so what you measured
+    # as the beltline was not the door top at all.
+    if CABIN_X0 <= spec_x <= CABIN_X1:
+        bz = table_z(BELT_Z, spec_x)
+        ends = min(smoothstep(CABIN_X0, CABIN_X0 + CABIN_RAMP, spec_x),
+                   1.0 - smoothstep(CABIN_X1 - 60, CABIN_X1 + 140, spec_x))
+        if ends > 0.35:
+            # Hold the door side out to the aperture edge for the whole belt band. Appending a
+            # single shelf point was not enough: above the flank the section still tucked in, so
+            # the cut at Y 700 landed on the tuck and the door top measured 14 mm low.
+            pts = [((max(y, CABIN_Y + 14) if CABIN_FLANK_LO + 120 <= z <= bz - 8 else y), z)
+                   for y, z in pts]
+            if pts[-1][0] > CABIN_Y - 40:
+                half = [(0.0, z_floor)] + pts + [(CABIN_Y - 40, bz)]
+            else:
+                half = [(0.0, z_floor)] + pts
     if b_top is not None and b_top > pts[-1][1] + 8:
         half.append((b["y"] + b["w"] * BUTTRESS_TOP_FRAC / 2, b_top))    # the blade crest
     half.append((0.0, max(crown, (b_top - 40) if b_top else crown)))
@@ -539,15 +656,10 @@ def build():
                 c.objects.unlink(cyl)
             subs["_WORK"].objects.link(cyl)
             cuts.append(cyl)
-    # the three negative-space regions
-    # ORDER MATTERS. The three channel voids must be cut BEFORE the wheel arches and the cabin.
-    # The other way round, the fifteenth boolean collapses the whole body to 52 faces — the arch
-    # cylinders leave geometry the later channel cuts cannot resolve. Do not reorder casually.
-    cuts = (make_cutter("nose_mouth", NOSE_MOUTH, subs["_WORK"])
-            + make_cutter("rear_undercut", REAR_UNDERCUT, subs["_WORK"])
-            + make_cutter("door_channel", DOOR_CHANNEL, subs["_WORK"])
-            + make_cutter("fender_channel", FENDER_CHANNEL, subs["_WORK"])
-            + cuts)
+    # Only the nose mouth is still cut. A mouth is an opening in the FRONT face of the car and
+    # cannot come out of a section profile; the four side voids now can, and do. That takes the
+    # boolean count from fifteen to six and removes the whole class of failure with it.
+    cuts = make_cutter("nose_mouth", NOSE_MOUTH, subs["_WORK"]) + cuts
     for c in cuts:
         fix_normals(c, c.name)
     boolean(skin, cuts)
@@ -588,8 +700,8 @@ def build():
         bpy.data.objects.remove(o, do_unlink=True)
 
     print(f"{ROOT}: " + " | ".join(f"{n} {f}f" for n, f in made))
-    print("voids cut: cabin, 4 wheel arches, fender channels, door channel into the intake, "
-          "rear undercut")
+    print("cut: cabin, 4 wheel arches, nose mouth. Built into the loft: front channel, "
+          "door channel, side intake, rear undercut, buttress.")
     return root
 
 

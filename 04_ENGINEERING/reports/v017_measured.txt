@@ -1,0 +1,32 @@
+MEASURED ON THE BUILT MESH, v017
+  length 4370.0   width 1849.4   body height 876.4 (floor 120 crown 996)
+  volume 3.896 m3   faces 8487
+  STATEV_WHEEL_F_L [0.0, 732.5, 323.5]
+  STATEV_WHEEL_F_R [0.0, -732.5, 323.5]
+  STATEV_WHEEL_R_L [-2415.0, 764.0, 337.5]
+  STATEV_WHEEL_R_R [-2415.0, -764.0, 337.5]
+  wheelbase 2415 track 1465/1528 cowl Z 970 header Z 1255 hoops Z 1235 shut 440/1635
+
+CROWN STATIONS through the rear
+   2000:   967.1
+   2200:   993.1   step   +25.9
+   2400:   989.6   step    -3.5
+   2600:   938.2   step   -51.4
+   2800:   858.7   step   -79.5
+   3000:   760.0   step   -98.7
+   3200:   642.6   step  -117.5
+   3420:   513.1   step  -129.4
+
+BELTLINE on the built mesh (top of the door at the aperture edge, Y 640..760)
+    440: door top   842.6   gap to screen base 970:  127.4
+    600: door top   873.9   gap to screen base 970:   96.1
+    800: door top   861.4   gap to screen base 970:  108.6
+   1000: door top   847.8   gap to screen base 970:  122.2
+   1200: door top   845.6   gap to screen base 970:  124.4
+   1400: door top   851.4   gap to screen base 970:  118.6
+   1600: door top   865.9   gap to screen base 970:  104.1
+   1635: door top   873.5   gap to screen base 970:   96.5
+
+MAX WIDTH at the axles (+-260 mm, clear of the arch cut)
+  front    1776.1
+  rear     1846.8

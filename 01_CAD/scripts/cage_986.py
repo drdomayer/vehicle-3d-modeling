@@ -274,6 +274,36 @@ def build():
     hl = make_box("HEADLAMP_MIN_500mm_plane", c_hard, (fo - 0.3, 0, 0.5), (0.6, Wt, 0.002), RED)
     tag(hl, None, "legal: headlamp centre must be at or above this plane")
 
+    # --- published structure points (workshop manual Group 5, "Structure dimensions")
+    # These are the only measured hard data we have about the body shell before the scan.
+    # Y is published to 0.1 mm; X is derived or approximate and says so per point.
+    door_mid = (d("door_front_x") + d("door_rear_x")) / 2.0
+    half_jack = d("jack_front_to_rear_x") / 2.0
+    STRUCT = [
+        ("P08_jack_front",      door_mid + half_jack, 0.16, "jack_front_y_total",
+         "front jacking point; X derived by centring the P8-P11 span (1375) on the door aperture"),
+        ("P11_jack_rear",       door_mid - half_jack, 0.16, "jack_rear_y_total",
+         "rear jacking point; X derived the same way"),
+        ("P10_rollbar_mount_front", d("hoop_x"), 0.50, "rollbar_mount_front_y_total",
+         "roll-over bar front screw point (M8); X = hoop plane, fore/aft bracket spacing unknown"),
+        ("P13_rollbar_mount_rear",  d("hoop_x"), 0.50, "rollbar_mount_rear_y_total",
+         "roll-over bar rear screw point (M8); X = hoop plane, fore/aft bracket spacing unknown"),
+        ("P21_softtop_position", d("ws_top_x"), d("ws_top_z"), "softtop_pos_point_y_total",
+         "convertible-top positioning point (M6) on the windshield header"),
+        ("P22_softtop_lock",     d("ws_top_x"), d("ws_top_z"), "softtop_lock_y_total",
+         "convertible-top lock point (M6) on the header"),
+    ]
+    BLUE = (0.25, 0.55, 0.95, 1.0)
+    for name, x, z, key, note in STRUCT:
+        hy = d(key) / 2.0
+        ln = make_line(name, c_hard, (x, hy, z), (x, -hy, z), BLUE)
+        tag(ln, key, note)
+        ln["y_total_mm"] = DIMS[key][0]
+        ln["x_status"] = "derived" if "derived" in note else "approx"
+        for side, sgn in (("L", 1), ("R", -1)):
+            e = make_empty(f"{name}_{side}", c_hard, (x, sgn * hy, z), 0.05)
+            tag(e, key, note)
+
     # --- summary in custom props on the root object
     summ = make_empty("CAGE_INFO", root, (0, 0, 0), 0.3)
     for k, (v, st) in DIMS.items():

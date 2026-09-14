@@ -60,6 +60,19 @@ SECTIONS = {
 
 RAIL_LEVELS = [120, 250, 400, 550, 700, 800, 900]
 
+# wheel arch apertures (msg1 §4): key -> (spec_x, radius, opening_width_y, tyre_od, tyre_width)
+# radius is measured from the wheel centre; opening width is the axial size of the aperture.
+ARCHES = {
+    "FRONT": (0,    350, 350, 647, 235),
+    "REAR":  (2415, 365, 370, 675, 275),
+}
+
+# diffuser central tunnel (msg1 §18): width 500 inside the 1500 wide diffuser
+DIFFUSER_TUNNEL = (3145, 0, 230, 550, 500, 220)   # spec_x, y, z, size_x, size_y, size_z
+
+# door character line (msg1 §11): the surface crease, front/middle/rear heights on the door
+DOOR_CHAR_LINE_Z = {"front": 420, "middle": 500, "rear": 520}
+
 # ---------------------------------------------------------------- discrete elements
 # name: (collection, spec_x_centre, y_centre, z_centre, size_x, size_y, size_z, status, note)
 # y_centre None -> mirrored pair is built at ±|y|
@@ -359,6 +372,49 @@ def build():
                          "875/900 would need a +285/+272 mm wider track — not possible on the 986.")
 
     D = donor_dims()
+
+    # ---- wheel arch apertures: two arcs per wheel, at the inboard and outboard edge of the opening
+    import math as _a
+    for side_key, (spec_x, radius, open_w, tod, twid) in ARCHES.items():
+        half_track = (D["track_front"] if side_key == "FRONT" else D["track_rear"]) / 2.0
+        for suffix, sgn in (("_L", 1), ("_R", -1)):
+            for edge, off in (("in", -open_w / 2), ("out", open_w / 2)):
+                pts = []
+                for i in range(25):                      # 180 deg over the top, front -> rear
+                    a = _a.pi * i / 24
+                    pts.append((mm(sx(spec_x) + radius * _a.cos(a)),
+                                mm(sgn * (half_track + sgn * 0 + off) if sgn > 0 else sgn * half_track - off),
+                                mm(tod / 2 + radius * _a.sin(a))))
+                ob = poly_curve(f"ARCH_{side_key}{suffix}_{edge}", subs["02_BODY"], pts,
+                                (0.20, 0.70, 0.90, 1.0))
+                ob["status"] = "spec"
+                ob["spec_x_mm"] = spec_x
+                ob["arch_radius_mm"] = radius
+                ob["arch_opening_width_mm"] = open_w
+                ob["radial_gap_to_tyre_mm"] = round(radius - tod / 2, 1)
+                ob["axial_gap_each_side_mm"] = round((open_w - twid) / 2.0, 1)
+                ob["note"] = ("wheel arch aperture edge. Radius is from the wheel centre; the tyre "
+                              "needs this gap at full bump AND full steer - only the scan settles it")
+
+    # ---- diffuser central tunnel
+    tx, ty, tz, tdx, tdy, tdz = DIFFUSER_TUNNEL
+    box("DIFFUSER_TUNNEL", subs["03_AERO"], (sx(tx), ty, tz), (tdx, tdy, tdz),
+        (0.85, 0.25, 0.65, 1.0),
+        "central tunnel, 500 wide inside the 1500 diffuser; the fins sit either side of it",
+        "spec", tx)
+
+    # ---- door character line (the crease the spec describes by three heights)
+    dc = DOOR_CHAR_LINE_Z
+    dfx, drx = -D["door_front_x"], -D["door_rear_x"]          # spec X of the shut lines
+    for suffix, sgn in (("_L", 1), ("_R", -1)):
+        pts = [(mm(sx(dfx)), mm(sgn * 850), mm(dc["front"])),
+               (mm(sx((dfx + drx) / 2)), mm(sgn * 862), mm(dc["middle"])),
+               (mm(sx(drx)), mm(sgn * 850), mm(dc["rear"]))]
+        ob = poly_curve(f"DOOR_CHAR_LINE{suffix}", subs["02_BODY"], pts, (0.20, 0.70, 0.90, 1.0))
+        ob["status"] = "spec"
+        ob["heights_mm"] = [dc["front"], dc["middle"], dc["rear"]]
+        ob["note"] = ("design crease on the door: Z 420 front, 500 middle, 520 rear. X taken from "
+                      "the donor shut lines, Y from the section half-widths")
 
     # ---- 00_DONOR_HARDPOINTS: pointer only. The cage stays a separate top-level collection so
     #      donor reference geometry is never mixed into STATEV geometry (prompt §27, §33).

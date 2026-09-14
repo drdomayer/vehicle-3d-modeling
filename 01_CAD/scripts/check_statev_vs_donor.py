@@ -118,6 +118,25 @@ for sec, lbl, half_track, width in (("S05", "front", d("track_front") / 2, 235),
     if body - outer < 0:
         rec("fatal", f"{sec} tyre", f"the tyre sticks {outer - body:.1f} mm outside the body envelope.")
 
+# ---------------------------------------------------------------- 3b. wheel arch apertures
+print("\n[wheel arches]")
+ARCHES = _sk["ARCHES"]
+for key, (spec_x, radius, open_w, tod, twid) in ARCHES.items():
+    half_track = (d("track_front") if key == "FRONT" else d("track_rear")) / 2.0
+    sec = "S05" if key == "FRONT" else "S11"
+    body = max(y for _, y in SECTIONS[sec][2])
+    outer = half_track + open_w / 2
+    print(f"  {key}: R {radius} vs tyre R {tod/2:.1f} -> radial {radius - tod/2:+.1f} | "
+          f"opening {open_w} vs tyre {twid} -> axial {(open_w-twid)/2:+.1f} each side | "
+          f"outer edge Y {outer:.1f} vs body {body} at {sec} -> {body - outer:+.1f}")
+    if radius - tod / 2 < 20:
+        rec("fatal", f"{key} arch radius", f"only {radius - tod/2:.1f} mm between tyre and arch.")
+    if outer > body:
+        rec("check", f"{key} arch width", f"the arch aperture reaches Y {outer:.1f} but the body at "
+            f"{sec} is {body} — the opening is {outer - body:.1f} mm wider than the surface it is cut "
+            "into. Either the section grows to about "
+            f"{outer + 10:.0f}, or the opening narrows to {2*(body - half_track):.0f}.")
+
 # ---------------------------------------------------------------- 4. body vs donor skin
 print("\n[body vs donor skin]  (donor plan ±30 mm; negative = STATEV is INSIDE the OEM skin)")
 tight = []

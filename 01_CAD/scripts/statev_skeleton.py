@@ -92,9 +92,11 @@ DECISIONS = {
 }
 
 # local widening around each axle: (spec_x, delta_mm, taper_half_length_mm, z_lo, z_hi)
+# Cut back 2026-09-14 to hit the 1850 target. The width comes out of the volume around the wheels,
+# not out of the cabin or the shoulder line.
 AXLE_WIDENING = [
-    (0,    18, 600, 200, 700),
-    (2415, 34, 600, 200, 750),
+    (0,     6, 600, 200, 700),
+    (2415,  0, 600, 200, 750),
 ]
 
 # wheel arch apertures (msg1 §4): key -> (spec_x, radius, opening_width_y, tyre_od, tyre_width)

@@ -40,6 +40,8 @@ D = _sk["donor_dims"]()
 ROOT = "STATEV_MASTER"
 ZONES = {"STATEV_FRONT": (-1000, 340), "STATEV_SIDE": (340, 1900), "STATEV_REAR": (1900, 3500)}
 
+MAX_HALF_WIDTH = 925.0    # 1850 overall. A soft cap: only the widest band near the rear axle is
+                          # touched, so the shoulder line everywhere else is left alone.
 N_HALF = 40
 SUBDIV = 6        # sub-stations between master sections; 6 gives ~85 rings over the car
 CROWN_FACTOR = 0.10
@@ -52,6 +54,12 @@ DOOR_CHANNEL = [(560, 0, 470, 600), (760, 55, 450, 620), (1100, 95, 430, 640),
                 (2090, 60, 420, 600)]
 # z_lo is 90, below the body floor at 120, on purpose: a cutter face coplanar with the body floor
 # makes the EXACT solver collapse the whole mesh. Never let a cutter boundary sit exactly on one.
+# The front mouth. This was in the element list but never in the cutter families, which is why the
+# nose came out as a solid rounded prow instead of a blade over an opening.
+# (spec_x, half_depth_into_body, z_lo, z_hi)
+NOSE_MOUTH = [(-965, 0, 215, 395), (-930, 150, 200, 405), (-850, 210, 195, 410),
+              (-770, 190, 200, 400), (-700, 90, 215, 385), (-655, 0, 230, 370)]
+
 REAR_UNDERCUT = [(2350, 0, 90, 300), (2600, 70, 90, 330), (2950, 95, 90, 340),
                  (3250, 60, 90, 320), (3400, 0, 90, 280)]
 
@@ -138,9 +146,15 @@ FENDER_X, FENDER_XW = -40.0, 470.0
 FENDER_Z, FENDER_ZW = 545.0, 120.0
 
 # 3. The rocker as its own element: the body tucks in below a defined sill line between the arches
-ROCKER_TUCK = 30.0        # mm the sill draws in
+ROCKER_TUCK = 34.0        # mm the sill draws in
 ROCKER_EDGE_Z = 315.0     # the sill line itself
 ROCKER_X0, ROCKER_X1 = 330.0, 1820.0
+
+# 2b. Rear flank. Every section was a smooth arc from floor to crown, so the haunch read as a bulge.
+# In the reference the flank is near vertical between the shoulder and the undercut.
+FLANK_X0, FLANK_X1 = 1900.0, 3050.0
+FLANK_Z_LO, FLANK_Z_HI = 300.0, 660.0      # the band held near constant width
+FLANK_PULL = 0.85                          # how strongly it is pulled to the station maximum
 
 # 4. The tail drawn out instead of ending in a wall
 TAIL_START, TAIL_END_X = 2800.0, 3420.0
@@ -165,6 +179,19 @@ def table_z(table, spec_x):
     return table[-1][1]
 
 
+def flank(spec_x, z, hw, hw_max):
+    """Pull the profile toward the station's widest value across a Z band, which turns a rolling
+    arc into a near-vertical flank. Returns the corrected half-width."""
+    if not (FLANK_X0 <= spec_x <= FLANK_X1) or not (FLANK_Z_LO <= z <= FLANK_Z_HI):
+        return hw
+    ends = min(smoothstep(FLANK_X0, FLANK_X0 + 300, spec_x),
+               1.0 - smoothstep(FLANK_X1 - 300, FLANK_X1, spec_x))
+    inb = min(smoothstep(FLANK_Z_LO, FLANK_Z_LO + 70, z),
+              1.0 - smoothstep(FLANK_Z_HI - 70, FLANK_Z_HI, z))
+    k = FLANK_PULL * ends * inb
+    return hw + (hw_max - hw) * k
+
+
 def character(spec_x, z):
     """Millimetres added to (or taken off) the half-width at this station and height."""
     add = 0.0
@@ -179,7 +206,8 @@ def character(spec_x, z):
     if ROCKER_X0 <= spec_x <= ROCKER_X1 and z < ROCKER_EDGE_Z:
         ends = min(smoothstep(ROCKER_X0, ROCKER_X0 + 260, spec_x),
                    1.0 - smoothstep(ROCKER_X1 - 260, ROCKER_X1, spec_x))
-        add -= ROCKER_TUCK * ends * (1.0 - smoothstep(ROCKER_EDGE_Z - 55, ROCKER_EDGE_Z, z))
+        # 18 mm of transition, not 55: the short run is what makes it an edge instead of a dent
+        add -= ROCKER_TUCK * ends * (1.0 - smoothstep(ROCKER_EDGE_Z - 18, ROCKER_EDGE_Z, z))
     return add
 
 
@@ -228,10 +256,13 @@ def ring(spec_x):
         crown = z0 * (1 - a) + belt * (a - b) + z1 * b
     narrow, drop = tail_factor(spec_x)
     crown = max(crown - drop, z_top + 10)
-    half = ([(0.0, z_floor)]
-            + [(max(20.0, (zone_shape(spec_x, z, hw, z_top) + character(spec_x, z)) * narrow), z)
-               for z, hw in prof]
-            + [(0.0, crown)])
+    shaped = [(z, zone_shape(spec_x, z, hw, z_top) + character(spec_x, z)) for z, hw in prof]
+    hw_max = max(y for _, y in shaped)
+    pts = []
+    for z, y in shaped:
+        y = flank(spec_x, z, y, hw_max) * narrow
+        pts.append((min(MAX_HALF_WIDTH, max(20.0, y)), z))
+    half = [(0.0, z_floor)] + pts + [(0.0, crown)]
     half = resample(half, N_HALF)
     return list(half) + [(-y, z) for y, z in reversed(half[1:-1])]
 
@@ -410,7 +441,8 @@ def build():
     # ORDER MATTERS. The three channel voids must be cut BEFORE the wheel arches and the cabin.
     # The other way round, the fifteenth boolean collapses the whole body to 52 faces — the arch
     # cylinders leave geometry the later channel cuts cannot resolve. Do not reorder casually.
-    cuts = (make_cutter("rear_undercut", REAR_UNDERCUT, subs["_WORK"])
+    cuts = (make_cutter("nose_mouth", NOSE_MOUTH, subs["_WORK"])
+            + make_cutter("rear_undercut", REAR_UNDERCUT, subs["_WORK"])
             + make_cutter("door_channel", DOOR_CHANNEL, subs["_WORK"])
             + make_cutter("fender_channel", FENDER_CHANNEL, subs["_WORK"])
             + cuts)

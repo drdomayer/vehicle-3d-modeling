@@ -118,10 +118,14 @@ BOXES = [
      "Z 570 the half-width is 680, the cavity spans Y 505..615. Replaces the 650x100x65 bar."),
     ("PROJECTOR_2", "04_LIGHTING", -700,  420,  570,  150,  110,  110, "OPTIONAL",
      "room for a second module if low and high are split across two units; delete if one bi-LED is used"),
-    ("TAIL_H",      "04_LIGHTING", 3200,  620,  650,   50,  400,   40, "PLACED",
-     "horizontal arm of the L; spec gives no X/Y/Z - put on the S13 shoulder"),
-    ("TAIL_V",      "04_LIGHTING", 3200,  815,  590,   50,   40,  120, "PLACED",
-     "vertical arm of the L, at the outboard end of the horizontal arm"),
+    ("TAIL_BAR",    "04_LIGHTING", 3230,    0,  700,   45, 1560,   38, "DECIDED",
+     "one thin full-width bar, not the spec's L-shape. Both reference renders show a single straight "
+     "blade across the tail; the L came from the earlier written spec and neither render has it. "
+     "Height Z 700 sits on the S13 shoulder (its top control point is 750)."),
+    ("HOOD_VENT",   "02_BODY",     -600,  250,  610,  380,  130,   25, "DECIDED",
+     "pair of hood extractors, in both renders and absent from the written spec. Functional: they are "
+     "the hot-air exit from the radiator duct, so they must line up with it (RAD_DUCT ends at specX "
+     "-680). Size is read off the render proportions - PROVISIONAL until the radiator is scanned."),
     # --- front
     ("FRONT_CLAMSHELL", "02_BODY", -400,    0,  450, 1100, 1800,  660, "spec",
      "envelope X -950..150, Y +-900, Z 120..780; the panel itself comes from the loft"),
@@ -158,11 +162,12 @@ BOXES = [
     ("INTAKE_BLADE","03_AERO",     1500,  887,  485,  400,   30,  180, "spec",
      "vertical blade inside the intake, 180 high, 25-35 thick"),
     # --- rear
-    ("AERO_FIN",    "03_AERO",     2135,  750,  675,  750,   42,  350, "DECIDED",
-     "moved from specX 1450..2200 to 1760..2510: starts at the roll-hoop plane, keeps the 750 length. "
-     "At 1450 it sat over the door aperture and the seats. Y +-750 is inside the spec's 650-850 range; "
-     "note it lands on skin, not structure — the nearest hard points are the roll-bar mounts at +-566, "
-     "so mounting needs a bonded subframe (next stage)."),
+    ("BUTTRESS",    "03_AERO",     2180,  600,  940,  840,  220,  300, "DECIDED",
+     "replaces the spec's free-standing AERO_FIN. Neither reference render has separate fins — both "
+     "show raised shoulders growing out of the haunch behind the hoops, with the louvred deck sunk "
+     "between them. specX 1760..2600, top 1090 (145 below the hoop tops so the hoops stay readable "
+     "as their own structure). Y +-600 puts the inner face close to the roll-bar mounts at +-566, "
+     "which is where a bonded subframe would pick up."),
     ("ENGINE_COVER","02_BODY",     2400,    0,  790,  800, 1050,  100, "spec", "cover envelope"),
     ("REAR_FASCIA", "02_BODY",     3310,    0,  520,  220, 1500,  500, "derived",
      "between S13 and S14; envelope only"),
@@ -176,8 +181,11 @@ BOXES = [
 LOUVERS = ("LOUVER", "02_BODY", 8, 2100, 2700, 0, 800, 40, 450, 12, "spec")
 DIFFUSER_FINS = ("DIFFUSER_FIN", "03_AERO", 7, 2870, 3420, None, 230, 550, 16, 200, "spec")
 
-# rear deck spine: (spec_x, z)
-DECK_SPINE = [(1450, 760), (1900, 800), (2500, 760), (3200, 600)]
+# Rear deck centreline: (spec_x, z). This is the SUNKEN louvred panel between the buttresses, not
+# the highest line of the car — ref-06/07 show the louvres recessed between two raised shoulders.
+# It starts at the roll-hoop plane; ahead of that is the cabin, not deck.
+# Heights are tied to the donor: the hoop tops (1235) set the ceiling, the deck sits under them.
+DECK_SPINE = [(1760, 960), (2100, 950), (2600, 880), (3200, 700)]
 
 SUBCOLLS = ["00_DONOR_HARDPOINTS", "01_MASTER_SKELETON", "02_BODY", "03_AERO",
             "04_LIGHTING", "05_MECHANICAL", "06_ROOF", "07_INTERIOR", "99_DEBUG"]

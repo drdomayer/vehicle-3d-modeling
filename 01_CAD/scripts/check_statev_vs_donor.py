@@ -239,25 +239,39 @@ if cowl_spec - hood_rear > 50:
 
 # ---------------------------------------------------------------- 7. aero fins vs roll hoops
 print("\n[aero fins]")
-fin = next(b for b in BOXES if b[0] == "AERO_FIN")
-fx_c, fsx = fin[2], fin[5]
+fin = next((b for b in BOXES if b[0] == "BUTTRESS"), None)
+fx_c, fsx = (fin[2], fin[5]) if fin else (1e9, 0)
 hoop_spec = -d("hoop_x")
 print(f"  fin specX {fx_c - fsx/2:.0f} … {fx_c + fsx/2:.0f} | roll hoop plane specX {hoop_spec}")
-if fx_c - fsx / 2 < hoop_spec:
+if fin and fx_c - fsx / 2 < hoop_spec:
     rec("check", "aero fins", f"the fins start at specX {fx_c - fsx/2:.0f}, which is "
         f"{hoop_spec - (fx_c - fsx/2):.0f} mm AHEAD of the roll hoop plane (specX {hoop_spec}) — i.e. over the door "
         "opening and the seats. The design calls for fins rising BEHIND the hoops. Start them at specX "
         f"{hoop_spec} or later, or accept that they cut into the cabin aperture.")
-fin_y = abs(fin[3])
+fin_y = abs(fin[3]) if fin else 0
 hoop_y = d("hoop_y")
 print(f"  fin Y ±{fin_y} vs roll hoop tube plane Y ±{hoop_y}")
 
 # ---------------------------------------------------------------- 8. deck vs donor roof
 print("\n[rear deck vs donor]")
 deck_max_z = max(z for _, z in _sk["DECK_SPINE"])
-print(f"  deck spine peak Z {deck_max_z} | roll hoop top Z {d('hoop_top_z')} | windshield header Z {d('ws_top_z')}")
-if deck_max_z < d("hoop_top_z"):
-    print(f"  deck sits {d('hoop_top_z') - deck_max_z} mm below the hoop tops — the closed soft top has to bridge that")
+but = next((b for b in BOXES if b[0] == "BUTTRESS"), None)
+but_top = (but[4] + but[7] / 2) if but else 0
+deck_start = min(x for x, _ in _sk["DECK_SPINE"])
+print(f"  deck centreline peak Z {deck_max_z} | buttress top Z {but_top:.0f} | "
+      f"hoop tops Z {d('hoop_top_z')} | windshield header Z {d('ws_top_z')}")
+print(f"  deck starts at specX {deck_start} | hoop plane specX {-d('hoop_x')}")
+if deck_start < -d("hoop_x"):
+    rec("check", "deck start", f"the deck begins at specX {deck_start}, ahead of the hoop plane "
+        f"({-d('hoop_x')}) — that is over the seats, not over the engine.")
+if but_top > d("hoop_top_z"):
+    rec("check", "buttress height", f"the buttresses reach Z {but_top:.0f}, above the hoop tops "
+        f"({d('hoop_top_z')}) — the hoops stop reading as their own structure.")
+rec("fatal", "roof fold vs raised deck", "the deck and buttresses now sit at Z 960/1090 behind the "
+    "hoops. That is exactly the volume the 986 soft top folds into. Either the deck is part of the "
+    "lid that opens with the OEM clamshell, or the roof has to stow entirely beneath it. Nothing in "
+    "either render or the written spec says which. This is the single highest-risk unknown in the "
+    "whole project and it is only answerable on the real car — scan the roof in all four positions.")
 rec("open", "roof", "the soft-top fold envelope, the engine-lid aperture and the clamshell path are still unknown. "
     "The deck peak (Z 800) and the louvre field (specX 2100–2700) both sit over them. Nothing behind the hoops "
     "can be locked before the scan.")

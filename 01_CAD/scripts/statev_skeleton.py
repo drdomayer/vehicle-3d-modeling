@@ -20,6 +20,7 @@ Status of every number: "spec" = from the v0.1 package, "derived" = computed her
 import bpy
 
 COLL_ROOT = "STATEV_001"
+PFX = "STATEV_"          # every object this script owns carries it (prompt §6, §9)
 
 # ---------------------------------------------------------------- package targets (mm)
 PACKAGE = {
@@ -97,7 +98,15 @@ BOXES = [
     ("REAR_DECK",   "02_BODY",     2575,    0,  750, 1450, 1850,  200, "spec",
      "X 1850..3300, width 1500..1850, Z 650..850; thin skin, must not box in the engine bay"),
     ("SIDE_INTAKE", "03_AERO",     1500,  887,  485,  600,   75,  270, "spec",
-     "envelope X 1200..1800, Y 850..925, Z 350..620"),
+     "sculpted channel, spec envelope X 1200..1800, Y 850..925, Z 350..620 — does NOT reach the "
+     "donor opening; see the check script"),
+    ("INTAKE_INLET", "03_AERO",    1990,  870,  520,  180,  110,  180, "derived",
+     "the DONOR opening: specX 1900..2080 from the side blueprint. This is the mouth that has to "
+     "feed the engine; the sculpted channel must run into it"),
+    ("INTAKE_DUCT",  "05_MECHANICAL", 2150, 650,  520,  320,  400,  180, "PROVISIONAL",
+     "inlet -> engine bay. Path guessed; the real duct route comes from the scan of the engine bay"),
+    ("INTAKE_OUTLET","05_MECHANICAL", 2300, 300,  600,  150,  300,  200, "PROVISIONAL",
+     "connection to the intake plenum. Position guessed"),
     ("INTAKE_BLADE","03_AERO",     1500,  887,  485,  400,   30,  180, "spec",
      "vertical blade inside the intake, 180 high, 25-35 thick"),
     # --- rear
@@ -114,7 +123,7 @@ BOXES = [
 
 # repeating features: (name, collection, count, spec_x_start, spec_x_end, y, z, size_x, size_y, size_z, status)
 LOUVERS = ("LOUVER", "02_BODY", 8, 2100, 2700, 0, 800, 40, 450, 12, "spec")
-DIFFUSER_FINS = ("DIFFUSER_FIN", "03_AERO", 6, 2870, 3420, None, 230, 550, 16, 200, "spec")
+DIFFUSER_FINS = ("DIFFUSER_FIN", "03_AERO", 7, 2870, 3420, None, 230, 550, 16, 200, "spec")
 
 # rear deck spine: (spec_x, z)
 DECK_SPINE = [(1450, 760), (1900, 800), (2500, 760), (3200, 600)]
@@ -134,6 +143,11 @@ ROOT_PROPS = {
     "side_intake_length": 600, "side_intake_height": 220,
     "rear_fin_height": 350, "diffuser_width": 1500, "diffuser_length": 550,
     "exhaust_diameter": 95,
+    # rim and offset are design variables; these are typical 986 19" values, PROVISIONAL until the
+    # wheels are actually bought and the arch clearance is measured on the car.
+    "front_rim": "8.5Jx19", "front_wheel_et": 50,
+    "rear_rim": "10Jx19", "rear_wheel_et": 45,
+    "wheel_et_status": "PROVISIONAL — ET sets how far the tyre sits inside the arch; verify on the car",
 }
 
 # Viewport materials for visualisation only (prompt §26): name -> (rgba, metallic, roughness)
@@ -189,6 +203,7 @@ def reset_tree():
 
 
 def poly_curve(name, coll, points_m, color, cyclic=False, bevel=0.0):
+    name = name if name.startswith(PFX) else PFX + name
     cu = bpy.data.curves.new(name, "CURVE")
     cu.dimensions = "3D"
     sp = cu.splines.new("POLY")
@@ -206,6 +221,7 @@ def poly_curve(name, coll, points_m, color, cyclic=False, bevel=0.0):
 
 
 def box(name, coll, centre_mm, size_mm, color, note="", status="spec", spec_x=None):
+    name = name if name.startswith(PFX) else PFX + name
     bpy.ops.mesh.primitive_cube_add(size=1.0, location=[mm(v) for v in centre_mm])
     ob = bpy.context.active_object
     ob.name = name
@@ -258,7 +274,7 @@ def build():
         x = mm(sx(spec_x))
         pts = [(x, mm(y), mm(z)) for z, y in prof]                       # left (+Y)
         pts += [(x, mm(-y), mm(z)) for z, y in reversed(prof)]           # right (-Y)
-        ob = poly_curve(f"{name}_{role.replace(' ', '_')}", subs["01_MASTER_SKELETON"], pts, CYAN)
+        ob = poly_curve(name, subs["01_MASTER_SKELETON"], pts, CYAN)
         ob["statev_v01"] = True
         ob["status"] = "spec"
         ob["spec_x_mm"] = spec_x
@@ -312,7 +328,7 @@ def build():
     # ---- diffuser fins
     nm, coll, n, x0, x1, _, z, sxx, sy, sz, status = DIFFUSER_FINS
     spec_x = (x0 + x1) / 2.0
-    spacing = 150
+    spacing = 150            # 7 fins x 150 = 900 inside the 1500 wide diffuser
     for i in range(n):
         y = (i - (n - 1) / 2.0) * spacing
         box(f"{nm}_{i+1:02d}", subs[coll], (sx(spec_x), y, z), (sxx, sy, sz), MAG,
@@ -329,7 +345,7 @@ def build():
                 radius=mm(od / 2), depth=mm(wdt), vertices=48,
                 location=(mm(sx(spec_x)), mm(sgn * half_track), mm(od / 2)))
             w = bpy.context.active_object
-            w.name = nm + suffix
+            w.name = PFX + nm + suffix
             w.rotation_euler = (math.radians(90), 0, 0)
             w.display_type = "WIRE"
             w.color = WHITE
@@ -346,7 +362,7 @@ def build():
 
     # ---- 00_DONOR_HARDPOINTS: pointer only. The cage stays a separate top-level collection so
     #      donor reference geometry is never mixed into STATEV geometry (prompt §27, §33).
-    ptr = bpy.data.objects.new("DONOR_HARDPOINTS__see_CAGE_986", None)
+    ptr = bpy.data.objects.new(PFX + "DONOR_HARDPOINTS__see_CAGE_986", None)
     ptr.empty_display_type = "SPHERE"
     ptr.empty_display_size = 0.25
     subs["00_DONOR_HARDPOINTS"].objects.link(ptr)
@@ -378,7 +394,7 @@ def build():
 
     # ---- 07_INTERIOR: seat centrelines from the measured plan view; cabin fit for 190 cm needs the scan
     for suffix, sgn in (("_L", 1), ("_R", -1)):
-        e = bpy.data.objects.new(f"SEAT_CENTRELINE{suffix}", None)
+        e = bpy.data.objects.new(PFX + f"SEAT_CENTRELINE{suffix}", None)
         e.empty_display_type = "SINGLE_ARROW"
         e.empty_display_size = 0.3
         e.location = (mm(sx(1500)), mm(sgn * 357), mm(500))
@@ -436,6 +452,101 @@ def build():
                 "PROVISIONAL")
         b["do_not_trust"] = True
 
+    # ---- engine bay and roll-hoop clearance (prompt §30)
+    eng = box("ENGINE_BAY_ENVELOPE", dbg, (D["hoop_x"] - 440, 0, 600), (760, 900, 600), RED,
+              "mid engine between the hoops and the rear axle. Engine mounts P9 are at Y +-188.5 "
+              "(published); the box size around them is GUESSED. Nothing may close this volume in.",
+              "PROVISIONAL")
+    eng["do_not_trust"] = True
+    eng["donor_engine_mount_y_total"] = D["jack_front_y_total"] and 377.0
+    for suffix, sgn in (("_L", 1), ("_R", -1)):
+        h = box(f"ROLLHOOP_CLEARANCE{suffix}", dbg,
+                (D["hoop_x"], sgn * D["hoop_y"], (600 + D["hoop_top_z"]) / 2.0),
+                (120 + 2 * D["oem_buffer"], 120 + 2 * D["oem_buffer"],
+                 D["hoop_top_z"] - 600 + D["oem_buffer"]), RED,
+                "keep-out around the roll hoop tube. Tube diameter not measured yet — 120 mm "
+                "assumed plus the standard buffer. The hoops are a locked safety structure.",
+                "PROVISIONAL")
+        h["do_not_trust"] = True
+
+    # ---- warning objects: recomputed live, so a fixed number makes the marker disappear (prompt §30)
+    WARN = (1.0, 0.15, 0.0, 1.0)
+
+    def warn(name, centre, size, text):
+        b = box(name, dbg, centre, size, WARN, text, "WARNING")
+        b["WARNING"] = True
+        cu = bpy.data.curves.new(PFX + name + "_TXT", "FONT")
+        cu.body = "! " + text.split(".")[0]
+        cu.size = 0.05
+        t = bpy.data.objects.new(PFX + name + "_TXT", cu)
+        t.location = (mm(centre[0]), mm(centre[1]), mm(centre[2] + size[2] / 2 + 60))
+        t.rotation_euler = (1.5708, 0, 0)
+        t.color = WARN
+        dbg.objects.link(t)
+        return b
+
+    n_warn = 0
+    # W1 — hub Y
+    spec_hub_f = 875
+    if abs(spec_hub_f - D["track_front"] / 2) > 5:
+        warn("WARN_hub_Y", (0, (spec_hub_f + D["track_front"] / 2) / 2, PACKAGE["tyre_front_od"] / 2),
+             (200, spec_hub_f - D["track_front"] / 2, 200),
+             f"spec hub Y {spec_hub_f} vs donor {D['track_front']/2:.0f}: needs "
+             f"{2*(spec_hub_f - D['track_front']/2):.0f} mm more track, impossible")
+        n_warn += 1
+    # W2 — headlight beyond the body
+    hl = next(b for b in BOXES if b[0] == "HEADLIGHT")
+    hl_out = abs(hl[3]) + hl[6] / 2
+    body_at = half_width_at(SECTIONS["S02"][2], hl[4])
+    if body_at and hl_out > body_at:
+        for sgn in (1, -1):
+            warn(f"WARN_headlight_{'L' if sgn > 0 else 'R'}",
+                 (sx(hl[2]), sgn * (body_at + hl_out) / 2, hl[4]),
+                 (hl[5], hl_out - body_at, hl[7]),
+                 f"headlight reaches Y {hl_out:.0f}, body is {body_at:.0f} — "
+                 f"{hl_out - body_at:.0f} mm outside the surface")
+            n_warn += 1
+    # W3 — side intake does not reach the donor opening
+    si = next(b for b in BOXES if b[0] == "SIDE_INTAKE")
+    si_end = si[2] + si[5] / 2
+    donor_open = 1900
+    if si_end < donor_open:
+        for sgn in (1, -1):
+            warn(f"WARN_intake_gap_{'L' if sgn > 0 else 'R'}",
+                 (sx((si_end + donor_open) / 2), sgn * 870, 520),
+                 (donor_open - si_end, 120, 180),
+                 f"{donor_open - si_end:.0f} mm gap between the sculpted intake and the real opening — "
+                 "as drawn it feeds nothing")
+            n_warn += 1
+    # W4 — door skin shorter than the aperture
+    ds = next(b for b in BOXES if b[0] == "DOOR_SKIN")
+    aperture = abs(D["door_rear_x"] - D["door_front_x"])
+    if abs(ds[5] - aperture) > 20:
+        for sgn in (1, -1):
+            warn(f"WARN_door_skin_{'L' if sgn > 0 else 'R'}",
+                 (sx(ds[2]), sgn * ds[3], ds[4]), (aperture, 60, ds[7]),
+                 f"skin {ds[5]} vs door aperture {aperture:.0f} — {aperture - ds[5]:.0f} mm short of the shut lines")
+            n_warn += 1
+    # W5 — unassigned strip between hood and cowl
+    hd = next(b for b in BOXES if b[0] == "HOOD")
+    hd_rear, cowl_spec = hd[2] + hd[5] / 2, -D["cowl_x"]
+    if cowl_spec - hd_rear > 50:
+        warn("WARN_cowl_strip", (sx((hd_rear + cowl_spec) / 2), 0, D["cowl_z"] - 80),
+             (cowl_spec - hd_rear, 1400, 120),
+             f"{cowl_spec - hd_rear:.0f} mm between the hood's rear edge and the windshield base "
+             "belongs to no panel")
+        n_warn += 1
+    # W6 — fins ahead of the hoops
+    fin = next(b for b in BOXES if b[0] == "AERO_FIN")
+    fin_start, hoop_spec = fin[2] - fin[5] / 2, -D["hoop_x"]
+    if fin_start < hoop_spec:
+        for sgn in (1, -1):
+            warn(f"WARN_fin_ahead_{'L' if sgn > 0 else 'R'}",
+                 (sx((fin_start + hoop_spec) / 2), sgn * abs(fin[3]), fin[4]),
+                 (hoop_spec - fin_start, fin[6], fin[7]),
+                 f"fin starts {hoop_spec - fin_start:.0f} mm ahead of the roll hoop, over the cabin aperture")
+            n_warn += 1
+
     # ---- materials (visualisation only)
     for nm, (rgba, metal, rough) in MATERIALS.items():
         mat = bpy.data.materials.get(nm) or bpy.data.materials.new(nm)
@@ -456,8 +567,56 @@ def build():
                 if "Alpha" in bsdf.inputs:
                     bsdf.inputs["Alpha"].default_value = 0.25
 
+    # ---- assign materials to what they belong to (prompt §26)
+    def assign(ob, mat_name):
+        m = bpy.data.materials.get(mat_name)
+        if m and ob.type == "MESH":
+            ob.data.materials.clear()
+            ob.data.materials.append(m)
+    for ob in root.all_objects:
+        n = ob.name
+        if "_TXT" in n or n.startswith(PFX + "WARN") or ob.users_collection[0].name == "99_DEBUG":
+            continue
+        if "WHEEL_" in n:
+            assign(ob, "STATEV_WHEELS")
+        elif any(k in n for k in ("HEADLIGHT", "DRL", "TAIL_", "PROJECTOR")):
+            assign(ob, "STATEV_LIGHT")
+        elif any(k in n for k in ("BLADE", "FIN", "DIFFUSER", "SPLITTER", "CHANNEL")):
+            assign(ob, "STATEV_CARBON")
+        elif "SEAT" in n:
+            assign(ob, "STATEV_INTERIOR")
+        elif ob.users_collection[0].name == "06_ROOF":
+            assign(ob, "STATEV_GLASS")
+        elif ob.users_collection[0].name in ("02_BODY", "03_AERO"):
+            assign(ob, "STATEV_BODY")
+
+    # ---- diagnostic cameras (prompt §30)
+    import math as _mm
+    cam_defs = [
+        ("CAM_side",  (12000, 0, 650),      (_mm.radians(90), 0, _mm.radians(90)),  "ORTHO", 5.2),
+        ("CAM_front", (12000, 0, 650),      (_mm.radians(90), 0, 0),                "ORTHO", 2.6),
+        ("CAM_rear",  (-12000, 0, 650),     (_mm.radians(90), 0, _mm.radians(180)), "ORTHO", 2.6),
+        ("CAM_top",   (-1200, 0, 12000),    (0, 0, _mm.radians(90)),                "ORTHO", 5.2),
+        ("CAM_three_quarter", (4200, 3400, 1900),
+         (_mm.radians(72), 0, _mm.radians(129)), "PERSP", 0),
+    ]
+    for nm, loc, rot, typ, ortho in cam_defs:
+        cd = bpy.data.cameras.new(PFX + nm)
+        cd.type = typ
+        if typ == "ORTHO":
+            cd.ortho_scale = ortho
+        else:
+            cd.lens = 85
+        c = bpy.data.objects.new(PFX + nm, cd)
+        c.location = tuple(mm(v) for v in loc)
+        c.rotation_euler = rot
+        dbg.objects.link(c)
+        c["note"] = "diagnostic view; ortho cameras are for proportion checks, not renders"
+    # CAM_side is the one a proportion judgement should be made from
+    bpy.context.scene.camera = bpy.data.objects[PFX + "CAM_side"]
+
     # ---- parametric root
-    rt = bpy.data.objects.new("STATEV_001_ROOT", None)
+    rt = bpy.data.objects.new(PFX + "001_ROOT", None)
     rt.empty_display_type = "ARROWS"
     rt.empty_display_size = 0.5
     root.objects.link(rt)

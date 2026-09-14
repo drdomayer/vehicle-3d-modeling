@@ -667,6 +667,7 @@ def build():
         c.location = tuple(mm(v) for v in loc)
         c.rotation_euler = rot
         dbg.objects.link(c)
+        c.hide_viewport = True      # kept out of the viewport so "frame selected" ignores them
         c["note"] = "diagnostic view; ortho cameras are for proportion checks, not renders"
     # CAM_side is the one a proportion judgement should be made from
     bpy.context.scene.camera = bpy.data.objects[PFX + "CAM_side"]

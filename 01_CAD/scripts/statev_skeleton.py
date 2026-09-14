@@ -60,6 +60,40 @@ SECTIONS = {
 
 RAIL_LEVELS = [120, 250, 400, 550, 700, 800, 900]
 
+# ---------------------------------------------------------------- engineering decisions
+# Taken here, not asked of the owner, per the agreed priority order:
+#   A donor hardpoints  B physical clearance  C STATEV proportions  D surface continuity
+#   E functional airflow  F manufacturability  G provisional dimensions
+# When G loses to A–F, the dimension changes and the reason is recorded.
+DECISIONS = {
+    "headlight": "The 650x100x65 bar centred at Y +-570 was dropped (it stuck 215 mm outside the "
+                 "body). Split into what the two things actually are: a thin DRL/position blade that "
+                 "follows the body's widest line across the nose and kicks up into the fender, and a "
+                 "separate projector cavity sized for a real Hella 90 mm bi-LED module "
+                 "(110x110x150 incl. heatsink). Priority C+D over G; docs/04 already decided "
+                 "E-marked modules in custom housings.",
+    "side_intake": "The sculpted channel now runs to specX 2080, the donor's real opening, instead of "
+                   "stopping at 1800. Priority A+E over G. The visible shape is still free; the "
+                   "airflow path is not.",
+    "arches": "Sections are NOT hand-tuned one by one. A smooth cosine widening is blended around "
+              "each axle so the body grows around the wheel and the arch aperture stays inside the "
+              "surface: +18 mm front, +34 mm rear at the axle, tapering to zero over +-600 mm and "
+              "only across the Z band the arch spans. Priority B+D over G.",
+    "aero_fins": "Fins start at the roll-hoop plane (specX 1760) instead of 1450, keeping the spec'd "
+                 "750 mm length by extending the tail to 2510. Priority A over G — at 1450 they sat "
+                 "over the door aperture and the seats.",
+    "door_skin": "Length taken from the donor aperture between the shut lines (1195), not the spec's "
+                 "1050. Priority A over G — the skin has to land on the locked shut lines.",
+    "hood": "Rear edge extended back to the windshield base (specX 420) instead of 80. Priority D+F "
+            "over G — the 340 mm strip belonged to no panel.",
+}
+
+# local widening around each axle: (spec_x, delta_mm, taper_half_length_mm, z_lo, z_hi)
+AXLE_WIDENING = [
+    (0,    18, 600, 200, 700),
+    (2415, 34, 600, 200, 750),
+]
+
 # wheel arch apertures (msg1 §4): key -> (spec_x, radius, opening_width_y, tyre_od, tyre_width)
 # radius is measured from the wheel centre; opening width is the axial size of the aperture.
 ARCHES = {
@@ -78,12 +112,12 @@ DOOR_CHAR_LINE_Z = {"front": 420, "middle": 500, "rear": 520}
 # y_centre None -> mirrored pair is built at ±|y|
 BOXES = [
     # --- lighting
-    ("HEADLIGHT",   "04_LIGHTING", -700,  570,  570,  100,  650,   65, "spec",
-     "housing; 650 along Y, 100 depth, 65 high. Earlier note said depth 110-140 - conflict, using 100"),
-    ("DRL",         "04_LIGHTING", -700,  570,  600,   12,  570,   14, "spec",
-     "light blade; 570 long, 14 high, 12 deep"),
-    ("PROJECTOR",   "04_LIGHTING", -700,  420,  570,   75,  290,   80, "spec",
-     "E-marked module cavity inside the housing, 290x80x75; Y PLACED at the inner end of the housing"),
+    ("PROJECTOR",   "04_LIGHTING", -700,  560,  570,  150,  110,  110, "DECIDED",
+     "cavity for ONE real Hella 90 mm bi-LED module (low+high): 110 dia x ~150 deep incl. heatsink. "
+     "Lit-surface lower edge 515 mm, above the 500 mm legal minimum. Sits inside the body: at S02 "
+     "Z 570 the half-width is 680, the cavity spans Y 505..615. Replaces the 650x100x65 bar."),
+    ("PROJECTOR_2", "04_LIGHTING", -700,  420,  570,  150,  110,  110, "OPTIONAL",
+     "room for a second module if low and high are split across two units; delete if one bi-LED is used"),
     ("TAIL_H",      "04_LIGHTING", 3200,  620,  650,   50,  400,   40, "PLACED",
      "horizontal arm of the L; spec gives no X/Y/Z - put on the S13 shoulder"),
     ("TAIL_V",      "04_LIGHTING", 3200,  815,  590,   50,   40,  120, "PLACED",
@@ -91,8 +125,9 @@ BOXES = [
     # --- front
     ("FRONT_CLAMSHELL", "02_BODY", -400,    0,  450, 1100, 1800,  660, "spec",
      "envelope X -950..150, Y +-900, Z 120..780; the panel itself comes from the loft"),
-    ("HOOD",        "02_BODY",     -435,    0,  585, 1030, 1500,  270, "spec",
-     "X -950..80, max width 1500, Z 450 at the front edge to 720 at the rear - envelope only"),
+    ("HOOD",        "02_BODY",     -265,    0,  585, 1370, 1500,  270, "DECIDED",
+     "rear edge extended from specX 80 back to the windshield base at 420, closing the 340 mm strip "
+     "that belonged to no panel. Z 450 at the front edge to 720 at the rear - envelope only"),
     ("FRONT_FENDER","02_BODY",     -200,  875,  490,  900,   50,  480, "spec",
      "X -650..250, Y 850..900, Z 250..730; a shell, not a flare over the OEM fender"),
     ("FRONT_MASK",  "02_BODY",     -870,    0,  310,  100,  650,  150, "spec", "mask panel envelope"),
@@ -103,16 +138,16 @@ BOXES = [
     ("FENDER_CHANNEL","03_AERO",    325,  835,  500,  350,   90,  180, "PLACED",
      "hot-air exit behind the front wheel; spec gives X 150..500 and the section but no Z/Y centre"),
     # --- sides
-    ("DOOR_SKIN",   "02_BODY",     1038,  850,  545, 1050,   30,  650, "spec",
-     "spec says 1050 long; the donor door aperture (shut lines) is 1195 long - see check script. "
-     "Z centre PLACED: spec only gives the character line at Z 420/500/520"),
+    ("DOOR_SKIN",   "02_BODY",     1038,  850,  545, 1195,   30,  650, "DECIDED",
+     "length taken from the donor aperture between the shut lines (1195), not the spec's 1050 — the "
+     "shut lines are locked. Z centre still PLACED: the spec only gives the crease at Z 420/500/520"),
     ("REAR_HAUNCH", "02_BODY",     2375,  887,  575,  950,   75,  550, "spec",
      "X 1900..2850, Y 850..925, Z 300..850; loft through 5-7 sections, not one sculpted blob"),
     ("REAR_DECK",   "02_BODY",     2575,    0,  750, 1450, 1850,  200, "spec",
      "X 1850..3300, width 1500..1850, Z 650..850; thin skin, must not box in the engine bay"),
-    ("SIDE_INTAKE", "03_AERO",     1500,  887,  485,  600,   75,  270, "spec",
-     "sculpted channel, spec envelope X 1200..1800, Y 850..925, Z 350..620 — does NOT reach the "
-     "donor opening; see the check script"),
+    ("SIDE_INTAKE", "03_AERO",     1640,  887,  485,  880,   75,  270, "DECIDED",
+     "sculpted channel extended from specX 1200..1800 to 1200..2080 so it runs into the donor's real "
+     "opening. Outer shape stays a styling choice; the airflow path does not."),
     ("INTAKE_INLET", "03_AERO",    1990,  870,  520,  180,  110,  180, "derived",
      "the DONOR opening: specX 1900..2080 from the side blueprint. This is the mouth that has to "
      "feed the engine; the sculpted channel must run into it"),
@@ -123,8 +158,11 @@ BOXES = [
     ("INTAKE_BLADE","03_AERO",     1500,  887,  485,  400,   30,  180, "spec",
      "vertical blade inside the intake, 180 high, 25-35 thick"),
     # --- rear
-    ("AERO_FIN",    "03_AERO",     1825,  750,  675,  750,   42,  350, "spec",
-     "X 1450..2200, height 350, thickness 35-50; Y given as a 650-850 range - centred at 750"),
+    ("AERO_FIN",    "03_AERO",     2135,  750,  675,  750,   42,  350, "DECIDED",
+     "moved from specX 1450..2200 to 1760..2510: starts at the roll-hoop plane, keeps the 750 length. "
+     "At 1450 it sat over the door aperture and the seats. Y +-750 is inside the spec's 650-850 range; "
+     "note it lands on skin, not structure — the nearest hard points are the roll-bar mounts at +-566, "
+     "so mounting needs a bonded subframe (next stage)."),
     ("ENGINE_COVER","02_BODY",     2400,    0,  790,  800, 1050,  100, "spec", "cover envelope"),
     ("REAR_FASCIA", "02_BODY",     3310,    0,  520,  220, 1500,  500, "derived",
      "between S13 and S14; envelope only"),
@@ -256,6 +294,69 @@ def box(name, coll, centre_mm, size_mm, color, note="", status="spec", spec_x=No
     return ob
 
 
+# DRL / position blade: (spec_x, target_half_width). Z is solved so the point lands ON the body's
+# upper shoulder at that width — the blade follows the widest line of the nose and kicks into the
+# fender, instead of being a straight bar hanging in space.
+DRL_PATH = [(-888, 120), (-878, 260), (-862, 400), (-838, 520), (-805, 610),
+            (-762, 680), (-710, 730), (-650, 775), (-585, 810)]
+DRL_INSET = 15          # mm inboard of the surface so the blade sits in a recess
+DRL_SECTION = (14, 12)  # height x depth of the lit element
+
+
+def section_profile(spec_x):
+    """Widened profile interpolated between the two bracketing master sections."""
+    items = sorted(((v[0], v[2]) for v in SECTIONS.values()), key=lambda t: t[0])
+    xs = [i[0] for i in items]
+    if spec_x <= xs[0]:
+        base = items[0][1]
+    elif spec_x >= xs[-1]:
+        base = items[-1][1]
+    else:
+        for i in range(len(xs) - 1):
+            if xs[i] <= spec_x <= xs[i + 1]:
+                t = (spec_x - xs[i]) / (xs[i + 1] - xs[i])
+                a, b = items[i][1], items[i + 1][1]
+                zs = sorted({z for z, _ in a} | {z for z, _ in b})
+                base = []
+                for z in zs:
+                    ya, yb = half_width_at(a, z), half_width_at(b, z)
+                    if ya is None or yb is None:
+                        continue
+                    base.append((z, ya + t * (yb - ya)))
+                break
+    return [(z, y + widening(spec_x, z)) for z, y in base]
+
+
+def z_at_half_width(spec_x, target_y):
+    """Height on the UPPER branch of the section where the body is target_y wide. None if never."""
+    prof = section_profile(spec_x)
+    y_max = max(y for _, y in prof)
+    target_y = min(target_y, y_max - 2)
+    z_at_max = max((z for z, y in prof if abs(y - y_max) < 1e-6), default=prof[0][0])
+    upper = [(z, y) for z, y in prof if z >= z_at_max]
+    for i in range(len(upper) - 1):
+        (z0, y0), (z1, y1) = upper[i], upper[i + 1]
+        if (y0 - target_y) * (y1 - target_y) <= 0 and y0 != y1:
+            return z0 + (target_y - y0) / (y1 - y0) * (z1 - z0)
+    return z_at_max
+
+
+def widening(spec_x, z):
+    """Smooth local growth of the body around an axle, so the arch aperture fits inside the
+    surface without anyone editing a single section by hand."""
+    import math as _w
+    add = 0.0
+    for ax, delta, taper, z_lo, z_hi in AXLE_WIDENING:
+        dx = abs(spec_x - ax)
+        if dx >= taper or not (z_lo <= z <= z_hi):
+            continue
+        fx = 0.5 * (1.0 + _w.cos(_w.pi * dx / taper))                  # 1 at the axle -> 0 at taper
+        zc, zh = (z_lo + z_hi) / 2.0, (z_hi - z_lo) / 2.0
+        fz = 0.5 * (1.0 + _w.cos(_w.pi * min(1.0, abs(z - zc) / zh)))  # peak mid-band -> 0 at edges
+        add = max(add, delta * fx * fz)
+    return add
+
+
 def half_width_at(profile, z):
     """Interpolate a section's half-width at height z. Returns None above the section's top."""
     zs = [p[0] for p in profile]
@@ -285,8 +386,9 @@ def build():
     # ---- cross-sections: left side bottom->top, across the top, right side top->bottom
     for name, (spec_x, role, prof) in SECTIONS.items():
         x = mm(sx(spec_x))
-        pts = [(x, mm(y), mm(z)) for z, y in prof]                       # left (+Y)
-        pts += [(x, mm(-y), mm(z)) for z, y in reversed(prof)]           # right (-Y)
+        prof_w = [(z, y + widening(spec_x, z)) for z, y in prof]         # local growth around the axles
+        pts = [(x, mm(y), mm(z)) for z, y in prof_w]                     # left (+Y)
+        pts += [(x, mm(-y), mm(z)) for z, y in reversed(prof_w)]         # right (-Y)
         ob = poly_curve(name, subs["01_MASTER_SKELETON"], pts, CYAN)
         ob["statev_v01"] = True
         ob["status"] = "spec"
@@ -294,6 +396,8 @@ def build():
         ob["repo_x_mm"] = sx(spec_x)
         ob["role"] = role
         ob["profile_z_halfwidth_mm"] = [list(p) for p in prof]
+        ob["profile_after_widening_mm"] = [[z, round(y, 1)] for z, y in prof_w]
+        ob["axle_widening_mm"] = round(max(widening(spec_x, z) for z, _ in prof), 1)
         ob["note"] = "open at the floor (underside not specified) and flat across the top of the data"
 
     # ---- longitudinal rails at constant Z through every section that reaches that height
@@ -304,6 +408,7 @@ def build():
             for name, (spec_x, role, prof) in order:
                 hw = half_width_at(prof, z)
                 if hw is not None:
+                    hw += widening(spec_x, z)
                     pts.append((mm(sx(spec_x)), mm(sgn * hw), mm(z)))
             if len(pts) > 1:
                 ob = poly_curve(f"RAIL_Z{z:04d}_{side}", subs["01_MASTER_SKELETON"], pts, YELL)
@@ -395,6 +500,27 @@ def build():
                 ob["axial_gap_each_side_mm"] = round((open_w - twid) / 2.0, 1)
                 ob["note"] = ("wheel arch aperture edge. Radius is from the wheel centre; the tyre "
                               "needs this gap at full bump AND full steer - only the scan settles it")
+
+    # ---- DRL / position blade, lying on the body's shoulder line
+    for suffix, sgn in (("_L", 1), ("_R", -1)):
+        pts, zs = [], []
+        for spec_x, ty in DRL_PATH:
+            z = z_at_half_width(spec_x, ty)
+            y = min(ty, max(v for _, v in section_profile(spec_x)) - 2) - DRL_INSET
+            zs.append(z)
+            pts.append((mm(sx(spec_x)), mm(sgn * y), mm(z)))
+        ob = poly_curve(f"DRL_BLADE{suffix}", subs["04_LIGHTING"], pts, (1.0, 0.97, 0.90, 1.0))
+        ob.data.bevel_depth = mm(DRL_SECTION[0] / 2.0)
+        ob.data.bevel_resolution = 2
+        ob["status"] = "DECIDED"
+        ob["section_h_d_mm"] = list(DRL_SECTION)
+        ob["length_mm"] = round(sum(
+            ((pts[i + 1][0] - pts[i][0]) ** 2 + (pts[i + 1][1] - pts[i][1]) ** 2 +
+             (pts[i + 1][2] - pts[i][2]) ** 2) ** 0.5 for i in range(len(pts) - 1)) * 1000, 1)
+        ob["z_range_mm"] = [round(min(zs), 1), round(max(zs), 1)]
+        ob["note"] = ("position/DRL blade. Follows the widest line of the nose and kicks up into the "
+                      "fender. Z is solved from the sections, not assumed, so it lies on the surface. "
+                      "Position lamps need >=350 mm; the headlamp height rule applies to the projector.")
 
     # ---- diffuser central tunnel
     tx, ty, tz, tdx, tdy, tdz = DIFFUSER_TUNNEL

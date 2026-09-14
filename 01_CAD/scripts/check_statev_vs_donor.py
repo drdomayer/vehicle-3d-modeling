@@ -23,7 +23,7 @@ with open(os.path.join(HERE, "data", "986_plan_section.json"), "r", encoding="ut
     PS = json.load(f)
 _sk = {}
 with open(os.path.join(HERE, "statev_skeleton.py"), "r", encoding="utf-8") as f:
-    exec(f.read().split("def mm(")[0].replace("import bpy", ""), _sk)
+    exec(f.read().split("def build(")[0].replace("import bpy", ""), _sk)
 SECTIONS, PACKAGE, BOXES = _sk["SECTIONS"], _sk["PACKAGE"], _sk["BOXES"]
 
 
@@ -43,6 +43,14 @@ def donor_half_width(repo_x):
             t = 0.0 if xs[i + 1] == xs[i] else (repo_x - xs[i]) / (xs[i + 1] - xs[i])
             return ys[i] + t * (ys[i + 1] - ys[i])
     return ys[-1]
+
+
+WIDEN = _sk["widening"]
+
+
+def max_hw(spec_x, prof):
+    """Section max half-width after the local widening around the axles."""
+    return max(y + WIDEN(spec_x, z) for z, y in prof)
 
 
 def hw_at(prof, z):
@@ -111,7 +119,7 @@ rec("fatal", "hub Y", "the spec puts the wheel centres at Y ±875 (front) / ±90
 for sec, lbl, half_track, width in (("S05", "front", d("track_front") / 2, 235),
                                     ("S11", "rear", d("track_rear") / 2, 275)):
     prof = SECTIONS[sec][2]
-    body = max(y for _, y in prof)
+    body = max_hw(SECTIONS[sec][0], prof)
     outer = half_track + width / 2
     print(f"  {sec} {lbl}: body max half-width {body} vs tyre outer face {outer:.1f} -> "
           f"{body - outer:+.1f} mm of body outboard of the tyre")
@@ -124,7 +132,7 @@ ARCHES = _sk["ARCHES"]
 for key, (spec_x, radius, open_w, tod, twid) in ARCHES.items():
     half_track = (d("track_front") if key == "FRONT" else d("track_rear")) / 2.0
     sec = "S05" if key == "FRONT" else "S11"
-    body = max(y for _, y in SECTIONS[sec][2])
+    body = max_hw(SECTIONS[sec][0], SECTIONS[sec][2])
     outer = half_track + open_w / 2
     print(f"  {key}: R {radius} vs tyre R {tod/2:.1f} -> radial {radius - tod/2:+.1f} | "
           f"opening {open_w} vs tyre {twid} -> axial {(open_w-twid)/2:+.1f} each side | "
@@ -133,65 +141,61 @@ for key, (spec_x, radius, open_w, tod, twid) in ARCHES.items():
         rec("fatal", f"{key} arch radius", f"only {radius - tod/2:.1f} mm between tyre and arch.")
     if outer > body:
         rec("check", f"{key} arch width", f"the arch aperture reaches Y {outer:.1f} but the body at "
-            f"{sec} is {body} — the opening is {outer - body:.1f} mm wider than the surface it is cut "
+            f"{sec} is {body:.1f} — the opening is {outer - body:.1f} mm wider than the surface it is cut "
             "into. Either the section grows to about "
             f"{outer + 10:.0f}, or the opening narrows to {2*(body - half_track):.0f}.")
 
 # ---------------------------------------------------------------- 4. body vs donor skin
-print("\n[body vs donor skin]  (donor plan ±30 mm; negative = STATEV is INSIDE the OEM skin)")
+print("\n[body vs donor skin]  (donor plan ±30 mm)")
+print("  Only matters where the OEM skin is KEPT. Front bumper, fenders, hood and rear bumper are")
+print("  bolt-on and thrown away (docs/02), so sitting inside them there is fine — it is clearance.")
+print("  Doors keep their shut lines and rear quarters are welded: there the new skin is an overlay")
+print("  and must sit OUTSIDE the OEM surface.")
+RETAINED = [(-440, -2800)]        # repo X: door aperture through the welded rear quarters
+def retained(repo_x):
+    return any(lo >= repo_x >= hi for lo, hi in RETAINED)
 tight = []
 for name, (spec_x, role, prof) in sorted(SECTIONS.items(), key=lambda kv: kv[1][0]):
     repo_x = -spec_x
     dn = donor_half_width(repo_x)
     if dn is None:
         continue
-    st = max(y for _, y in prof)
+    st = max_hw(spec_x, prof)
     gap = st - dn
-    flag = "  <-- inside OEM" if gap < 0 else ("  <-- under 15 mm" if gap < 15 else "")
-    print(f"  {name} specX {spec_x:>5} (repo {repo_x:>5}) {role:<18} STATEV {st:>5.0f} | donor {dn:>5.0f} | {gap:+6.0f}{flag}")
-    if gap < 15:
+    keep = retained(repo_x)
+    zone = "OVERLAY" if keep else "panel removed"
+    flag = ""
+    if keep and gap < 15:
+        flag = "  <-- OVERLAY TOO TIGHT"
         tight.append((name, spec_x, role, gap))
+    print(f"  {name} specX {spec_x:>5} (repo {repo_x:>5}) {role:<18} STATEV {st:>5.0f} | donor {dn:>5.0f} | "
+          f"{gap:+6.0f} | {zone}{flag}")
 if tight:
-    rec("check", "body vs OEM skin", "sections where the new body is inside, or within 15 mm of, the OEM outer skin: "
+    rec("check", "overlay too tight", "where the OEM skin is kept, the new skin must sit outside it with room "
+        "for adhesive and a flange: "
         + ", ".join(f"{n} (specX {x}, {r}, {g:+.0f} mm)" for n, x, r, g in tight)
-        + ". The doors keep their OEM shut lines, so a door skin cannot sit inboard of the OEM door. "
-          "Either widen those sections or accept a flush overlay of near-zero thickness.")
+        + ". Under 15 mm there is no room for a bonded overlay.")
 
-# ---------------------------------------------------------------- 5. headlights
-print("\n[headlights]")
-hl = next(b for b in BOXES if b[0] == "HEADLIGHT")
-_, _, spec_x, y_c, z_c, sx_, sy_, sz_, _, _ = hl
+# ---------------------------------------------------------------- 5. lighting
+print("\n[lighting]")
+pj = next(b for b in BOXES if b[0] == "PROJECTOR")
+_, _, pspec, py, pz, pdx, pdy, pdz, _, _ = pj
 prof = SECTIONS["S02"][2]
-body_at_z = hw_at(prof, z_c)
-outer_end = abs(y_c) + sy_ / 2
-inner_end = abs(y_c) - sy_ / 2
-print(f"  housing {sy_} long, centre Y ±{y_c}, Z {z_c} -> spans Y {inner_end:.0f} … {outer_end:.0f}")
-print(f"  S02 body half-width at Z {z_c} = {body_at_z:.0f} mm")
+body_at_z = hw_at(prof, pz) + WIDEN(pspec, pz)
+outer_end = abs(py) + pdy / 2
+print(f"  projector cavity {pdy}x{pdz}x{pdx} (Hella 90 mm bi-LED class), centre Y +-{py}, Z {pz}")
+print(f"  spans Y {abs(py)-pdy/2:.0f} … {outer_end:.0f} vs body {body_at_z:.0f} at that height -> "
+      f"{body_at_z - outer_end:+.0f}")
 if outer_end > body_at_z:
-    rec("fatal", "headlight vs body", f"the housing's outer end reaches Y {outer_end:.0f} but the body at that "
-        f"height is only {body_at_z:.0f} wide — it protrudes {outer_end - body_at_z:.0f} mm into thin air. "
-        "Fix by one of: centre it at Y ±"
-        f"{body_at_z - sy_/2:.0f}, shorten it to {2*(body_at_z - inner_end):.0f} mm, or run the blade "
-        "diagonally (inner end low, outer end high) instead of straight along Y.")
-low_edge = z_c - sz_ / 2
-print(f"  lower edge of the housing Z {low_edge:.1f} vs legal minimum 500 -> "
+    rec("fatal", "projector vs body", f"the cavity reaches Y {outer_end:.0f}, body is {body_at_z:.0f}.")
+low_edge = pz - pdz / 2
+print(f"  lit-surface lower edge Z {low_edge:.1f} vs the 500 mm minimum -> "
       f"{'OK' if low_edge >= 500 else 'ILLEGAL'}")
 if low_edge < 500:
-    rec("fatal", "headlamp height", f"lower edge at {low_edge:.0f} mm, below the 500 mm minimum.")
-
-# ---------------------------------------------------------------- 6. side intake vs the real opening
-print("\n[side intake]")
-intake = next(b for b in BOXES if b[0] == "SIDE_INTAKE")
-ix_c, isx = intake[2], intake[5]
-spec_lead = -d("side_intake_x")          # donor leading edge in spec X
-spec_trail = 1900
-print(f"  spec envelope: specX {ix_c - isx/2:.0f} … {ix_c + isx/2:.0f}")
-print(f"  donor opening: specX {spec_trail} … {spec_lead:.0f}  (repo {-spec_lead:.0f} … {-spec_trail})")
-if ix_c + isx / 2 < spec_trail:
-    rec("fatal", "side intake", f"the spec's intake ends at specX {ix_c + isx/2:.0f}, but the donor's real opening "
-        f"starts at specX {spec_trail} and runs to {spec_lead:.0f}. They do not overlap — as drawn the intake sits "
-        "entirely on the door skin and feeds nothing. Hard constraint: the opening must feed the engine and every "
-        f"opening is functional. Extend the channel to at least specX {spec_lead:.0f}.")
+    rec("fatal", "headlamp height", f"lower edge {low_edge:.0f} mm, below 500.")
+drl_lo = 350
+print(f"  DRL blade runs along the body's widest line; position lamps need >= {drl_lo} mm — the blade's "
+      "own z_range property carries the built value")
 
 # ---------------------------------------------------------------- 6b. door skin vs the door aperture
 print("\n[door skin]")

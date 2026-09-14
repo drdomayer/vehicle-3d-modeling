@@ -141,7 +141,13 @@ branches and never let them diverge for more than one session.
   `check_statev_vs_donor.py` дава конфликтен доклад: 3 fatal (главини Y, фар извън каросерията,
   intake не съвпада с реалния отвор), 3 за проверка (преден навес срещу crash beam, S00–S03/S06
   навътре от OEM обшивката, перките пред roll hoops), 1 отворен (покрив/капак — само от скана).
-  Screenshots: `04_ENGINEERING/statev_v01/skeleton_{side,top,front,persp}.png`. **Без loft.**
+  Screenshots: `04_ENGINEERING/statev_v01/skeleton_{side,top,front,persp,debug_side}.png`. **Без loft.**
+- 2026-09-14 (local, 2): допълнен до пълния обхват на двете съобщения — 105 обекта в 9 колекции.
+  Добавени: envelope кутии за clamshell/капак/калници/врати/рамена/deck, колекции
+  00_DONOR_HARDPOINTS (указател към CAGE_986) / 06_ROOF (2 PROVISIONAL обвивки) / 07_INTERIOR /
+  99_DEBUG (размерни линии + STEER_SWEEP), 6 материала, `STATEV_001_ROOT` с 26 параметъра,
+  L-образни стопове. Файл `02_DESIGN/exterior/STATEV_001_v001.blend`. Две нови находки:
+  door skin 1050 срещу отвор 1195, и 340 mm между капака и cowl-а без панел.
 - Next: собственикът гледа wireframe-а и казва кои сечения да се коригират; трите fatal се
   решават с числа. Чак след това loft. Успоредно: учебна стъпка 1 — **капак на огледало**
   (после корпус за Hella модул, после преден калник — не носът). Клетката е готова

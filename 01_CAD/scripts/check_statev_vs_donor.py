@@ -174,6 +174,30 @@ if ix_c + isx / 2 < spec_trail:
         "entirely on the door skin and feeds nothing. Hard constraint: the opening must feed the engine and every "
         f"opening is functional. Extend the channel to at least specX {spec_lead:.0f}.")
 
+# ---------------------------------------------------------------- 6b. door skin vs the door aperture
+print("\n[door skin]")
+door = next(b for b in BOXES if b[0] == "DOOR_SKIN")
+dsk_len = door[5]
+ap_front, ap_rear = -d("door_front_x"), -d("door_rear_x")     # in spec X
+aperture = abs(ap_rear - ap_front)
+print(f"  spec door skin {dsk_len} long | donor shut lines specX {ap_front:.0f} … {ap_rear:.0f} "
+      f"-> aperture {aperture:.0f} mm")
+if abs(dsk_len - aperture) > 20:
+    rec("check", "door skin", f"the spec's skin is {dsk_len} mm long but the donor door aperture between the "
+        f"shut lines is {aperture:.0f} mm — a {aperture - dsk_len:.0f} mm shortfall. The shut lines are locked, "
+        "so the skin has to span them exactly; take the length from the aperture, not from the spec.")
+
+# ---------------------------------------------------------------- 6c. hood rear edge vs the cowl
+print("\n[hood]")
+hood = next(b for b in BOXES if b[0] == "HOOD")
+hood_rear = hood[2] + hood[5] / 2.0
+cowl_spec = -d("cowl_x")
+print(f"  hood rear edge specX {hood_rear:.0f} | windshield base (cowl) specX {cowl_spec:.0f}")
+if cowl_spec - hood_rear > 50:
+    rec("check", "hood / cowl", f"the hood stops at specX {hood_rear:.0f} but the windshield base is at specX "
+        f"{cowl_spec:.0f} — {cowl_spec - hood_rear:.0f} mm of body between them is unassigned. Either the hood "
+        "runs back to the cowl or a separate cowl panel has to be added to the panel list.")
+
 # ---------------------------------------------------------------- 7. aero fins vs roll hoops
 print("\n[aero fins]")
 fin = next(b for b in BOXES if b[0] == "AERO_FIN")

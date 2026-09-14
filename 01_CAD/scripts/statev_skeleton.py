@@ -118,17 +118,22 @@ BOXES = [
      "Z 570 the half-width is 680, the cavity spans Y 505..615. Replaces the 650x100x65 bar."),
     ("PROJECTOR_2", "04_LIGHTING", -700,  420,  570,  150,  110,  110, "OPTIONAL",
      "room for a second module if low and high are split across two units; delete if one bi-LED is used"),
-    ("TAIL_BAR",    "04_LIGHTING", 3230,    0,  700,   45, 1560,   38, "DECIDED",
-     "one thin full-width bar, not the spec's L-shape. Both reference renders show a single straight "
-     "blade across the tail; the L came from the earlier written spec and neither render has it. "
-     "Height Z 700 sits on the S13 shoulder (its top control point is 750)."),
+    ("TAIL_BAR",    "04_LIGHTING", 3230,    0,  700,   45, 1560,   38, "LOCKED",
+     "thin full-width blade across the tail. Z 700 sits on the S13 shoulder (top control point 750)."),
+    ("TAIL_END",    "04_LIGHTING", 3150,  790,  700,  120,   40,   38, "LOCKED",
+     "L termination: the blade turns forward onto the quarter at each outboard end. I had dropped "
+     "this when I read the render as a plain bar — the locked intent is blade PLUS sharp L ends. "
+     "Explicitly NOT a Lamborghini-style separate triangular lamp; the light stays integrated "
+     "into the body."),
     ("HOOD_VENT",   "02_BODY",     -600,  250,  610,  380,  130,   25, "DECIDED",
      "pair of hood extractors, in both renders and absent from the written spec. Functional: they are "
      "the hot-air exit from the radiator duct, so they must line up with it (RAD_DUCT ends at specX "
      "-680). Size is read off the render proportions - PROVISIONAL until the radiator is scanned."),
     # --- front
-    ("FRONT_CLAMSHELL", "02_BODY", -400,    0,  450, 1100, 1800,  660, "spec",
-     "envelope X -950..150, Y +-900, Z 120..780; the panel itself comes from the loft"),
+    ("FRONT_CLAMSHELL", "02_BODY", -400,    0,  450, 1100, 1800,  660, "DESIGN_GROUP",
+     "envelope X -950..150, Y +-900, Z 120..780. This is a DESIGN GROUP, not one physical part: it "
+     "must read as one coherent front, but the manufactured split into nose / hood / left fender / "
+     "right fender is decided by mounting, servicing and the shop's build volume, not by styling."),
     ("HOOD",        "02_BODY",     -265,    0,  585, 1370, 1500,  270, "DECIDED",
      "rear edge extended from specX 80 back to the windshield base at 420, closing the 340 mm strip "
      "that belonged to no panel. Z 450 at the front edge to 720 at the rear - envelope only"),
@@ -195,7 +200,12 @@ DIFFUSER_FINS = ("DIFFUSER_FIN", "03_AERO", 7, 2870, 3420, None, 230, 550, 16, 2
 # the highest line of the car — ref-06/07 show the louvres recessed between two raised shoulders.
 # It starts at the roll-hoop plane; ahead of that is the cabin, not deck.
 # Heights are tied to the donor: the hoop tops (1235) set the ceiling, the deck sits under them.
+# BLOCKED BY THE ROOF ENVELOPE. These heights come from the render, and they sit inside the volume
+# the 986 soft top folds into. The locked rule is: model the ORIGINAL roof envelope first, then shape
+# the deck around it. We cannot — the fold path is unknown until the car is scanned in all four roof
+# positions. Treat every Z here as the maximum the design wants, not as a value that has been cleared.
 DECK_SPINE = [(1760, 960), (2100, 950), (2600, 880), (3200, 700)]
+DECK_STATUS = "BLOCKED: roof fold envelope unknown — scan the roof closed / half / open / clamshell up"
 
 SUBCOLLS = ["00_DONOR_HARDPOINTS", "01_MASTER_SKELETON", "02_BODY", "03_AERO",
             "04_LIGHTING", "05_MECHANICAL", "06_ROOF", "07_INTERIOR", "99_DEBUG"]

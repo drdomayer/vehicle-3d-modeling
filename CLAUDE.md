@@ -41,6 +41,14 @@ do the body design himself. Height ~190 cm — cabin fit is a hard constraint.
 | Design before donor | Yes — build a **hardpoint cage** from published 986 dimensions + blueprint + artist model, design panels with **15–20 mm air** to anything OEM, then buy/scan the car and realign | Owner has no donor yet |
 | Budget | Donor ≤ €6k. Whole one-off ≈ €31–60k, realistic target ~€40k. No €3–8k freelance surface designer (owner does it) | See docs/06-budget.md |
 
+## Visual authority
+
+The latest approved infographic is the **visual design authority**. CAD does not redesign the car;
+it translates the approved design into manufacturable panels against real 986 hardpoints. The locked
+elements are listed in `docs/14-locked-visual-decisions.md` — read it before touching any styling
+feature. If an engineering constraint forces a change, make the **smallest possible** change to the
+affected surface and record it there with the reason. Never redesign the surrounding area.
+
 ## Hard constraints (never violate)
 
 1. **Packaging first.** Never design a panel independent of the scanned/known
@@ -188,6 +196,11 @@ branches and never let them diverge for more than one session.
   ги шкури и боядисва. `docs/12` — готов промпт за ChatGPT (описание на формата по панели, без
   милиметри). `docs/13` — въпросник към фирмата; техните отговори определят разрязването,
   дебелините, фланците и формата на файловете, затова се пита ПРЕДИ да се чертае фуга.
+- 2026-09-14 (local, 11): визуалните решения заключени в `docs/14-locked-visual-decisions.md`.
+  Поправена моя грешка: бях прочел рендера като права лента и махнал L-края на стопа — върнат като
+  `TAIL_BAR` + `TAIL_END_L/R`. `FRONT_CLAMSHELL` маркиран като дизайнерска група, не един панел.
+  `DECK_SPINE` маркиран **BLOCKED** — височините са от рендера и стоят в обема на сгъване на
+  покрива; редът е обем на покрива първо, deck после, а обемът идва само от скан. 140 обекта.
 - Next: собственикът гледа wireframe-а и казва кои сечения да се коригират; трите fatal се
   решават с числа. Чак след това loft. Успоредно: учебна стъпка 1 — **капак на огледало**
   (после корпус за Hella модул, после преден калник — не носът). Клетката е готова

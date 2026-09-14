@@ -149,6 +149,16 @@ BOXES = [
      "X 1900..2850, Y 850..925, Z 300..850; loft through 5-7 sections, not one sculpted blob"),
     ("REAR_DECK",   "02_BODY",     2575,    0,  750, 1450, 1850,  200, "spec",
      "X 1850..3300, width 1500..1850, Z 650..850; thin skin, must not box in the engine bay"),
+    ("DOOR_VENT",   "03_AERO",      480,  845,  560,   70,   55,  260, "DECIDED",
+     "tall narrow slot at the LEADING EDGE of the door, ref-08 side view. Reads as the hot-air exit "
+     "from the front wheel well / radiator, so it pairs with FENDER_CHANNEL and HOOD_VENT. Sits just "
+     "behind the donor's front shut line (specX 440) - the line is locked, the vent is not on it."),
+    ("ROCKER_CHANNEL", "03_AERO",  1038,  810,  240, 1195,   80,   90, "DECIDED",
+     "deep undercut along the sill, running the full length of the door aperture, ref-08. Feeds the "
+     "side intake and visually lowers the car. Length taken from the donor shut lines, not the render."),
+    ("REAR_SPOILER", "03_AERO",    3150,    0,  790,  180, 1450,   40, "DECIDED",
+     "flat blade across the top of the tail, ref-08 side and rear views. Not in the written spec. "
+     "Sits above the tail bar; height PROVISIONAL until the deck surface exists."),
     ("SIDE_INTAKE", "03_AERO",     1640,  887,  485,  880,   75,  270, "DECIDED",
      "sculpted channel extended from specX 1200..1800 to 1200..2080 so it runs into the donor's real "
      "opening. Outer shape stays a styling choice; the airflow path does not."),

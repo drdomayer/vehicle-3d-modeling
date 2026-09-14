@@ -119,6 +119,75 @@ def smoothstep(a, b, x):
     return t * t * (3.0 - 2.0 * t)
 
 
+
+# ---------------------------------------------------------------- character fields
+# Five design elements, each a tunable field rather than hand-sculpted geometry, so a note like
+# "the shoulder should rise 200 mm later" is a number change and not a remodel.
+
+# 1. The one main side line: front fender -> door -> rear haunch. (spec_x, z) of its trajectory.
+SHOULDER_TRAJECTORY = [(-950, 470), (-700, 505), (-250, 545), (0, 565), (350, 578),
+                       (800, 592), (1200, 612), (1600, 648), (2000, 700), (2415, 735),
+                       (2800, 712), (3200, 648), (3420, 600)]
+SHOULDER_GAIN = 13.0      # mm of local width gained at the line
+SHOULDER_W_BELOW = 42.0   # tight below: this is what makes it read as a crease, not a bulge
+SHOULDER_W_ABOVE = 95.0   # soft release above
+
+# 2. Tension over the front wheel: a shoulder that starts low ahead of it, peaks above it, releases
+FENDER_GAIN = 20.0
+FENDER_X, FENDER_XW = -40.0, 470.0
+FENDER_Z, FENDER_ZW = 545.0, 120.0
+
+# 3. The rocker as its own element: the body tucks in below a defined sill line between the arches
+ROCKER_TUCK = 30.0        # mm the sill draws in
+ROCKER_EDGE_Z = 315.0     # the sill line itself
+ROCKER_X0, ROCKER_X1 = 330.0, 1820.0
+
+# 4. The tail drawn out instead of ending in a wall
+TAIL_START, TAIL_END_X = 2800.0, 3420.0
+TAIL_NARROW = 0.86        # half-width multiplier reached at the very tail
+TAIL_DROP = 90.0          # mm the crown falls over the same run
+
+# 5. Buttress crest (used in the blade loft): top width as a fraction of base
+BUTTRESS_TOP_FRAC = 0.20
+
+
+def table_z(table, spec_x):
+    xs = [t[0] for t in table]
+    if spec_x <= xs[0]:
+        return table[0][1]
+    if spec_x >= xs[-1]:
+        return table[-1][1]
+    for i in range(len(table) - 1):
+        (x0, z0), (x1, z1) = table[i], table[i + 1]
+        if x0 <= spec_x <= x1:
+            f = (spec_x - x0) / (x1 - x0)
+            return z0 + f * (z1 - z0)
+    return table[-1][1]
+
+
+def character(spec_x, z):
+    """Millimetres added to (or taken off) the half-width at this station and height."""
+    add = 0.0
+    # main side line
+    zs = table_z(SHOULDER_TRAJECTORY, spec_x)
+    w = SHOULDER_W_BELOW if z < zs else SHOULDER_W_ABOVE
+    add += SHOULDER_GAIN * math.exp(-((z - zs) / w) ** 2)
+    # front fender tension
+    add += (FENDER_GAIN * math.exp(-((spec_x - FENDER_X) / FENDER_XW) ** 2)
+            * math.exp(-((z - FENDER_Z) / FENDER_ZW) ** 2))
+    # rocker tuck, with a defined edge at ROCKER_EDGE_Z
+    if ROCKER_X0 <= spec_x <= ROCKER_X1 and z < ROCKER_EDGE_Z:
+        ends = min(smoothstep(ROCKER_X0, ROCKER_X0 + 260, spec_x),
+                   1.0 - smoothstep(ROCKER_X1 - 260, ROCKER_X1, spec_x))
+        add -= ROCKER_TUCK * ends * (1.0 - smoothstep(ROCKER_EDGE_Z - 55, ROCKER_EDGE_Z, z))
+    return add
+
+
+def tail_factor(spec_x):
+    t = smoothstep(TAIL_START, TAIL_END_X, spec_x)
+    return 1.0 - (1.0 - TAIL_NARROW) * t, TAIL_DROP * t
+
+
 ZONE_BLEND = 420      # mm over which one zone's character hands over to the next
 
 
@@ -157,8 +226,12 @@ def ring(spec_x):
         a = smoothstep(x0, x0 + 320, spec_x)          # release out of the cowl
         b = smoothstep(x1 - 320, x1, spec_x)          # gather into the deck
         crown = z0 * (1 - a) + belt * (a - b) + z1 * b
-    crown = max(crown, z_top + 10)
-    half = [(0.0, z_floor)] + [(zone_shape(spec_x, z, hw, z_top), z) for z, hw in prof] + [(0.0, crown)]
+    narrow, drop = tail_factor(spec_x)
+    crown = max(crown - drop, z_top + 10)
+    half = ([(0.0, z_floor)]
+            + [(max(20.0, (zone_shape(spec_x, z, hw, z_top) + character(spec_x, z)) * narrow), z)
+               for z, hw in prof]
+            + [(0.0, crown)])
     half = resample(half, N_HALF)
     return list(half) + [(-y, z) for y, z in reversed(half[1:-1])]
 
@@ -361,7 +434,8 @@ def build():
             wid = b["w"] * (0.45 + 0.55 * math.sin(math.pi * min(1.0, 0.25 + f * 0.9)))
             z_base = b["z_lo"] - 260      # reaches down INTO the haunch so the union merges
             quad = [(b["y"] - wid / 2, z_base), (b["y"] + wid / 2, z_base),
-                    (b["y"] + wid / 2 * 0.55, z_top), (b["y"] - wid / 2 * 0.55, z_top)]
+                    (b["y"] + wid / 2 * BUTTRESS_TOP_FRAC, z_top),
+                    (b["y"] - wid / 2 * BUTTRESS_TOP_FRAC, z_top)]
             if sgn < 0:
                 quad.reverse()
             idx = []

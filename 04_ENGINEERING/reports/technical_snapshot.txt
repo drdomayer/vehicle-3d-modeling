@@ -1,0 +1,130 @@
+======================================================================================
+STATEV 001 — TECHNICAL SNAPSHOT of the current blockout (file v014). NO GEOMETRY CHANGED.
+Coordinates: spec X (+ = rearward, front axle = 0), Y = lateral, Z = height above ground, mm.
+======================================================================================
+
+1. OVERALL
+   length                4370.0      nose -950  tail 3420
+   width                 1850.0
+   body height            864.5      lowest 120  highest 984
+   highest without hoops  984.5      (roll hoops themselves reach 1235)
+   wheelbase               2415
+   front overhang         950.0      rear overhang   1005.0
+   track front / rear      1465 / 1528
+
+2. WHEELS
+   STATEV_WHEEL_F_L   specX    -0.0  Y   732.5  Z  323.5   dia 647  width 235
+   STATEV_WHEEL_F_R   specX    -0.0  Y  -732.5  Z  323.5   dia 647  width 235
+   STATEV_WHEEL_R_L   specX  2415.0  Y   764.0  Z  337.5   dia 675  width 275
+   STATEV_WHEEL_R_R   specX  2415.0  Y  -764.0  Z  337.5   dia 675  width 275
+
+3. PROFILE — body top Z and 4. WIDTH, by station
+    specX what                        top Z   low Z  half-width    width
+     -950 nose tip                    460.0   120.0       417.8    835.7
+     -700 headlight zone              630.0   120.0       728.0   1456.1
+     -500 fender start                694.4   120.0       832.3   1664.6
+     -250 ahead of front axle         732.3   120.0       880.8   1761.6
+        0 FRONT AXLE                  772.7   120.0       745.4   1490.7
+      350 behind front arch           919.9   120.0       864.6   1729.3
+      420 windshield base (cowl)      934.7   120.0       858.3   1716.7
+      800 door centre                 726.8   120.0       856.3   1712.7
+     1200 side intake start           776.6   120.0       862.4   1724.7
+     1600 side intake deep            795.7   120.0       896.0   1792.0
+     1760 ROLL HOOP PLANE             877.3   120.0       911.8   1823.6
+     2000 rear haunch start           984.5   120.0       924.7   1849.5
+     2415 REAR AXLE                   823.2   120.0       901.4   1802.7
+     2800 behind rear wheel           752.6   120.0       924.0   1848.0
+     3200 rear fascia                 704.5   120.0       752.3   1504.7
+     3420 tail                        742.6   120.0       529.5   1059.0
+
+5. COCKPIT, SCREEN, HOOPS, DECK, BUTTRESSES
+   cockpit opening     specX 420 .. 1760   length 1340   half-width at the cut 700  (width 1400)
+   windshield base     specX 420   Z 970
+   windshield header   specX 1055   Z 1255
+   roll hoops          specX 1760   tube plane Y +-350   top Z 1235
+   roll-bar mounts     front Y total 1132.0  rear 1104.5
+   deck spine          (1760,880)  (2100,862)  (2600,800)  (3200,665)
+   buttress            specX 1600 .. 2640   Y +-585   width 300   Z 760 .. 985
+   door shut lines     specX 440 and 1635   aperture 1195
+
+6. DONOR / LOCKED  vs  NEW / EDITABLE
+   DONOR, LOCKED — read only, never written by any script:
+     wheelbase              2415
+     track_front            1465
+     track_rear             1528
+     cowl_x                 -420
+     cowl_z                 970
+     ws_top_x               -1055
+     ws_top_z               1255
+     hoop_x                 -1760
+     hoop_top_z             1235
+     hoop_y                 350
+     door_front_x           -440
+     door_rear_x            -1635
+     side_intake_x          -2080
+   NEW, EDITABLE — our design, all parametric:
+     SHOULDER_TRAJECTORY    [(-950, 470), (-700, 505), (-250, 545), (0, 565), (350, 57
+     FENDER_GAIN            34.0
+     ROCKER_TUCK            34.0
+     ROCKER_EDGE_Z          315.0
+     BELT_DIP               48.0
+     TAIL_NARROW            0.86
+     TAIL_DROP              140.0
+     BUTTRESS_TOP_FRAC      0.2
+     FLANK_PULL             0.88
+     MAX_HALF_WIDTH         925.0
+     NOSE_BLADE_THIN        46.0
+
+7. BODY OBJECTS
+   name                               specX centre             dims L/W/H mm  editable
+   STATEV_FRONT_VOLUME                        -432         [1350, 1762, 800]  yes (our geometry)
+   STATEV_REAR_VOLUME                         2705         [1553, 1850, 864]  yes (our geometry)
+   STATEV_SIDE_VOLUME                         1147         [1639, 1841, 841]  yes (our geometry)
+   DOOR_FRONT_L                                 -0               [0, 0, 600]  NO (donor hardpoint)
+   DOOR_FRONT_R                                 -0               [0, 0, 600]  NO (donor hardpoint)
+   DOOR_REAR_L                                  -0               [0, 0, 600]  NO (donor hardpoint)
+   DOOR_REAR_R                                  -0               [0, 0, 600]  NO (donor hardpoint)
+   ROLLHOOP_L                                   -0               [0, 0, 635]  NO (donor hardpoint)
+   ROLLHOOP_R                                   -0               [0, 0, 635]  NO (donor hardpoint)
+   WINDSHIELD_centreline                        -0             [635, 0, 285]  NO (donor hardpoint)
+
+   body volume 3.599 m3   faces 5648
+
+==============================================================================
+WHAT THE NUMBERS SAY THAT THE SCREENSHOTS DO NOT
+==============================================================================
+
+Three problems in the profile that are arithmetic, not taste. None were fixed —
+this is a measurement pass.
+
+1. A CLIFF AT THE COWL
+   specX  350  top Z 920
+   specX  420  top Z 935      <- windshield base, donor, Z 970
+   specX  800  top Z 727      <- door centre
+   The body falls 208 mm in 380 mm of length, right where the cowl hands over to
+   the door. In side view that is a vertical face, not a transition. The scuttle
+   is doing all the work and nothing carries the line into the door.
+   Cause: HOOD_SPINE ends at 970 and BELT_DIP takes 48 mm out of the door region,
+   with nothing bridging between them.
+
+2. THE REAR PEAK IS IN THE WRONG PLACE
+   specX 2000  top Z 985      <- highest point of the whole body
+   specX 2415  top Z 823      <- REAR AXLE
+   specX 2800  top Z 753
+   The crown peaks 415 mm AHEAD of the rear axle and is already falling by the
+   time it reaches the wheel. A rear haunch reads as muscle when its peak sits
+   over the axle. Here the mass is over the seats instead.
+   Cause: BUTTRESS runs 1600..2640 with its rise centred early, and it is what
+   sets the crown there, not the haunch.
+
+3. THE TAIL TURNS BACK UP
+   specX 3200  top Z 705
+   specX 3420  top Z 743      <- the very last station is 38 mm HIGHER
+   The tail should fall away. It rises at the end, which is why the rear reads
+   as blunt however much the width is tapered.
+   Cause: DECK_SPINE ends at specX 3200; beyond it the fallback crown takes over
+   and lifts.
+
+Also worth noting, not a fault: at the front axle the half-width reads 745 rather
+than the 880 either side of it. That is the wheel arch cut passing through the
+station, not a waist in the body.

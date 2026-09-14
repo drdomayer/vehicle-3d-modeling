@@ -41,6 +41,13 @@ do the body design himself. Height ~190 cm — cabin fit is a hard constraint.
 | Design before donor | Yes — build a **hardpoint cage** from published 986 dimensions + blueprint + artist model, design panels with **15–20 mm air** to anything OEM, then buy/scan the car and realign | Owner has no donor yet |
 | Budget | Donor ≤ €6k. Whole one-off ≈ €31–60k, realistic target ~€40k. No €3–8k freelance surface designer (owner does it) | See docs/06-budget.md |
 
+## Freeze rule
+
+Zones are approved and then frozen. A frozen zone's defining data cannot change: the build itself
+refuses to run and names what changed. This is code, not a convention — `01_CAD/scripts/freeze.py`,
+checked at the top of `build()`. Unfreezing requires an explicit command and a recorded reason.
+See `docs/17-staged-plan-and-freeze-rule.md`. Never work around it by editing the state file.
+
 ## Visual authority
 
 The latest approved infographic is the **visual design authority**. CAD does not redesign the car;
@@ -227,7 +234,13 @@ branches and never let them diverge for more than one session.
   `scan_dependency_report.py`: осем сесии, подредени така, че нищо да не се сваля и връща пак.
   **S2 (покривът в четирите положения) е първи** — той разблокира цялата задна група.
   Изход в `04_ENGINEERING/reports/scan_dependency.txt`.
-- Next: собственикът гледа wireframe-а и казва кои сечения да се коригират; трите fatal се
+- 2026-09-14 (local, 17): приет петстепенният план (`docs/17`): големи обеми → зони → детайли →
+  производствена версия → производство, с четири контролни точки. **FREEZE правилото е
+  машинария, не обещание** — `freeze.py` + състояние в `data/freeze_state.json`, проверката се
+  вика в началото на `build()`. Тествано: замразена зона, преместен елемент с 5 mm, строежът
+  отказа и назова зоната и двата хеша; след връщане мина чисто.
+- Next: Prompt 01 „Build the master exterior volumes“ от собственика. Големите обеми по зони,
+  без детайли, профилът да се чете като ref-08. После CHECKPOINT 01 и freeze. и казва кои сечения да се коригират; трите fatal се
   решават с числа. Чак след това loft. Успоредно: учебна стъпка 1 — **капак на огледало**
   (после корпус за Hella модул, после преден калник — не носът). Клетката е готова
   като подложка. Отворено: `hoop_y`, roof fold envelope, engine-lid opening — от скана.

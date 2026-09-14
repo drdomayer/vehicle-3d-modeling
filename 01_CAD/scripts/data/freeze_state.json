@@ -1,0 +1,35 @@
+{
+ "FRONT": {
+  "state": "OPEN",
+  "hash": null,
+  "frozen_at": null,
+  "history": []
+ },
+ "SIDE": {
+  "state": "OPEN",
+  "hash": null,
+  "frozen_at": "2026-09-14",
+  "history": [
+   "2026-09-14 FROZEN at 9966cafd9842a557",
+   "2026-09-14 UNFROZEN: \u0442\u0435\u0441\u0442\u043e\u0432\u043e \u0437\u0430\u043c\u0440\u0430\u0437\u044f\u0432\u0430\u043d\u0435; SIDE \u043e\u0449\u0435 \u043d\u0435 \u0435 \u043c\u0438\u043d\u0430\u043b\u0430 CHECKPOINT 01"
+  ]
+ },
+ "REAR": {
+  "state": "OPEN",
+  "hash": null,
+  "frozen_at": null,
+  "history": []
+ },
+ "ROOF": {
+  "state": "OPEN",
+  "hash": null,
+  "frozen_at": null,
+  "history": []
+ },
+ "LIGHTS": {
+  "state": "OPEN",
+  "hash": null,
+  "frozen_at": null,
+  "history": []
+ }
+}

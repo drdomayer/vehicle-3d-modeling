@@ -18,6 +18,7 @@ Status of every number: "spec" = from the v0.1 package, "derived" = computed her
 """
 
 import bpy
+import os
 
 COLL_ROOT = "STATEV_001"
 PFX = "STATEV_"          # every object this script owns carries it (prompt §6, §9)
@@ -498,6 +499,17 @@ def half_width_at(profile, z):
 
 
 def build():
+    # FREEZE RULE — refuse to rebuild if an approved zone's defining data has changed.
+    try:
+        import importlib.util as _ilu
+        _sp = _ilu.spec_from_file_location("_freeze", os.path.join(_here, "freeze.py"))
+        _fz = _ilu.module_from_spec(_sp); _sp.loader.exec_module(_fz)
+        _fz.check()
+    except FileNotFoundError:
+        pass
+    except RuntimeError:
+        raise
+
     scene = bpy.context.scene
     scene.unit_settings.system = "METRIC"
     scene.unit_settings.length_unit = "MILLIMETERS"

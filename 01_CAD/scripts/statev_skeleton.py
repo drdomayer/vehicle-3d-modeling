@@ -260,6 +260,51 @@ PANEL_SEAMS = {
                              [(3050, 0, 330), (3050, 450, 330), (3050, 700, 330)]),
 }
 
+# Surface behaviour per zone (docs/16). Not geometry — the rules the surfacing must obey.
+# curvature / highlight / tension / edges / transition / the mistake to avoid.
+SURFACE = {
+    "NOSE":              ("longitudinally almost flat, slightly convex across", "one long near-horizontal band narrowing to the centre", "front edge and the outer tips of the lights", "outer edges sharp; centre-to-intake defined but not knife-edged throughout", "tangent to hood, clear direction change at the lights", "no rounded supercar nose, do not lift the centre"),
+    "HOOD":              ("long, low, gently convex centre with two faint raised tension zones", "two long diagonals running back to the windshield base", "strongest along the outer hood lines, centre stays calm", "long controlled edges, small radius", "continuous into the windshield base", "no power bulge, no muscle-car hood"),
+    "FRONT_FENDER_TOP":  ("strongly convex over the wheel but only locally, then releasing fast toward the centre", "one strong diagonal band over the arch", "maximum directly above the front tyre", "clean arch edge; from it the surface stretches up to the hood", "tangent to hood, must not read as a sphere", "not a separate round balloon"),
+    "FRONT_FENDER_SIDE": ("convex at the arch turning concave into the channel", "the highlight BREAKS in the channel — light must disappear", "along the upper outer edge of the fender", "sharp transition edge into the open channel", "a clear break, not a soft fillet", "do not fill the void with material — the void is the hypercar read"),
+    "HEADLIGHT_SURROUND":("slightly concave around the lamp", "the lamps interrupt the hood/fender reflection", "around the outer edge of the module", "sharp inboard, softer toward the hood", "integrated into the surface, not sitting on it", "not a Lamborghini-style separate pocket"),
+    "FRONT_LOWER_INTAKE":("the surface breaks inward sharply — a real hole", "light nearly vanishes inside", "maximum at the upper lip", "sharp upper edge, softer lower transition", "clear break", "not a huge smile; technical, low and wide"),
+    "DOOR_UPPER":        ("gently convex in the upper half, then drawing in", "one long clean longitudinal band", "strongest along the shoulder line", "as few edges as possible", "quiet", "no decorative creases"),
+    "DOOR_CHANNEL":      ("surface collapses inward into a deep channel", "highlight terminates in the channel", "along the upper lip of the channel", "sharp entry edge", "surface -> inward collapse -> channel -> blade -> intake", "must look like air cut the car, not like a styling dent"),
+    "SIDE_INTAKE_MOUTH": ("convex outer frame, deeply concave interior", "highlight breaks completely at the mouth", "front and top lips", "sharp; the vertical blade separates body from cavity", "clear break", "not a huge Lamborghini scoop — narrower and tenser"),
+    "ROCKER":            ("nearly flat across, lifting slightly toward the rear haunch", "one long horizontal band", "along the top edge", "thin structural blade", "quiet", "not a thick side skirt"),
+    "REAR_HAUNCH_TOP":   ("strongly convex over the rear wheel, asymmetric, not a clean arc", "one broad band along the shoulder", "maximum just behind the cabin", "rises, holds tension, draws back to the tail", "into the deck", "not a round classic widebody muscle"),
+    "REAR_HAUNCH_SIDE":  ("convex above, near vertical, concave below", "band breaks low", "upper outer edge", "clear lower undercut", "into the diffuser", "do not fill the volume down to the floor"),
+    "BUTTRESS":          ("starts low at the front, rises, then releases into the deck", "one narrow longitudinal highlight", "along both defined edges", "two clear edges, inner and outer", "structure, not a hump", "not soft and rounded"),
+    "REAR_DECK":         ("structurally calm around the roof mechanism", "quiet", "low — this area must not fight the mechanism", "thin skin over a technical mechanism", "into the cover and the fascia", "no aggressive forms where the roof has to stow"),
+    "ENGINE_COVER":      ("gently convex around the louvres, falling to the fascia", "interrupted by the louvres, which share one perspective", "moderate", "louvres are real openings on one common vanishing direction", "into the fascia", "not a giant flat grille"),
+    "REAR_FASCIA":       ("wide but light; the light blade cuts the tail in two", "the blade is the dominant horizontal", "low — mass is what we are avoiding here", "dark technical zone beneath the blade", "into the diffuser", "no four exhausts, no decorative openings"),
+    "DIFFUSER":          ("relatively flat in the centre, expanding out to the fins", "broken by the fins", "at the fin roots", "clear sharp vertical fins", "a real tunnel, not a black plastic bumper", "fewer and larger fins, not ten small ones"),
+}
+
+# Continuity between zones. G0 = deliberate structural break, G1 = character transition,
+# G2 = main body surfaces. Chasing G2 everywhere is what makes CAD models look like soap.
+CONTINUITY = {
+    ("NOSE", "HOOD"): "G1", ("HOOD", "FRONT_FENDER_TOP"): "G2",
+    ("FRONT_FENDER_TOP", "FRONT_FENDER_SIDE"): "G1",
+    ("FRONT_FENDER_SIDE", "DOOR_UPPER"): "G0",
+    ("HOOD", "HEADLIGHT_SURROUND"): "G1", ("NOSE", "FRONT_LOWER_INTAKE"): "G0",
+    ("DOOR_UPPER", "DOOR_CHANNEL"): "G0", ("DOOR_CHANNEL", "SIDE_INTAKE_MOUTH"): "G1",
+    ("DOOR_UPPER", "ROCKER"): "G1", ("DOOR_UPPER", "REAR_HAUNCH_TOP"): "G2",
+    ("REAR_HAUNCH_TOP", "REAR_HAUNCH_SIDE"): "G1",
+    ("REAR_HAUNCH_TOP", "BUTTRESS"): "G0", ("BUTTRESS", "REAR_DECK"): "G1",
+    ("REAR_DECK", "ENGINE_COVER"): "G1", ("ENGINE_COVER", "REAR_FASCIA"): "G1",
+    ("REAR_FASCIA", "DIFFUSER"): "G0", ("REAR_HAUNCH_SIDE", "DIFFUSER"): "G1",
+}
+
+# The shoulder line, as ONE idea rather than separate lines: low -> tight -> rising -> muscular -> tapering
+SHOULDER_LINE = "front fender low -> slight dip at the door -> rises behind the cabin -> peak over the rear wheel -> draws back to the tail; no visible kink"
+
+# The three negative-space regions. These are the reason the car reads as exotic.
+NEGATIVE_SPACE = ["front fender channel, behind the front wheel — the most aggressive void at the front",
+                  "door / side-intake channel — the main side character element",
+                  "rear lower body under the haunch into the diffuser — thin skin, visible dark structure behind"]
+
 SUBCOLLS = ["00_DONOR_HARDPOINTS", "01_MASTER_SKELETON", "02_BODY", "03_AERO",
             "04_LIGHTING", "05_MECHANICAL", "06_ROOF", "07_INTERIOR",
             "08_PANEL_SEAMS", "99_DEBUG"]

@@ -57,8 +57,15 @@ DOOR_CHANNEL = [(560, 0, 470, 600), (760, 55, 450, 620), (1100, 95, 430, 640),
 # The front mouth. This was in the element list but never in the cutter families, which is why the
 # nose came out as a solid rounded prow instead of a blade over an opening.
 # (spec_x, half_depth_into_body, z_lo, z_hi)
-NOSE_MOUTH = [(-965, 0, 215, 395), (-930, 150, 200, 405), (-850, 210, 195, 410),
-              (-770, 190, 200, 400), (-700, 90, 215, 385), (-655, 0, 230, 370)]
+# Mouth top lowered from ~405 to ~345: at the old height only 15 mm of body sat above it, so there
+# was no blade to read. 80 mm of material above the opening is what makes it "blade over a mouth".
+NOSE_MOUTH = [(-965, 0, 200, 330), (-930, 155, 185, 345), (-850, 215, 180, 350),
+              (-770, 195, 185, 342), (-700, 95, 200, 325), (-655, 0, 215, 310)]
+
+# The blade itself: thin the nose above the mouth so the upper line reads sharp, not blunt.
+NOSE_BLADE_X0, NOSE_BLADE_X1 = -965.0, -640.0
+NOSE_BLADE_Z = 350.0        # everything above this at the nose is drawn in
+NOSE_BLADE_THIN = 46.0      # mm taken off the half-width at the top of the blade
 
 REAR_UNDERCUT = [(2350, 0, 90, 300), (2600, 70, 90, 330), (2950, 95, 90, 340),
                  (3250, 60, 90, 320), (3400, 0, 90, 280)]
@@ -154,7 +161,9 @@ ROCKER_X0, ROCKER_X1 = 330.0, 1820.0
 # In the reference the flank is near vertical between the shoulder and the undercut.
 FLANK_X0, FLANK_X1 = 1900.0, 3050.0
 FLANK_Z_LO, FLANK_Z_HI = 300.0, 660.0      # the band held near constant width
-FLANK_PULL = 0.85                          # how strongly it is pulled to the station maximum
+FLANK_PULL = 0.88                          # how strongly it is pulled to the station maximum
+FLANK_EASE_TOP = 34.0                      # short: a crisp shoulder edge, not a roll
+FLANK_SHOULDER = 16.0                      # extra mass in the shoulder just above the flank
 
 # 4. The tail drawn out instead of ending in a wall
 TAIL_START, TAIL_END_X = 2800.0, 3420.0
@@ -187,7 +196,7 @@ def flank(spec_x, z, hw, hw_max):
     ends = min(smoothstep(FLANK_X0, FLANK_X0 + 300, spec_x),
                1.0 - smoothstep(FLANK_X1 - 300, FLANK_X1, spec_x))
     inb = min(smoothstep(FLANK_Z_LO, FLANK_Z_LO + 70, z),
-              1.0 - smoothstep(FLANK_Z_HI - 70, FLANK_Z_HI, z))
+              1.0 - smoothstep(FLANK_Z_HI - FLANK_EASE_TOP, FLANK_Z_HI, z))
     k = FLANK_PULL * ends * inb
     return hw + (hw_max - hw) * k
 
@@ -202,12 +211,21 @@ def character(spec_x, z):
     # front fender tension
     add += (FENDER_GAIN * math.exp(-((spec_x - FENDER_X) / FENDER_XW) ** 2)
             * math.exp(-((z - FENDER_Z) / FENDER_ZW) ** 2))
+    # rear shoulder mass, sitting just above the vertical flank
+    if FLANK_X0 <= spec_x <= FLANK_X1:
+        ends = min(smoothstep(FLANK_X0, FLANK_X0 + 300, spec_x),
+                   1.0 - smoothstep(FLANK_X1 - 300, FLANK_X1, spec_x))
+        add += FLANK_SHOULDER * ends * math.exp(-((z - (FLANK_Z_HI + 40)) / 85.0) ** 2)
+    # nose blade: thin the section above the mouth so the upper line is sharp
+    if NOSE_BLADE_X0 <= spec_x <= NOSE_BLADE_X1 and z > NOSE_BLADE_Z:
+        run = min(smoothstep(NOSE_BLADE_X1, NOSE_BLADE_X1 - 140, spec_x), 1.0)
+        add -= NOSE_BLADE_THIN * run * smoothstep(NOSE_BLADE_Z, NOSE_BLADE_Z + 90, z)
     # rocker tuck, with a defined edge at ROCKER_EDGE_Z
     if ROCKER_X0 <= spec_x <= ROCKER_X1 and z < ROCKER_EDGE_Z:
         ends = min(smoothstep(ROCKER_X0, ROCKER_X0 + 260, spec_x),
                    1.0 - smoothstep(ROCKER_X1 - 260, ROCKER_X1, spec_x))
-        # 18 mm of transition, not 55: the short run is what makes it an edge instead of a dent
-        add -= ROCKER_TUCK * ends * (1.0 - smoothstep(ROCKER_EDGE_Z - 18, ROCKER_EDGE_Z, z))
+        # 10 mm of transition: crisper still. Depth unchanged — the edge is what was missing.
+        add -= ROCKER_TUCK * ends * (1.0 - smoothstep(ROCKER_EDGE_Z - 10, ROCKER_EDGE_Z, z))
     return add
 
 

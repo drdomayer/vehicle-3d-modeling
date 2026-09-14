@@ -9,8 +9,8 @@ ARCHITECTURAL DIAGNOSTIC of v015. NOTHING CHANGED. Measurements only.
    specX  -100: half-width  802.2   top Z  755.0   above the arch crown (Z>674)  731.5
    specX     0: half-width  772.2   top Z  772.7   above the arch crown (Z>674)  731.1
    specX   100: half-width  788.0   top Z  800.1   above the arch crown (Z>674)  721.2
-   specX   250: half-width  843.6   top Z  847.7   above the arch crown (Z>674)  703.0
-   specX   400: half-width  859.9   top Z  947.5   above the arch crown (Z>674)  718.5
+   specX   250: half-width  829.3   top Z  847.7   above the arch crown (Z>674)  703.0
+   specX   400: half-width  861.9   top Z  947.5   above the arch crown (Z>674)  718.2
    crown of the body over the front axle: Z 772.7, arch crown at Z 673.5 -> 99.2 mm of fender above the opening
    fender proud of the centre section at specX 0: 772.2 mm between the widest and the rocker line
 
@@ -21,118 +21,61 @@ ARCHITECTURAL DIAGNOSTIC of v015. NOTHING CHANGED. Measurements only.
      specX  -250: designed line Z   545   body top/belt  724.2
      specX     0: designed line Z   565   body top/belt  772.7
      specX   350: designed line Z   578   body top/belt  921.8
-     specX   800: designed line Z   592   body top/belt  735.7
-     specX  1200: designed line Z   612   body top/belt  776.5
-     specX  1600: designed line Z   648   body top/belt  800.0
-     specX  2000: designed line Z   700   body top/belt  908.7
-     specX  2415: designed line Z   735   body top/belt  984.8
-     specX  2800: designed line Z   712   body top/belt  755.6
-     specX  3200: designed line Z   648   body top/belt  569.6
+     specX   800: designed line Z   592   body top/belt  822.7
+     specX  1200: designed line Z   612   body top/belt  786.7
+     specX  1600: designed line Z   648   body top/belt  822.6
+     specX  2000: designed line Z   700   body top/belt  966.6
+     specX  2415: designed line Z   735   body top/belt  990.5
+     specX  2800: designed line Z   712   body top/belt  858.1
+     specX  3200: designed line Z   648   body top/belt  642.5
      specX  3420: designed line Z   600   body top/belt  513.1
    door channel depth (how far the surface collapses inward):
-     specX   760: widest  854.9   inside the channel band  854.9   depth    0.0
-     specX  1100: widest  860.2   inside the channel band  859.7   depth    0.5
-     specX  1450: widest  883.6   inside the channel band  847.4   depth   36.2
-     specX  1750: widest  907.5   inside the channel band  890.4   depth   17.1
-     specX  1980: widest  922.9   inside the channel band  922.3   depth    0.5
+     specX   760: widest  858.9   inside the channel band  858.9   depth    0.0
+     specX  1100: widest  863.3   inside the channel band  863.3   depth    0.0
+     specX  1450: widest  887.2   inside the channel band    0.0   depth  887.2
+     specX  1750: widest  907.4   inside the channel band  700.0   depth  207.4
+     specX  1980: widest  923.3   inside the channel band  923.3   depth    0.0
    rocker: body half-width below the sill line vs above it
-     specX   600: below Z300  793.3   above Z340  853.0   tuck   59.7
-     specX  1000: below Z300  794.6   above Z340  858.7   tuck   64.1
-     specX  1400: below Z300  811.8   above Z340  877.6   tuck   65.8
-     specX  1700: below Z300  851.5   above Z340  906.1   tuck   54.6
+     specX   600: below Z300  803.3   above Z340  857.5   tuck   54.3
+     specX  1000: below Z300  782.7   above Z340  861.4   tuck   78.6
+     specX  1400: below Z300  795.9   above Z340  881.3   tuck   85.4
+     specX  1700: below Z300  832.3   above Z340  906.2   tuck   73.8
 
 3. REAR 3/4 — haunch, buttress, deck, tail as one form
    crown line through the rear, looking for steps:
-     specX  1600: top Z  800.0
-     specX  1750: top Z  876.4  step   +76.4
-     specX  1900: top Z  876.5  step    +0.1
-     specX  2050: top Z  908.7  step   +32.2
-     specX  2200: top Z  964.6  step   +55.9
-     specX  2350: top Z  980.6  step   +16.0
-     specX  2500: top Z  976.6  step    -4.0
-     specX  2650: top Z  957.2  step   -19.4
-     specX  2800: top Z  755.6  step  -201.6
-     specX  2950: top Z  700.6  step   -55.1
-     specX  3100: top Z  625.1  step   -75.5
-     specX  3250: top Z  561.4  step   -63.7
-     specX  3400: top Z  513.1  step   -48.3
+     specX  1600: top Z  822.6
+     specX  1750: top Z  900.5  step   +77.9
+     specX  1900: top Z  955.0  step   +54.5
+     specX  2050: top Z  977.6  step   +22.6
+     specX  2200: top Z  993.2  step   +15.7
+     specX  2350: top Z  996.5  step    +3.3
+     specX  2500: top Z  977.5  step   -19.1
+     specX  2650: top Z  912.7  step   -64.7
+     specX  2800: top Z  858.1  step   -54.6
+     specX  2950: top Z  793.7  step   -64.5
+     specX  3100: top Z  728.2  step   -65.4
+     specX  3250: top Z  589.7  step  -138.5
+     specX  3400: top Z  513.1  step   -76.6
    shoulder width through the rear:
-     specX  1900: half-width  919.1
+     specX  1900: half-width  916.5
      specX  2100: half-width  925.0
-     specX  2415: half-width  911.5
+     specX  2415: half-width  910.0
      specX  2700: half-width  924.7
-     specX  3000: half-width  859.4
-     specX  3300: half-width  655.3
+     specX  3000: half-width  863.1
+     specX  3300: half-width  654.8
 
 4. COCKPIT / DECK — are the donor screen and hoops integrated or sitting on top
    windshield base Z 970 (donor)   header Z 1255 (donor)
-     specX   440: beltline  731.1   step to the screen base  238.9
-     specX   700: beltline  719.8   step to the screen base  250.2
-     specX  1100: beltline  775.7   step to the screen base  194.3
-     specX  1500: beltline  788.3   step to the screen base  181.7
-     specX  1635: beltline  800.0   step to the screen base  170.0
-   deck at the hoop plane Z 877.6   hoop top Z 1235   hoops stand 357.4 mm proud of the deck
-   hoop tube plane Y +-350   body half-width there 911.6   -> the hoops sit 561.6 mm inboard of the body edge
+     specX   440: beltline  752.9   step to the screen base  217.1
+     specX   700: beltline  819.5   step to the screen base  150.5
+     specX  1100: beltline  785.8   step to the screen base  184.2
+     specX  1500: beltline  799.3   step to the screen base  170.7
+     specX  1635: beltline  831.1   step to the screen base  138.9
+   deck at the hoop plane Z 915.8   hoop top Z 1235   hoops stand 319.2 mm proud of the deck
+   hoop tube plane Y +-350   body half-width there 909.0   -> the hoops sit 559.0 mm inboard of the body edge
 
 5. NEGATIVE SPACES — are they strong enough to read
-   front fender channel   specX    320  widest  867.4  in the void  867.4  depth    0.0
-   door channel           specX   1425  widest  882.0  in the void  846.0  depth   36.0
-   side intake mouth      specX   1990  widest  924.7  in the void  924.7  depth    0.0
-   rear undercut          specX   2775  widest  924.7  in the void  814.0  depth  110.6
-
-==============================================================================
-RANKED FINDINGS
-==============================================================================
-
-#1  THREE OF THE FOUR SIGNATURE VOIDS DO NOT EXIST IN THE SURFACE
-      front fender channel  depth   0.0 mm
-      side intake mouth     depth   0.0 mm
-      door channel          depth  36.0 mm at its deepest, 0.0 at both ends
-      rear undercut         depth 110.6 mm   <- the only one that works
-    The booleans run and report cutting, but the cutters are sized from the RAW
-    section profile while the body is built from the SHAPED profile, which is
-    wider by more than the cutter's 60 mm outboard margin at those stations. The
-    cutter ends up entirely inside the body and hollows it instead of opening it.
-    These voids are the car's identity and the reason the highlight test failed.
-
-#2  A 201 mm STEP IN THE REAR CROWN AT specX 2800
-      2350: 980.6   2500: 976.6   2650: 957.2   2800: 755.6   2950: 700.6
-    The buttress ends at specX 2640 and the deck spine takes over far below it.
-    haunch -> buttress -> deck -> tail is therefore two forms, not one. This is
-    the direct answer to "is the rear one continuous form": no.
-
-#3  BELTLINE STEP AT THE A-PILLAR IS 239-250 mm
-      specX 440 belt 731, 700 belt 720, against a screen base of 970.
-    The screen is planted on the body. Note the 150 mm quoted earlier compared
-    the beltline at the REAR of the cabin against the screen at the FRONT.
-
-#4  THE SHOULDER TRAJECTORY IS NOT CONTROLLING THE SILHOUETTE
-      designed Z 565 at the front axle, body top 772; designed 735 at the rear
-      axle, body 984.
-    SHOULDER_TRAJECTORY only adds a 13 mm crease at those heights, which is
-    invisible against a body 200 mm taller. It is a detail field, not the line.
-
-#5  FRONT WAIST AT THE AXLE IS 115 mm DEEP
-      specX -250: 887   specX 0: 772   specX 250: 844
-    The arch cut passing through the station. It reads as a pinch in 3/4.
-
-#6  THE HOOPS STAND 357 mm PROUD OF THE DECK
-    Tall, but defensible on a roadster. Lowest priority of the six.
-
-==============================================================================
-THE THREE CORRECTIONS I PROPOSE BEFORE ANY DETAIL WORK
-==============================================================================
-
-1. MAKE THE VOIDS REAL. Size the cutters from the built body rather than the raw
-   sections, and verify each one afterwards by measuring surface depth, not by
-   trusting that the boolean ran. Without this the car has no signature.
-
-2. BRIDGE THE REAR CROWN. Carry the buttress out to meet the deck instead of
-   ending at 2640, so haunch, deck and tail are one falling line with no step.
-
-3. LIFT THE BELTLINE through the cabin so cowl, door and deck read as one line.
-   My recommendation is a step of about 115 mm at the A-pillar rather than the
-   donor's 70-100: our body sits lower than a 986's, so matching the donor number
-   would make the cabin read tall against it.
-
-Nothing else should be touched before the detail phase.
+   front fender channel   specX    320  widest  864.6  in the void  733.4  depth  131.2
+   door channel           specX   1425  widest  886.4  in the void    0.0  depth  886.4
+   side intake mouth      specX   1990  widest  923.3  in the void  923.3  depth    0.0
+   rear undercut          specX   2775  widest  924.7  in the void  819.0  depth  105.7

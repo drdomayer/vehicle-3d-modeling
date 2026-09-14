@@ -1,0 +1,100 @@
+STATEV 001 — ARCHITECTURE CORRECTION PASS v016.  v015 kept.
+Blockout only. No lights, no diffuser detail, no seams, no materials.
+
+=== I. LOCKED DONOR VERIFICATION =============================================
+  length 4370.0   width 1850.0   wheelbase 2415   track 1465 / 1528
+  wheels  front +-732.5 @ Z 323.5   rear +-764.0 @ Z 337.5
+  windshield base Z 970   header Z 1255   hoops Z 1235 @ specX 1760
+  door shut lines specX 440 / 1635   rear arch aperture 320 mm
+  ALL UNCHANGED.  Width not increased to solve anything.
+  body height 876.8 (floor 120, crown 997)   volume 3.809 m3   faces 5530
+
+=== II. PRIORITY 1 — NEGATIVE SPACES ========================================
+Root cause fixed: cutters were sized from the RAW section profile while the body
+is built from the SHAPED profile. They now sample the BUILT ring at the centre of
+the band. Depth below is measured as pull-in against the shoulders either side —
+not by trusting that a boolean ran.
+
+ name                    start   end    min    max  at specX   mid   type
+ FRONT WHEEL CHANNEL      210    510  -13.7  128.1     330     51.5  OPEN
+ DOOR CHANNEL             560   2000   -1.7  211.9    1760      8.8  OPEN
+ SIDE INTAKE MOUTH       1880   2120   -9.2   84.2    2040     -0.8  OPEN
+ REAR UNDERCUT           2760   3240  161.5  224.1    3240    193.4  constant slot
+
+ BEFORE (v015):  front channel 0.0   door channel 36 max   intake mouth 0.0
+ AFTER  (v016):  front channel 128   door channel see below   intake mouth 84
+
+ Curvature: none of the four grows and releases smoothly yet. The front channel
+ spikes at one station. The rear undercut is a constant slot rather than a shaped
+ void.
+
+ NOT SOLVED, and I am saying so rather than trying a fourth time: the door channel
+ reads 6-11 mm between specX 920 and 1400, the middle of the door, where the
+ cutter carries 78-104 mm of depth. It works at the ends (68 at 560, 36 at 1640)
+ and spikes to 212 at 1760. Three attempts did not move the middle. The cause is
+ not yet identified; guessing again would waste another pass.
+
+=== III. PRIORITY 2 — REAR CROWN ============================================
+ specX   v015     v016    step v016
+  2000   908.7    977.6
+  2200      -     993.2    +15.7
+  2400      -     996.5     +3.3
+  2600      -     912.7    -64.7   (interpolated station 2650)
+  2800   755.6    858.1    -54.6
+  3000      -     793.7    -64.5
+  3200   569.6    728.2    -65.4
+  3420   513.1    513.1    -76.6
+
+ The 201 mm discontinuity at specX 2800 is GONE. Largest step is now 77 mm at the
+ very tail. The buttress is no longer a separate mass unioned on: it is part of
+ the section profile, riding on DECK_SPINE with a gaussian height peaking on the
+ rear axle, so haunch, blade, deck and tail are one lofted surface. No boolean.
+ Tail still falls monotonically. Haunch peak still on the rear axle.
+
+=== IV. PRIORITY 3 — BELTLINE ===============================================
+                  v015     v016
+  specX 440       731.1    752.9     step to screen 217.1
+  specX 700       719.8    819.5     step 150.5
+  specX 1100      775.7    785.8     step 184.2
+  specX 1500      788.3    799.3     step 170.7
+  specX 1635      800.0    831.1     step 138.9
+  deck at hoops   877.6    915.8     hoops stand 319 proud (was 357)
+
+ Improved but short of the target. I aimed for ~115 mm at the A-pillar and the
+ measured minimum is 139 at specX 1635, with 217 still at 440. BELT_LIFT is
+ applied to the section top, and the cabin cut then governs what survives at the
+ A-pillar, so the lift does not reach where it is most needed.
+
+=== V. TOP 3 REMAINING ARCHITECTURAL PROBLEMS ===============================
+
+1. DOOR CHANNEL DOES NOT READ THROUGH THE MIDDLE OF THE DOOR
+   What I see: the channel exists at both ends and vanishes between specX 920 and
+     1400 — exactly the length the eye follows in side view.
+   Why: unknown after three attempts. The cutter carries 78-104 mm of depth there
+     and the surface does not move.
+   Evidence: depth 6.0 / 1.4 / 7.3 / 8.8 / 11.1 mm at specX 920..1400.
+   What I would change: stop cutting it and build it into the section profile, the
+     way the buttress was just fixed. Booleans have failed on this four times.
+   Priority: HIGH. It is the car's main side line.
+
+2. BELTLINE AT THE A-PILLAR IS STILL 217 mm BELOW THE SCREEN
+   What I see: the screen still sits proud of the door at the front of the cabin.
+   Why: BELT_LIFT raises the section top, but the cabin cutter removes |Y| < 700
+     above Z 640 from specX 420, so at the A-pillar the surviving body is governed
+     by the cut, not by the lift.
+   Evidence: 217.1 at specX 440 against 138.9 at 1635 — the lift lands at the back
+     of the cabin, not the front.
+   What I would change: taper the cabin cut's front edge upward so the aperture
+     starts lower and further back, letting the body carry up to the A-pillar.
+   Priority: HIGH.
+
+3. NO VOID GROWS AND RELEASES SMOOTHLY
+   What I see: the front channel is one deep spot, the rear undercut is a constant
+     slot, the intake mouth appears abruptly at specX 2040.
+   Why: the void stations are a coarse depth table and the boolean produces a hard
+     edge wherever the cutter meets the surface, with no blend.
+   Evidence: front channel -14, 36, 128, 52, 29, 23 across six stations.
+   What I would change: drive void depth from a continuous field like the character
+     fields, not from a lofted cutter with discrete stations.
+   Priority: MEDIUM. They exist now, which they did not before; shaping them is the
+     next step rather than a blocker.

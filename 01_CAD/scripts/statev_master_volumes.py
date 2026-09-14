@@ -48,10 +48,16 @@ CROWN_FACTOR = 0.10
 
 # ---- void families. Each is a list of (spec_x, half_depth_into_body, z_lo, z_hi) stations.
 #      The cutter is lofted through them and sits outboard, so the difference eats INTO the side.
-FENDER_CHANNEL = [(140, 0, 420, 560), (240, 95, 400, 580), (400, 105, 400, 580), (520, 0, 420, 560)]
-DOOR_CHANNEL = [(560, 0, 470, 600), (760, 55, 450, 620), (1100, 95, 430, 640),
-                (1450, 130, 410, 650), (1750, 150, 400, 650), (1980, 165, 390, 640),
-                (2090, 60, 420, 600)]
+# Depths increased now that the cutter is sized from the real surface. These are open channels,
+# not surface dents: the channel behind the front wheel has to read in side and front 3/4.
+FENDER_CHANNEL = [(120, 0, 415, 570), (190, 70, 400, 590), (260, 108, 393, 598),
+                  (330, 122, 390, 600), (400, 108, 393, 598), (470, 70, 400, 590),
+                  (540, 0, 420, 560)]
+# Clear start, growth, maximum, release. Not one constant depth along its length.
+DOOR_CHANNEL = [(540, 0, 475, 595), (700, 42, 458, 612), (860, 62, 448, 625),
+                (1020, 78, 440, 635), (1180, 92, 432, 644), (1340, 104, 426, 651),
+                (1500, 114, 420, 657), (1660, 122, 414, 660), (1820, 128, 408, 660),
+                (1960, 118, 404, 652), (2080, 82, 414, 628), (2170, 0, 440, 580)]
 # z_lo is 90, below the body floor at 120, on purpose: a cutter face coplanar with the body floor
 # makes the EXACT solver collapse the whole mesh. Never let a cutter boundary sit exactly on one.
 # The front mouth. This was in the element list but never in the cutter families, which is why the
@@ -71,10 +77,27 @@ REAR_UNDERCUT = [(2350, 0, 90, 300), (2600, 70, 90, 330), (2950, 95, 90, 340),
                  (3250, 60, 90, 320), (3400, 0, 90, 280)]
 
 CABIN_Y, CABIN_Z = 700, 640
+
+# Beltline. Measured at the A-pillar the door top was 731 against a screen base of 970 — a 239 mm
+# step, and the glass read as planted on the body. (The 150 mm quoted earlier compared the beltline
+# at the REAR of the cabin with the screen at the FRONT: two different places.)
+#
+# My call: not a uniform lift of the whole door. One continuous line that starts tight at the
+# A-pillar, develops through the door and climbs into the haunch, meeting DECK_SPINE at the hoop
+# plane so cowl -> door -> deck is a single move. Step at the A-pillar lands near 115 mm rather
+# than the donor's 70-100: our body sits lower than a 986's and matching the donor number exactly
+# would make the cabin read tall against it.
+BELT_LIFT = [(420, 0), (470, 110), (560, 126), (800, 122), (1100, 112),
+             (1400, 100), (1635, 86), (1780, 48), (1920, 0)]
 # Lowered from z_hi 1090 to 985 and widened 210 -> 300, starting 160 mm further forward. At 1090
 # they read as two towers competing with the roll hoops. The hoops themselves are donor structure at
 # Z 1235 and cannot move — making them read lighter means lowering OUR volume around them, not theirs.
-BUTTRESS = dict(x0=1600, x1=2640, y=585, w=300, z_lo=760, z_hi=985)
+# The blade now RIDES on the deck spine instead of having its own floor and ceiling. Its base is
+# the deck line at that station and its height is a gaussian on the rear axle, so it grows out of
+# the haunch, peaks over the wheel and releases into the deck with nothing left to step off.
+# Ending it at 2640 with a fixed z_lo is what produced the 201 mm crown step at specX 2800.
+BUTTRESS = dict(x0=1740, x1=3200, y=620, w=300, height=152)   # starts at the hoop plane,
+                                                              # outboard of the cabin cut
 
 
 def section_profile(spec_x):
@@ -298,15 +321,53 @@ def ring(spec_x):
         crown -= BELT_DIP * min(1.0, f)
     narrow, drop = tail_factor(spec_x)
     crown = max(crown - drop, z_top + 10)
+    # Buttress as PROFILE, not as a boolean union. Two sequential unions and then a single
+    # two-shell union both collapsed the skin; and a shape that belongs to the body should come
+    # from the loft, not be glued on. The section simply stays wide up to the blade top at Y +-620,
+    # then falls to the centreline crown, which lofts into a ridge each side of a sunken deck.
+    b = BUTTRESS
+    b_top = None
+    if b["x0"] <= spec_x <= b["x1"]:
+        deck = spine_z(DECK_SPINE, spec_x)
+        if deck is None:
+            deck = DECK_SPINE[0][1] if spec_x < DECK_SPINE[0][0] else DECK_SPINE[-1][1]
+        rise = math.exp(-((spec_x - 2415.0) / 620.0) ** 2)
+        b_top = deck + b["height"] * rise
+
+    lift = table_z(BELT_LIFT, spec_x) if BELT_LIFT[0][0] <= spec_x <= BELT_LIFT[-1][0] else 0.0
+    if lift > 1.0:
+        prof = prof + [(z_top + lift, hw_top * 0.94)]     # carry the body up beside the aperture
+        z_top, hw_top = prof[-1]
     shaped = [(z, zone_shape(spec_x, z, hw, z_top) + character(spec_x, z)) for z, hw in prof]
     hw_max = max(y for _, y in shaped)
     pts = []
     for z, y in shaped:
         y = flank(spec_x, z, y, hw_max) * narrow
         pts.append((min(MAX_HALF_WIDTH, max(20.0, y)), z))
-    half = [(0.0, z_floor)] + pts + [(0.0, crown)]
+    half = [(0.0, z_floor)] + pts
+    if b_top is not None and b_top > pts[-1][1] + 8:
+        half.append((b["y"] + b["w"] * BUTTRESS_TOP_FRAC / 2, b_top))    # the blade crest
+    half.append((0.0, max(crown, (b_top - 40) if b_top else crown)))
     half = resample(half, N_HALF)
     return list(half) + [(-y, z) for y, z in reversed(half[1:-1])]
+
+
+def built_hw(spec_x, z_lo, z_hi):
+    """Half-width of the ACTUAL BUILT body at this station across a height band.
+    The cutters used to be sized from section_profile(), which is the raw input. The body is built
+    by ring(), which adds the zone shaping, the character fields, the flank pull and the tail
+    taper, and comes out wider. A cutter sized to the raw profile ended up entirely INSIDE the
+    body, hollowing it instead of opening it — which is why three of the four voids measured 0.0
+    mm of depth while every boolean reported success."""
+    # Sample at the CENTRE of the band, not the maximum across band+-60. Using the max pulled in the
+    # shoulder above the channel, so subtracting the depth from it still left the cutter outside the
+    # local surface — which is why the door channel measured 0-10 mm through the middle of the door.
+    zc = (z_lo + z_hi) / 2.0
+    r = ring(spec_x)
+    near = [(abs(z - zc), abs(y)) for y, z in r]
+    near.sort()
+    k = max(3, len(near) // 14)
+    return sum(v for _, v in near[:k]) / k
 
 
 def make_cutter(name, stations, coll, mirror=True):
@@ -315,9 +376,8 @@ def make_cutter(name, stations, coll, mirror=True):
     for sgn in ((1, -1) if mirror else (1,)):
         verts, faces, rings = [], [], []
         for spec_x, depth, z_lo, z_hi in stations:
-            prof = section_profile(spec_x)
-            hw = max(y for _, y in prof)
-            y_out, y_in = hw + 60, hw - depth
+            hw = built_hw(spec_x, z_lo, z_hi)
+            y_out, y_in = hw + 150, hw - depth
             quad = [(y_out, z_lo), (y_in, z_lo), (y_in, z_hi), (y_out, z_hi)]
             if sgn < 0:
                 quad.reverse()      # mirroring by negating Y reverses the winding; undo it here,
@@ -497,56 +557,7 @@ def build():
     # ---- 3. buttresses, lofted as blades rather than boxes.
     # The first version was literally a cube. A buttress reads as: rising -> tightening -> blade ->
     # merging into the deck, so it is built from stations along X with a varying height and width.
-    b = BUTTRESS
-    buttresses = []
-    for sgn in (1, -1):
-        verts, faces, brings = [], [], []
-        for f in [i / 10.0 for i in range(11)]:
-            x = b["x0"] + (b["x1"] - b["x0"]) * f
-            # Peak on the REAR AXLE. The old sin() form topped out at specX 2034, 381 mm ahead of
-            # the wheel, which put the mass over the seats instead of over the tyre.
-            xs_ = b["x0"] + (b["x1"] - b["x0"]) * f
-            rise = math.exp(-((xs_ - 2415.0) / 620.0) ** 2)
-            z_top = b["z_lo"] + (b["z_hi"] - b["z_lo"]) * rise
-            wid = b["w"] * (0.45 + 0.55 * math.sin(math.pi * min(1.0, 0.25 + f * 0.9)))
-            z_base = b["z_lo"] - 260      # reaches down INTO the haunch so the union merges
-            quad = [(b["y"] - wid / 2, z_base), (b["y"] + wid / 2, z_base),
-                    (b["y"] + wid / 2 * BUTTRESS_TOP_FRAC, z_top),
-                    (b["y"] - wid / 2 * BUTTRESS_TOP_FRAC, z_top)]
-            if sgn < 0:
-                quad.reverse()
-            idx = []
-            for y, z in quad:
-                idx.append(len(verts))
-                verts.append((mm(sx(x)), mm(sgn * y), mm(z)))
-            brings.append(idx)
-        for a2, b2 in zip(brings[:-1], brings[1:]):
-            for i in range(4):
-                j = (i + 1) % 4
-                faces.append((a2[i], a2[j], b2[j], b2[i]))
-        faces.append(tuple(reversed(brings[0])))
-        faces.append(tuple(brings[-1]))
-        bme = bpy.data.meshes.new("BUTTRESS")
-        bme.from_pydata(verts, [], faces)
-        bme.update()
-        bt = bpy.data.objects.new(PFX + f"BUTTRESS_VOLUME_{'L' if sgn > 0 else 'R'}", bme)
-        subs["_WORK"].objects.link(bt)
-        for pf in bme.polygons:
-            pf.use_smooth = True
-        fix_normals(bt)
-        buttresses.append(bt)
-    # union the blades into the skin so the buttress reads as the body rising, not a box placed on it
-    bpy.ops.object.select_all(action="DESELECT")
-    skin.select_set(True)
-    bpy.context.view_layer.objects.active = skin
-    for bt in buttresses:
-        m = skin.modifiers.new(bt.name, "BOOLEAN")
-        m.operation, m.object, m.solver = "UNION", bt, "EXACT"
-        bpy.ops.object.modifier_apply(modifier=m.name)
-        fix_normals(skin)
-    for bt in buttresses:
-        bpy.data.objects.remove(bt, do_unlink=True)
-    print(f"  buttresses merged into the skin: {len(skin.data.polygons)} faces")
+
 
     # ---- 4. split the skin into zones
     bpy.ops.object.select_all(action="DESELECT")

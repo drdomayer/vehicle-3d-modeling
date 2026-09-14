@@ -22,6 +22,8 @@ import os
 
 COLL_ROOT = "STATEV_001"
 PFX = "STATEV_"          # every object this script owns carries it (prompt §6, §9)
+SCRIPTS_DIR = (os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals()
+               else "/Users/miroslavstatev/vehicle-3d-modeling/01_CAD/scripts")
 
 # ---------------------------------------------------------------- package targets (mm)
 PACKAGE = {
@@ -343,8 +345,7 @@ MATERIALS = {
 def donor_dims():
     """DIMS from cage_986.py — the donor hardpoints, published or blueprint-derived."""
     import os
-    here = os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() \
-        else "/Users/miroslavstatev/vehicle-3d-modeling/01_CAD/scripts"
+    here = SCRIPTS_DIR
     ns = {}
     with open(os.path.join(here, "cage_986.py"), "r", encoding="utf-8") as fh:
         head = fh.read().split("# ---------------------------------------------------------------- helpers")[0]
@@ -502,7 +503,7 @@ def build():
     # FREEZE RULE — refuse to rebuild if an approved zone's defining data has changed.
     try:
         import importlib.util as _ilu
-        _sp = _ilu.spec_from_file_location("_freeze", os.path.join(_here, "freeze.py"))
+        _sp = _ilu.spec_from_file_location("_freeze", os.path.join(SCRIPTS_DIR, "freeze.py"))
         _fz = _ilu.module_from_spec(_sp); _sp.loader.exec_module(_fz)
         _fz.check()
     except FileNotFoundError:

@@ -1,0 +1,141 @@
+====================================================================================================
+STATEV 001 — panel vs donor knowledge.  THERE IS NO SCAN.
+Every donor number below comes from a CC-BY drawing at 9 mm/px or the workshop manual.
+====================================================================================================
+
+[RED] DIFFUSER
+  hold:
+    ground_clear_oem                     95   (published)
+  scan must supply:
+    - underbody and rear subframe
+    - exhaust routing and silencer position
+    - how low a fin can go before it is the first thing to ground out
+
+[RED] ENGINE_COVER
+  hold:
+    hoop_x                            -1760   (approx)
+  scan must supply:
+    - engine lid aperture and hinge
+    - engine bay top surface — how low the louvred panel can sit
+    - heat map: where the hot air actually needs to leave
+
+[RED] FRONT_CLAMSHELL
+  hold:
+    front_overhang                     1007   (approx)
+    width_oem                          1780   (published)
+    ground_clear_oem                     95   (published)
+  scan must supply:
+    - crash beam position and its brackets — the STATEV nose sits 57 mm behind the OEM bumper face
+    - bumper and fender mounting points
+    - radiator position and the space in front of it
+
+[RED] REAR_DECK
+  hold:
+    hoop_x                            -1760   (approx)
+    hoop_top_z                         1235   (approx)
+    ws_top_z                           1255   (approx)
+  scan must supply:
+    - THE ROOF FOLD ENVELOPE in all four positions — closed, half, open, clamshell raised
+    - whether the deck must move with the clamshell or the roof stows beneath it
+    - engine lid aperture
+
+[RED] REAR_HAUNCH
+  hold:
+    track_rear                         1528   (published)
+    wheelbase                          2415   (published)
+    width_oem                          1780   (published)
+  scan must supply:
+    - the welded quarter's outer surface — the overlay bonds to it
+    - where the bodyshop can cut a 30–40 mm flange without touching structure
+    - wheelhouse and full suspension travel
+
+[RED] REAR_SPOILER
+  hold:  nothing donor-side
+  scan must supply:
+    - the rear deck surface it grows out of — blocked behind REAR_DECK
+
+[RED] SIDE_INTAKE
+  hold:
+    side_intake_x                     -2080   (approx)
+  scan must supply:
+    - the real opening's shape, not just its X
+    - duct route from the opening to the plenum
+    - what is behind the opening on this particular car
+
+[YELLOW] BUTTRESS
+  hold:
+    hoop_x                            -1760   (approx)
+    hoop_top_z                         1235   (approx)
+    hoop_y                              350   (approx)
+    rollbar_mount_front_y_total      1132.0   (published)
+    rollbar_mount_rear_y_total       1104.5   (published)
+  scan must supply:
+    - roll-bar tube diameter and its real envelope
+    - whether a bonded subframe can pick up on the roll-bar mounts
+
+[YELLOW] DOOR_SKIN
+  hold:
+    door_front_x                       -440   (approx)
+    door_rear_x                       -1635   (approx)
+  scan must supply:
+    - the OEM door's outer surface — the new skin is an overlay and must sit on it
+    - hinge and check-strap positions
+    - glass drop path and seal line
+
+[YELLOW] FRONT_FENDER
+  hold:
+    track_front                        1465   (published)
+    wheelbase                          2415   (published)
+    front_overhang                     1007   (approx)
+  scan must supply:
+    - fender mounting points
+    - wheelhouse liner and its clearance
+    - steering lock envelope — the kingpin axis is unknown, so the swept volume is a worst case
+
+[YELLOW] HEADLIGHT
+  hold:  nothing donor-side
+  scan must supply:
+    - the front structure the housing bolts to
+    - beam aim check on the real car
+
+[YELLOW] HOOD
+  hold:
+    cowl_x                             -420   (approx)
+    cowl_z                              970   (approx)
+    width_oem                          1780   (published)
+  scan must supply:
+    - hinge positions and swing arc
+    - frunk aperture and its flange
+    - washer bottle / latch
+
+[YELLOW] REAR_FASCIA
+  hold:
+    rear_overhang                       893   (approx)
+    length_oem                         4315   (published)
+  scan must supply:
+    - rear bumper mounting points and crash structure
+    - exhaust hanger positions
+
+[YELLOW] ROCKER
+  hold:
+    door_front_x                       -440   (approx)
+    door_rear_x                       -1635   (approx)
+    jack_front_y_total               1330.0   (published)
+    jack_rear_y_total                1375.0   (published)
+  scan must supply:
+    - sill profile and where a bonded flange can land
+    - jack point access after the panel is on
+
+[YELLOW] TAIL_LIGHT
+  hold:  nothing donor-side
+  scan must supply:
+    - the rear panel it mounts into — comes with REAR_FASCIA
+
+====================================================================================================
+RED 7   YELLOW 8   GREEN 0   of 15 panels
+
+No panel is GREEN. Not one exterior panel can become trusted geometry before the car is
+scanned. The design intent is complete and regenerable; the interfaces are not knowable.
+
+The single item that unblocks the most: the roof fold envelope in four positions. It
+gates REAR_DECK, which gates ENGINE_COVER, REAR_SPOILER and the whole rear group.

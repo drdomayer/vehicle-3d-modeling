@@ -161,9 +161,17 @@ BOXES = [
     ("ROCKER_CHANNEL", "03_AERO",  1038,  810,  240, 1195,   80,   90, "DECIDED",
      "deep undercut along the sill, running the full length of the door aperture, ref-08. Feeds the "
      "side intake and visually lowers the car. Length taken from the donor shut lines, not the render."),
-    ("REAR_SPOILER", "03_AERO",    3150,    0,  790,  180, 1450,   40, "DECIDED",
-     "flat blade across the top of the tail, ref-08 side and rear views. Not in the written spec. "
-     "Sits above the tail bar; height PROVISIONAL until the deck surface exists."),
+    ("REAR_SPOILER", "03_AERO",    3120,    0,  770,  240, 1450,   55, "DECIDED",
+     "integrated lip / ducktail growing out of the rear deck, NOT a fixed wing on stalks. The render "
+     "does not need a wing and a wing would read as a track conversion rather than a designed tail."),
+    ("ROCKER",      "02_BODY",     1038,  830,  260, 1300,   60,  140, "DECIDED",
+     "thin low technical rocker, deliberately NOT a massive side skirt. Visually links front aero to "
+     "the door to the diffuser and makes the car read low without dropping the chassis."),
+    ("BRAKE_DUCT_F", "05_MECHANICAL", -330, 700,  330,  260,  140,  140, "DECIDED",
+     "front brake cooling: enclosed duct from ahead of the wheel to the disc. Functional, not a "
+     "styling slot. Exact routing needs the scan of the suspension and liner."),
+    ("BRAKE_DUCT_R", "05_MECHANICAL", 2080, 780,  360,  220,  130,  130, "DECIDED",
+     "rear brake cooling, fed off the side-intake path. Small and functional."),
     ("SIDE_INTAKE", "03_AERO",     1640,  887,  485,  880,   75,  270, "DECIDED",
      "sculpted channel extended from specX 1200..1800 to 1200..2080 so it runs into the donor's real "
      "opening. Outer shape stays a styling choice; the airflow path does not."),
@@ -218,8 +226,43 @@ HOOD_SPINE_NOTE = ("last point = donor cowl (windshield base), locked. Nose tip 
 DECK_SPINE = [(1760, 960), (2100, 950), (2600, 880), (3200, 700)]
 DECK_STATUS = "BLOCKED: roof fold envelope unknown — scan the roof closed / half / open / clamshell up"
 
+# Airflow systems: name -> (inlet element, path, outlet element). Every opening on the car must
+# appear here. If something has no row, it is decorative and gets deleted — project rule.
+AIRFLOW = {
+    "front_cooling":  ("RAD_INTAKE", "RAD_DUCT", "HOOD_VENT + FENDER_CHANNEL"),
+    "front_brakes":   ("BRAKE_DUCT_F inlet, ahead of the wheel", "enclosed duct", "wheel / disc"),
+    "engine_intake":  ("SIDE_INTAKE + INTAKE_INLET", "INTAKE_DUCT", "INTAKE_OUTLET -> plenum"),
+    "engine_cooling": ("side / rear intake", "engine bay", "ENGINE_COVER louvres"),
+    "rear_brakes":    ("BRAKE_DUCT_R, off the side-intake path", "short duct", "wheel / disc"),
+    "diffuser":       ("underbody", "DIFFUSER_TUNNEL expansion", "rear, between the fins"),
+}
+
+# Panel seams. Every one needs an engineering reason; decorative lines are forbidden.
+# name: (reason, [(spec_x, y, z), ...] polyline)
+PANEL_SEAMS = {
+    "HOOD_to_FRONT_BODY":   ("frunk access and service; the hood is a separate physical panel",
+                             [(420, 0, 970), (300, 420, 880), (120, 620, 800), (-100, 700, 745)]),
+    "FRONT_FENDER_to_DOOR": ("donor front shut line — locked",
+                             [(440, 700, 300), (440, 845, 560), (440, 800, 800)]),
+    "DOOR_SHUT_FRONT":      ("donor shut line — locked, the skin must land on it",
+                             [(440, 855, 250), (440, 870, 550), (440, 800, 800)]),
+    "DOOR_SHUT_REAR":       ("donor shut line — locked",
+                             [(1635, 855, 250), (1635, 890, 550), (1635, 810, 800)]),
+    "ROCKER_to_UPPER_BODY": ("rocker is a separate removable panel; kerb damage is replaceable",
+                             [(440, 840, 330), (1038, 850, 330), (1635, 850, 330)]),
+    "REAR_HAUNCH_to_DOOR":  ("panel removal; the haunch is an overlay on welded quarter",
+                             [(1635, 890, 250), (1635, 915, 560), (1635, 830, 820)]),
+    "ENGINE_COVER_to_DECK": ("engine access — must open",
+                             [(2000, 0, 950), (2000, 400, 930), (2000, 560, 900)]),
+    "REAR_FASCIA_to_DECK":  ("exhaust and diffuser access; separate from the cover",
+                             [(3000, 0, 800), (3000, 450, 790), (3000, 700, 740)]),
+    "DIFFUSER_to_FASCIA":   ("diffuser is replaceable and is the first thing to ground out",
+                             [(3050, 0, 330), (3050, 450, 330), (3050, 700, 330)]),
+}
+
 SUBCOLLS = ["00_DONOR_HARDPOINTS", "01_MASTER_SKELETON", "02_BODY", "03_AERO",
-            "04_LIGHTING", "05_MECHANICAL", "06_ROOF", "07_INTERIOR", "99_DEBUG"]
+            "04_LIGHTING", "05_MECHANICAL", "06_ROOF", "07_INTERIOR",
+            "08_PANEL_SEAMS", "99_DEBUG"]
 
 # Parametric properties carried on the STATEV_001_ROOT empty (prompt §28). Editable; the build
 # reads SECTIONS/BOXES, so changing a value here documents intent — rerun the script to apply.
@@ -456,6 +499,18 @@ def build():
                 ob["status"] = "derived"
                 ob["z_mm"] = z
                 ob["sections"] = len(pts)
+
+    # ---- panel seams (08) — every one carries its engineering reason as a property
+    for nm, (reason, pts) in PANEL_SEAMS.items():
+        for suffix, sgn in ((("_L", 1), ("_R", -1)) if any(y for _, y, _ in pts) else (("", 1),)):
+            ob = poly_curve(f"SEAM_{nm}{suffix}", subs["08_PANEL_SEAMS"],
+                            [(mm(sx(x)), mm(sgn * y), mm(z)) for x, y, z in pts],
+                            (0.95, 0.45, 0.10, 1.0))
+            ob["status"] = "DECIDED"
+            ob["reason"] = reason
+            ob["locked_by_donor"] = "donor shut line" in reason or "locked" in reason
+            ob["note"] = ("panel boundary. A seam exists only for a reason - donor line, access, "
+                          "removal, manufacture or mounting. Decorative seams are forbidden.")
 
     # ---- front centreline (hood line)
     ob = poly_curve("HOOD_SPINE", subs["02_BODY"],

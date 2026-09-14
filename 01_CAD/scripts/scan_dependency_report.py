@@ -1,0 +1,137 @@
+"""
+scan_dependency_report.py — map every STATEV panel onto what we actually know about the donor.
+
+Answers the question the panel architecture ends with: "map every panel to the 986 scan and report
+where the scan is missing or conflicts with the design". There is no scan. So this reports, per
+panel, which donor facts we hold, where they came from and how good they are, and exactly what the
+scan must supply before that panel can become geometry.
+
+Status per panel:
+  GREEN  — design intent complete and no donor interface is in doubt; surfacing can start
+  YELLOW — intent complete, but at least one interface needs the scan before geometry is trusted
+  RED    — blocked: a fact the panel cannot exist without is missing entirely
+
+Runs outside Blender:  python3 01_CAD/scripts/scan_dependency_report.py
+"""
+
+import os
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+_ns = {}
+with open(os.path.join(HERE, "cage_986.py"), "r", encoding="utf-8") as f:
+    exec(f.read().split("# ------------------------------------------------- helpers")[0].split(
+        "# ---------------------------------------------------------------- helpers")[0]
+         .replace("import bpy", ""), _ns)
+DIMS = _ns["DIMS"]
+
+# panel -> (known donor facts we hold, what only the scan can give, status)
+PANELS = {
+    "FRONT_CLAMSHELL": (
+        ["front_overhang", "width_oem", "ground_clear_oem"],
+        ["crash beam position and its brackets — the STATEV nose sits 57 mm behind the OEM bumper face",
+         "bumper and fender mounting points",
+         "radiator position and the space in front of it"],
+        "RED"),
+    "HOOD": (
+        ["cowl_x", "cowl_z", "width_oem"],
+        ["hinge positions and swing arc", "frunk aperture and its flange", "washer bottle / latch"],
+        "YELLOW"),
+    "FRONT_FENDER": (
+        ["track_front", "wheelbase", "front_overhang"],
+        ["fender mounting points", "wheelhouse liner and its clearance",
+         "steering lock envelope — the kingpin axis is unknown, so the swept volume is a worst case"],
+        "YELLOW"),
+    "DOOR_SKIN": (
+        ["door_front_x", "door_rear_x"],
+        ["the OEM door's outer surface — the new skin is an overlay and must sit on it",
+         "hinge and check-strap positions", "glass drop path and seal line"],
+        "YELLOW"),
+    "ROCKER": (
+        ["door_front_x", "door_rear_x", "jack_front_y_total", "jack_rear_y_total"],
+        ["sill profile and where a bonded flange can land", "jack point access after the panel is on"],
+        "YELLOW"),
+    "SIDE_INTAKE": (
+        ["side_intake_x"],
+        ["the real opening's shape, not just its X", "duct route from the opening to the plenum",
+         "what is behind the opening on this particular car"],
+        "RED"),
+    "REAR_HAUNCH": (
+        ["track_rear", "wheelbase", "width_oem"],
+        ["the welded quarter's outer surface — the overlay bonds to it",
+         "where the bodyshop can cut a 30–40 mm flange without touching structure",
+         "wheelhouse and full suspension travel"],
+        "RED"),
+    "BUTTRESS": (
+        ["hoop_x", "hoop_top_z", "hoop_y", "rollbar_mount_front_y_total", "rollbar_mount_rear_y_total"],
+        ["roll-bar tube diameter and its real envelope",
+         "whether a bonded subframe can pick up on the roll-bar mounts"],
+        "YELLOW"),
+    "REAR_DECK": (
+        ["hoop_x", "hoop_top_z", "ws_top_z"],
+        ["THE ROOF FOLD ENVELOPE in all four positions — closed, half, open, clamshell raised",
+         "whether the deck must move with the clamshell or the roof stows beneath it",
+         "engine lid aperture"],
+        "RED"),
+    "ENGINE_COVER": (
+        ["hoop_x"],
+        ["engine lid aperture and hinge", "engine bay top surface — how low the louvred panel can sit",
+         "heat map: where the hot air actually needs to leave"],
+        "RED"),
+    "REAR_FASCIA": (
+        ["rear_overhang", "length_oem"],
+        ["rear bumper mounting points and crash structure", "exhaust hanger positions"],
+        "YELLOW"),
+    "REAR_SPOILER": (
+        [],
+        ["the rear deck surface it grows out of — blocked behind REAR_DECK"],
+        "RED"),
+    "DIFFUSER": (
+        ["ground_clear_oem"],
+        ["underbody and rear subframe", "exhaust routing and silencer position",
+         "how low a fin can go before it is the first thing to ground out"],
+        "RED"),
+    "HEADLIGHT": (
+        [],
+        ["the front structure the housing bolts to", "beam aim check on the real car"],
+        "YELLOW"),
+    "TAIL_LIGHT": (
+        [],
+        ["the rear panel it mounts into — comes with REAR_FASCIA"],
+        "YELLOW"),
+}
+
+ORDER = {"RED": 0, "YELLOW": 1, "GREEN": 2}
+
+
+def main():
+    print("=" * 100)
+    print("STATEV 001 — panel vs donor knowledge.  THERE IS NO SCAN.")
+    print("Every donor number below comes from a CC-BY drawing at 9 mm/px or the workshop manual.")
+    print("=" * 100)
+
+    counts = {"RED": 0, "YELLOW": 0, "GREEN": 0}
+    for name, (known, needs, status) in sorted(PANELS.items(), key=lambda kv: (ORDER[kv[1][2]], kv[0])):
+        counts[status] += 1
+        print(f"\n[{status}] {name}")
+        if known:
+            print("  hold:")
+            for k in known:
+                v, src = DIMS[k]
+                print(f"    {k:<30} {v:>8}   ({src})")
+        else:
+            print("  hold:  nothing donor-side")
+        print("  scan must supply:")
+        for n in needs:
+            print(f"    - {n}")
+
+    print("\n" + "=" * 100)
+    print(f"RED {counts['RED']}   YELLOW {counts['YELLOW']}   GREEN {counts['GREEN']}"
+          f"   of {len(PANELS)} panels")
+    print("\nNo panel is GREEN. Not one exterior panel can become trusted geometry before the car is")
+    print("scanned. The design intent is complete and regenerable; the interfaces are not knowable.")
+    print("\nThe single item that unblocks the most: the roof fold envelope in four positions. It")
+    print("gates REAR_DECK, which gates ENGINE_COVER, REAR_SPOILER and the whole rear group.")
+
+
+if __name__ == "__main__":
+    main()

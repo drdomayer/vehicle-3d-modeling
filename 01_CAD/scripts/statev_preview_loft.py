@@ -24,6 +24,7 @@ _sk = {}
 with open(os.path.join(_here, "statev_skeleton.py"), "r", encoding="utf-8") as f:
     exec(f.read().split("def build(")[0], _sk)
 SECTIONS, PFX, DECK_SPINE = _sk["SECTIONS"], _sk["PFX"], _sk["DECK_SPINE"]
+HOOD_SPINE = _sk["HOOD_SPINE"]
 widening, sx, mm = _sk["widening"], _sk["sx"], _sk["mm"]
 D = _sk["donor_dims"]()
 
@@ -62,6 +63,14 @@ def section_ring(spec_x, prof):
     z_floor, hw_floor = pts[0]
     z_top, hw_top = pts[-1]
     crown_z = z_top + hw_top * CROWN_FACTOR
+    hx = [t[0] for t in HOOD_SPINE]
+    if hx[0] <= spec_x <= hx[-1]:                    # ahead of the cabin: the hood line IS the crown
+        for i in range(len(HOOD_SPINE) - 1):
+            (x0, z0), (x1, z1) = HOOD_SPINE[i], HOOD_SPINE[i + 1]
+            if x0 <= spec_x <= x1:
+                f = 0.0 if x1 == x0 else (spec_x - x0) / (x1 - x0)
+                crown_z = z0 + f * (z1 - z0)
+                break
     xs = [t[0] for t in DECK_SPINE]
     if xs[0] <= spec_x <= xs[-1]:                    # inside the deck: the spec says how tall it is
         for i in range(len(DECK_SPINE) - 1):

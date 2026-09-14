@@ -200,6 +200,17 @@ DIFFUSER_FINS = ("DIFFUSER_FIN", "03_AERO", 7, 2870, 3420, None, 230, 550, 16, 2
 # the highest line of the car — ref-06/07 show the louvres recessed between two raised shoulders.
 # It starts at the roll-hoop plane; ahead of that is the cabin, not deck.
 # Heights are tied to the donor: the hoop tops (1235) set the ceiling, the deck sits under them.
+# Centreline of the front body (Y = 0): (spec_x, z). THE line you judge in side view, and the one
+# thing the written spec never gave — its sections describe how WIDE the body is at a height, never
+# how TALL it is in the middle. Authored here from the ref-08 silhouette, anchored at both ends by
+# facts: the nose tip sits just above the splitter, and the last point IS the donor's windshield
+# base, which is not a choice. Between them the line is a translation of the approved render.
+# The cabin aperture (specX 420..1760) has no body centreline; DECK_SPINE picks up behind the hoops.
+HOOD_SPINE = [(-950, 400), (-850, 470), (-700, 565), (-500, 660),
+              (-250, 725), (0, 770), (200, 820), (420, 970)]
+HOOD_SPINE_NOTE = ("last point = donor cowl (windshield base), locked. Nose tip height is the design "
+                   "call; everything between is the ref-08 side silhouette.")
+
 # BLOCKED BY THE ROOF ENVELOPE. These heights come from the render, and they sit inside the volume
 # the 986 soft top folds into. The locked rule is: model the ORIGINAL roof envelope first, then shape
 # the deck around it. We cannot — the fold path is unknown until the car is scanned in all four roof
@@ -405,6 +416,7 @@ def build():
     scene.unit_settings.scale_length = 1.0
 
     root, subs = reset_tree()
+    D = donor_dims()
     CYAN = (0.15, 0.75, 0.85, 1.0)
     YELL = (0.95, 0.75, 0.15, 1.0)
     MAG = (0.85, 0.25, 0.65, 1.0)
@@ -444,6 +456,17 @@ def build():
                 ob["status"] = "derived"
                 ob["z_mm"] = z
                 ob["sections"] = len(pts)
+
+    # ---- front centreline (hood line)
+    ob = poly_curve("HOOD_SPINE", subs["02_BODY"],
+                    [(mm(sx(x)), 0.0, mm(z)) for x, z in HOOD_SPINE], (0.95, 0.75, 0.15, 1.0))
+    ob["statev_v01"] = True
+    ob["status"] = "DECIDED"
+    ob["points_specx_z_mm"] = [list(pt) for pt in HOOD_SPINE]
+    ob["note"] = HOOD_SPINE_NOTE
+    ob["cowl_z_donor"] = D["cowl_z"]
+    if abs(HOOD_SPINE[-1][1] - D["cowl_z"]) > 1:
+        ob["MISMATCH"] = f"last point {HOOD_SPINE[-1][1]} != donor cowl {D['cowl_z']}"
 
     # ---- rear deck spine (centreline)
     ob = poly_curve("DECK_SPINE", subs["02_BODY"],
@@ -504,7 +527,6 @@ def build():
             w["note"] = ("STATEV 19in tyre at the DONOR track (1465/1528). The v0.1 spec's hub Y of "
                          "875/900 would need a +285/+272 mm wider track — not possible on the 986.")
 
-    D = donor_dims()
 
     # ---- wheel arch apertures. The visible arch line is a curve ON the body surface, not an arc at
     # a constant Y: as the arch climbs, the fender narrows, so the line has to follow it. The inboard

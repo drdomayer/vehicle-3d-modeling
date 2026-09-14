@@ -1,0 +1,68 @@
+================================================================================================
+STATEV 001 — panel register.  27 parts, minimum practical count.
+gap 4.0 mm | flange 20-35 mm | overlap 10-20 mm | nominal thickness 2.5 mm
+These are preliminary and change with the composite shop's answers (docs/13).
+================================================================================================
+
+ID   PART                  SIDE  GROUP   STEP  FIT  STATUS  METHOD
+P01  FRONT_FASCIA          -     FRONT   3     +X   RED     printed master -> composite
+P02  HOOD                  -     FRONT   4     +Z   YELLOW  printed master -> composite
+P03  FRONT_FENDER_L        L     FRONT   4     +Y   YELLOW  printed master -> composite
+P04  FRONT_FENDER_R        R     FRONT   4     -Y   YELLOW  printed master -> composite
+P05  FENDER_CHANNEL_L      L     FRONT   5     +Y   YELLOW  direct print
+P06  FENDER_CHANNEL_R      R     FRONT   5     -Y   YELLOW  direct print
+P07  ROCKER_L              L     SIDE    6     +Y   YELLOW  printed master -> composite
+P08  ROCKER_R              R     SIDE    6     -Y   YELLOW  printed master -> composite
+P09  DOOR_SKIN_L           L     SIDE    7     +Y   YELLOW  printed master -> composite
+P10  DOOR_SKIN_R           R     SIDE    7     -Y   YELLOW  printed master -> composite
+P11  SIDE_INTAKE_L         L     SIDE    8     +Y   RED     printed master -> composite
+P12  SIDE_INTAKE_R         R     SIDE    8     -Y   RED     printed master -> composite
+P13  INTAKE_BLADE_L        L     SIDE    9     +Y   RED     direct print or CNC
+P14  INTAKE_BLADE_R        R     SIDE    9     -Y   RED     direct print or CNC
+P15  REAR_HAUNCH_L         L     REAR    10    +Y   RED     printed master -> composite
+P16  REAR_HAUNCH_R         R     REAR    10    -Y   RED     printed master -> composite
+P17  BUTTRESS_L            L     REAR    11    +Z   YELLOW  printed master -> composite
+P18  BUTTRESS_R            R     REAR    11    +Z   YELLOW  printed master -> composite
+P19  REAR_DECK             -     REAR    12    +Z   RED     printed master -> composite
+P20  ENGINE_COVER          -     REAR    13    +Z   RED     printed master -> composite
+P21  REAR_FASCIA           -     REAR    14    -X   YELLOW  printed master -> composite
+P22  DIFFUSER              -     REAR    15    -X   RED     printed master -> composite
+P23  REAR_SPOILER          -     REAR    16    +Z   RED     direct print or composite
+P24  HEADLIGHT_HOUSING_L   L     LIGHTS  17    +X   YELLOW  direct print, ASA
+P25  HEADLIGHT_HOUSING_R   R     LIGHTS  17    +X   YELLOW  direct print, ASA
+P26  TAIL_HOUSING_L        L     LIGHTS  18    -X   YELLOW  direct print, ASA
+P27  TAIL_HOUSING_R        R     LIGHTS  18    -X   YELLOW  direct print, ASA
+
+ASSEMBLY ORDER
+   1. donor hardpoints verified against the scan
+   2. mounting brackets and bonded tabs on the donor
+   3. front fascia
+   4. hood and front fenders
+   5. fender channel inserts
+   6. rockers
+   7. door skins
+   8. side intakes
+   9. intake blades
+  10. rear haunches
+  11. buttresses
+  12. rear deck
+  13. engine cover
+  14. rear fascia
+  15. diffuser
+  16. rear spoiler
+  17. headlight modules
+  18. tail light modules
+
+REMOVAL: the reverse of the install vector, and the reverse of the assembly order.
+Every part must come off without removing another, except: the intake blade comes out
+before the intake, and the spoiler before the deck.
+
+NOT IN THIS REGISTER YET — needs geometry or the shop's answers:
+  - flanges and their bolt patterns — need the scan and the shop's flange width
+  - panel overlaps — need adjacent surfaces to exist
+  - manufacturing splits and print orientation — need the shop's build volume (docs/13 Q9)
+  - mass and centre of mass — need solids with real thickness
+  - the exploded view itself — needs the panels
+  - door operation envelope — needs hinge positions from the scan
+
+status of the 27 parts: RED 11, YELLOW 16

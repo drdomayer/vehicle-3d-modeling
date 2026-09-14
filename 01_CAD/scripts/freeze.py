@@ -46,7 +46,7 @@ ZONES = {
 def _skel():
     ns = {}
     with open(os.path.join(HERE, "statev_skeleton.py"), "r", encoding="utf-8") as f:
-        exec(f.read().split("def build(")[0].replace("import bpy", ""), ns)
+        exec(f.read().split("\ndef build():")[0].replace("import bpy", ""), ns)
     return ns
 
 

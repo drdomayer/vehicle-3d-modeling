@@ -22,7 +22,7 @@ REPO = os.path.dirname(os.path.dirname(HERE))
 
 _sd = {}
 with open(os.path.join(HERE, "scan_dependency_report.py"), "r", encoding="utf-8") as f:
-    exec(f.read().split("def main(")[0], {"__file__": os.path.join(HERE, "scan_dependency_report.py"), "__name__": "_sd"}, _sd)
+    exec(f.read().split("\ndef main(argv):")[0], {"__file__": os.path.join(HERE, "scan_dependency_report.py"), "__name__": "_sd"}, _sd)
 PANEL_STATUS = {k: v[2] for k, v in _sd["PANELS"].items()}
 
 # Preliminary design values. Every one is subject to the composite shop's answers (docs/13).

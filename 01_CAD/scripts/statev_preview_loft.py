@@ -22,7 +22,7 @@ _here = os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() \
     else os.path.join(REPO, "01_CAD/scripts")
 _sk = {}
 with open(os.path.join(_here, "statev_skeleton.py"), "r", encoding="utf-8") as f:
-    exec(f.read().split("def build(")[0], _sk)
+    exec(f.read().split("\ndef build():")[0], _sk)
 SECTIONS, PFX, DECK_SPINE = _sk["SECTIONS"], _sk["PFX"], _sk["DECK_SPINE"]
 HOOD_SPINE = _sk["HOOD_SPINE"]
 widening, sx, mm = _sk["widening"], _sk["sx"], _sk["mm"]

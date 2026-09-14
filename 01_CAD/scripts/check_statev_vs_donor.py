@@ -23,7 +23,7 @@ with open(os.path.join(HERE, "data", "986_plan_section.json"), "r", encoding="ut
     PS = json.load(f)
 _sk = {}
 with open(os.path.join(HERE, "statev_skeleton.py"), "r", encoding="utf-8") as f:
-    exec(f.read().split("def build(")[0].replace("import bpy", ""), _sk)
+    exec(f.read().split("\ndef build():")[0].replace("import bpy", ""), _sk)
 SECTIONS, PACKAGE, BOXES = _sk["SECTIONS"], _sk["PACKAGE"], _sk["BOXES"]
 
 

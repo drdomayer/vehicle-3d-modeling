@@ -1,0 +1,55 @@
+STATEV 001 — geometry correction pass. before = v014, after = v015. No detail, no material.
+
+STATION COMPARISON
+ specX | top Z before    after    delta | half-w before    after    delta
+   350 |        919.9    921.8     +1.9 |         864.6    867.4     +2.8
+   420 |        934.7    947.5    +12.8 |         858.3    859.9     +1.6
+   800 |        726.8    735.7     +8.9 |         856.3    856.0     -0.3
+  1760 |        877.3    877.6     +0.3 |         911.8    911.6     -0.2
+  2000 |        984.5    908.7    -75.8 |         924.7    924.7     +0.0
+  2415 |        823.2    984.8   +161.6 |         901.4    911.5    +10.1
+  2800 |        752.6    755.6     +3.0 |         924.0    923.9     -0.1
+  3050 |        646.6    625.1    -21.5 |         838.0    831.9     -6.1
+  3200 |        704.5    569.6   -134.9 |         752.3    750.3     -2.0
+  3300 |        752.6    556.9   -195.7 |         663.0    655.3     -7.7
+  3420 |        742.6    513.1   -229.5 |         529.5    521.4     -8.1
+
+MAX BODY WIDTH AT THE AXLES  (+-260 mm, clear of the arch cut)
+  front  1749.5 -> 1773.7  (+24.2)
+  rear   1850.0 -> 1850.0  (0.0)
+
+COCKPIT beltline Z    831.3 -> 820.4
+WINDSHIELD base Z     970 (donor, locked)
+step base-to-beltline 138.7 -> 149.6
+
+REAR HAUNCH peak      specX 2000 Z 984.5  ->  specX 2400 Z 984.8
+  distance from the rear axle: 415 mm ahead  ->  15 mm.  FIXED
+
+TAIL  3050:625.1  3200:569.6  3300:556.9  3420:513.1
+  steps -55.6, -12.7, -43.7   monotonic fall: YES   (was +106 at one step).  FIXED
+
+OVERALL  length 4370.0   width 1850.0   body height 864.8   crown 984.8
+  volume 3.590 m3 (was 3.599)   faces 5650
+
+LOCKED: wheel centres, wheelbase 2415, track 1465/1528, cowl Z 970, hoops Z 1235,
+        shut lines 440/1635 — all unchanged.
+
+==============================================================================
+PROBLEM 1 WAS MIS-DIAGNOSED BY ME. THE 208 mm WAS NOT A CLIFF.
+==============================================================================
+  specX 350  top Z 921.8 at |Y| 0      <- this is the HOOD CROWN, on the centreline
+  specX 420  top Z 947.5 at |Y| 3      <- still the hood crown
+  specX 550  top Z 710.5 at |Y| 723    <- this is the DOOR TOP, beside the aperture
+  specX 800  top Z 735.7 at |Y| 700    <- door top
+
+The cabin cutter removes everything above Z 640 within |Y| < 700 between specX 420
+and 1760. So "top Z" before the cowl is the hood crown on the centreline, and after
+it is the top of the door beside the opening. The 208 mm was one measured against
+the other — two different features, not a discontinuity in a surface.
+
+The number that actually matters is BELTLINE vs WINDSHIELD BASE:
+  820 vs 970  =  150 mm step.
+On a 986 that step is roughly 70-100 mm, so ours is 50-80 mm too big, but it is a
+different and much smaller problem than the one I reported. Fixing it means lifting
+the beltline through the door region, which changes the cabin proportion. Not done
+without a decision.

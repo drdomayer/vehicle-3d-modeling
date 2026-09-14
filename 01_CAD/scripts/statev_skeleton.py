@@ -233,7 +233,9 @@ HOOD_SPINE_NOTE = ("last point = donor cowl (windshield base), locked. Nose tip 
 # roll hoops are slim things standing clear of it — that is the architecture we build on.
 # NOTE: this moves away from "the closed roof meets the deck in one line" until the scan gives us
 # the real closed-roof line. The two cannot both be satisfied on guessed numbers.
-DECK_SPINE = [(1760, 880), (2100, 862), (2600, 800), (3200, 665)]
+# Extended to 3420. It used to stop at 3200, after which the fallback crown took over and LIFTED
+# the last station by 106 mm. The spine now governs all the way to the tail and only falls.
+DECK_SPINE = [(1760, 880), (2100, 868), (2415, 845), (2800, 760), (3200, 640), (3420, 545)]
 DECK_STATUS = "BLOCKED: roof fold envelope unknown — scan the roof closed / half / open / clamshell up"
 
 # Airflow systems: name -> (inlet element, path, outlet element). Every opening on the car must

@@ -151,9 +151,9 @@ SHOULDER_W_BELOW = 42.0   # tight below: this is what makes it read as a crease,
 SHOULDER_W_ABOVE = 95.0   # soft release above
 
 # 2. Tension over the front wheel: a shoulder that starts low ahead of it, peaks above it, releases
-FENDER_GAIN = 34.0        # the fender must read as its own volume the nose flows into
+FENDER_GAIN = 52.0        # was 34: at the axle we read 745 half-width against the donor's 850
 FENDER_X, FENDER_XW = -30.0, 380.0    # tighter, so it is a fender and not a general swelling
-FENDER_Z, FENDER_ZW = 545.0, 120.0
+FENDER_Z, FENDER_ZW = 600.0, 180.0    # higher and taller, so there is body above the arch crown
 
 # 3. The rocker as its own element: the body tucks in below a defined sill line between the arches
 ROCKER_TUCK = 34.0        # mm the sill draws in
@@ -170,8 +170,10 @@ FLANK_SHOULDER = 16.0                      # extra mass in the shoulder just abo
 
 # 1b. Belt dip. Between the wheels the 986 reads visually compressed; my sections were flat there,
 # which is the "flat platform" in the side view. This lowers the top of the body through the door.
-BELT_DIP_X0, BELT_DIP_PEAK, BELT_DIP_X1 = 430.0, 1050.0, 1700.0
-BELT_DIP = 48.0
+# Dip moved back and made shallower. Starting it at 430 put it right under the cowl and turned the
+# scuttle-to-door handover into a 208 mm cliff. It now starts at 940, well clear of the screen.
+BELT_DIP_X0, BELT_DIP_PEAK, BELT_DIP_X1 = 940.0, 1280.0, 1740.0
+BELT_DIP = 26.0
 
 # 4. The tail drawn out instead of ending in a wall
 TAIL_START, TAIL_END_X = 2800.0, 3420.0
@@ -287,7 +289,7 @@ def ring(spec_x):
         x0, z0 = HOOD_SPINE[-1]
         x1, z1 = DECK_SPINE[0]
         belt = z_top + hw_top * CROWN_FACTOR
-        a = smoothstep(x0, x0 + 320, spec_x)          # release out of the cowl
+        a = smoothstep(x0, x0 + 700, spec_x)          # long release out of the cowl, was 320
         b = smoothstep(x1 - 320, x1, spec_x)          # gather into the deck
         crown = z0 * (1 - a) + belt * (a - b) + z1 * b
     if BELT_DIP_X0 <= spec_x <= BELT_DIP_X1:
@@ -501,7 +503,10 @@ def build():
         verts, faces, brings = [], [], []
         for f in [i / 10.0 for i in range(11)]:
             x = b["x0"] + (b["x1"] - b["x0"]) * f
-            rise = math.sin(math.pi * min(1.0, f * 1.20)) ** 1.15       # longer, gentler climb
+            # Peak on the REAR AXLE. The old sin() form topped out at specX 2034, 381 mm ahead of
+            # the wheel, which put the mass over the seats instead of over the tyre.
+            xs_ = b["x0"] + (b["x1"] - b["x0"]) * f
+            rise = math.exp(-((xs_ - 2415.0) / 620.0) ** 2)
             z_top = b["z_lo"] + (b["z_hi"] - b["z_lo"]) * rise
             wid = b["w"] * (0.45 + 0.55 * math.sin(math.pi * min(1.0, 0.25 + f * 0.9)))
             z_base = b["z_lo"] - 260      # reaches down INTO the haunch so the union merges

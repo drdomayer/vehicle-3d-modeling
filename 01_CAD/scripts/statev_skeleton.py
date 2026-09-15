@@ -117,12 +117,18 @@ DOOR_CHAR_LINE_Z = {"front": 420, "middle": 500, "rear": 520}
 # y_centre None -> mirrored pair is built at ±|y|
 BOXES = [
     # --- lighting
-    ("PROJECTOR",   "04_LIGHTING", -700,  560,  570,  150,  110,  110, "DECIDED",
+    ("PROJECTOR",   "04_LIGHTING", -600,  560,  570,  150,  110,  110, "DECIDED",
      "cavity for ONE real Hella 90 mm bi-LED module (low+high): 110 dia x ~150 deep incl. heatsink. "
-     "Lit-surface lower edge 515 mm, above the 500 mm legal minimum. Sits inside the body: at S02 "
-     "Z 570 the half-width is 680, the cavity spans Y 505..615. Replaces the 650x100x65 bar."),
-    ("PROJECTOR_2", "04_LIGHTING", -700,  420,  570,  150,  110,  110, "OPTIONAL",
-     "room for a second module if low and high are split across two units; delete if one bi-LED is used"),
+     "Lit-surface lower edge 515 mm, above the 500 mm legal minimum and only 15 mm clear of it, so "
+     "the module cannot be dropped. MOVED 2026-09-15 from specX -700 to -600. Measured on the BUILT "
+     "surface, the body top inside the module's own Y band 505..615 is 583.5 at specX -700 while the "
+     "cavity needs 625: the lamp protruded 41.5 mm through the bodywork. It first clears at -600, "
+     "where the same measurement reads 652.2. The note this replaces claimed a half-width of 680 at "
+     "S02 Z 570; the built body gives 652 there, because that check was taken from the section "
+     "control data rather than from the surface the sections produce."),
+    ("PROJECTOR_2", "04_LIGHTING", -600,  420,  570,  150,  110,  110, "OPTIONAL",
+     "room for a second module if low and high are split across two units; delete if one bi-LED is "
+     "used. Moved with PROJECTOR, for the same reason"),
     ("TAIL_BAR",    "04_LIGHTING", 3230,    0,  700,   45, 1560,   38, "LOCKED",
      "thin full-width blade across the tail. Z 700 sits on the S13 shoulder (top control point 750)."),
     ("TAIL_END",    "04_LIGHTING", 3150,  790,  700,  120,   40,   38, "LOCKED",

@@ -129,10 +129,19 @@ BOXES = [
     ("PROJECTOR_2", "04_LIGHTING", -600,  420,  570,  150,  110,  110, "OPTIONAL",
      "room for a second module if low and high are split across two units; delete if one bi-LED is "
      "used. Moved with PROJECTOR, for the same reason"),
-    ("TAIL_BAR",    "04_LIGHTING", 3230,    0,  700,   45, 1560,   38, "LOCKED",
-     "thin full-width blade across the tail. Z 700 sits on the S13 shoulder (top control point 750)."),
-    ("TAIL_END",    "04_LIGHTING", 3150,  790,  700,  120,   40,   38, "LOCKED",
-     "L termination: the blade turns forward onto the quarter at each outboard end. I had dropped "
+    ("TAIL_BAR",    "04_LIGHTING", 3200,    0,  612,   45, 1440,   38, "LOCKED",
+     "thin full-width blade across the tail. REPLACED 2026-09-15. It used to sit at specX 3230, "
+     "Z 700, 1560 wide, on the reasoning that Z 700 sat on the S13 shoulder whose top control point "
+     "is 750 — measured against the section control data again, not against the body those sections "
+     "produce. The built body crowns at 642.6 there and is 749.4 half-wide, so the bar stood 76 mm "
+     "proud of the tail AND overhung it by 31 mm a side. Now placed on the body: specX 3200 where "
+     "the crown is 642.6, top edge 631 so it sits 12 mm under the crown, and 1440 wide so it stays "
+     "inside the body. The intent is unchanged — thin, full width, high on the tail."),
+    ("TAIL_END",    "04_LIGHTING", 3120,  700,  612,  120,   40,   38, "LOCKED",
+     "L termination: the blade turns forward onto the quarter at each outboard end. MOVED 2026-09-15 "
+     "from specX 3150 / Y 790 / Z 700, which sat 283 mm above the body because at that station the "
+     "quarter has already fallen away outboard of Y 770. Now at specX 3120 / Y 700 / Z 612, sharing "
+     "the bar's Z so the L reads as one continuous light. I had dropped "
      "this when I read the render as a plain bar — the locked intent is blade PLUS sharp L ends. "
      "Explicitly NOT a Lamborghini-style separate triangular lamp; the light stays integrated "
      "into the body."),

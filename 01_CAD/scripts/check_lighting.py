@@ -12,6 +12,9 @@ Two checks per lamp:
     ENCLOSURE   the body, sampled only inside the lamp's own Y band, must reach at least the top
                 of the cavity at the lamp's station. A lamp whose top is above the bodywork is not
                 recessed, it is sticking out.
+    WIDTH       the lamp must not be wider than the car is at that station. TAIL_BAR was 1560 wide
+                where the body is 1498, so it overhung by 31 mm a side on top of standing proud,
+                and only the height was being looked at.
     LEGAL       CLAUDE.md hard constraint 5: a headlamp's lit surface sits at least 500 mm above
                 the ground. The lit lower edge is taken as the cavity's lower edge.
 
@@ -54,8 +57,8 @@ def main():
     print("=" * 96)
     print("LIGHTING PACKAGING CHECK, against the BUILT body rather than the section data")
     print("=" * 96)
-    print(f"\n{'LAMP':<14}{'specX':>7}{'cavity Z':>12}{'body top in its Y band':>24}"
-          f"{'ENCLOSURE':>11}{'LEGAL':>8}")
+    print(f"\n{'LAMP':<14}{'specX':>7}{'cavity Z':>12}{'body top in band':>18}"
+          f"{'half-width':>12}{'ENCLOSURE':>11}{'WIDTH':>10}{'LEGAL':>8}")
     bad = 0
     for name, coll, x, y, z, sx, sy, sz, status, note in LAMPS:
         z_lo, z_hi = z - sz / 2.0, z + sz / 2.0
@@ -66,13 +69,18 @@ def main():
         enc = "n/a" if top is None else ("OK" if top >= z_hi else f"OUT {z_hi - top:.0f}mm")
         legal = "n/a" if "PROJECTOR" not in name and "DRL" not in name else (
             "OK" if z_lo >= LEGAL_MIN_MM else f"LOW {LEGAL_MIN_MM - z_lo:.0f}mm")
-        if enc.startswith("OUT") or legal.startswith("LOW"):
+        station = [p for p in V if abs(p[0] - x) < max(60.0, sx / 2.0)]
+        hw = max((abs(p[1]) for p in station), default=None)
+        wid = "n/a" if hw is None else ("OK" if y_hi <= hw else f"OVER {y_hi - hw:.0f}mm")
+        if enc.startswith("OUT") or legal.startswith("LOW") or wid.startswith("OVER"):
             bad += 1
         print(f"{name:<14}{x:>7}{f'{z_lo:.0f}..{z_hi:.0f}':>12}"
-              f"{('--' if top is None else f'{top:.1f}'):>24}{enc:>11}{legal:>8}")
+              f"{('--' if top is None else f'{top:.1f}'):>18}"
+              f"{('--' if hw is None else f'{hw:.1f}'):>12}{enc:>11}{wid:>10}{legal:>8}")
     print(f"\n{bad} problem(s).")
     if bad:
         print("A lamp that reads OUT is not recessed into the body; it protrudes by that much.")
+        print("A lamp that reads OVER is wider than the car is at its own station.")
         print("Moving it rearward along specX is usually the cheapest fix, because the body rises")
         print("toward the cowl. Dropping it is usually not: the legal floor leaves little margin.")
     return bad

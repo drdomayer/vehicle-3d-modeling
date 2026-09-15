@@ -82,6 +82,13 @@ VOID_FIELDS = {
     "SIDE_INTAKE": dict(depth=124.0, x0=1780.0, xa=1940.0, xb=2110.0, x1=2300.0, w=72.0, n=2.8,
                         centre=[(1780, 554), (2070, 536), (2300, 518)]),
 }
+# STAGE 02 FINDING, 2026-09-15. docs/16 CONTINUITY lists REAR_FASCIA -> DIFFUSER as one of only
+# two G0 transitions on the car, meaning a crease rather than a blend. The built edge turns 2.6 to
+# 3.4 degrees, which is no crease at all. Narrowing `trans` from 72 to 18 was tried and produced
+# geometry IDENTICAL to 72, to the vertex: at 60 points per half-section the resample cannot
+# resolve a transition that narrow, so this parameter is inert at the current resolution. A G0
+# crease here needs explicit control points, the way the buttress crest needed them — which is
+# Stage 03 work on a surface that does not exist yet, not a number change.
 REAR_UNDERCUT_FIELD = dict(depth=108.0, x0=2260.0, xa=2560.0, xb=2950.0, x1=3400.0, trans=72.0,
                            edge=[(2260, 322), (2960, 336), (3400, 300)])
 
@@ -255,6 +262,20 @@ BUTTRESS_TOP_FRAC = 0.20
 # touch the crown: the centreline still closes at max(crown, b_top - 40) exactly as before.
 DECK_EDGE_OUT = 12.0     # mm outboard of the crest where the approach starts
 DECK_EDGE_DROP = 34.0    # mm below the crest at that point -> a 70 degree final approach
+
+# STAGE 02, ATTEMPTED AND REVERTED 2026-09-15. docs/16 asks the buttress for TWO clear edges.
+# Adding an inner one cost 13.9 mm of crown against a 1.2 mm tolerance, and raising the section
+# resolution to 72, 84 and 96 points did not recover it, so it was not a sampling artefact.
+#
+# The measurement that explains it: b_top stands only 2 to 14 mm above the section's own top
+# through the whole buttress range, and it oscillates station to station — 4.6, 11.7, 3.8, 13.6,
+# 2.0, 10.8, 6.4. Any guard written on that headroom switches on and off between neighbouring
+# stations, which breaks the point correspondence build() relies on when it smooths along X.
+#
+# The real finding is underneath that. What is built is not a buttress standing on a sunken deck;
+# it is a 10 mm lip on the crown. It cannot be given two edges until the deck between the blades
+# can drop, and DECK_SPINE is marked BLOCKED in docs/14 because its heights sit in the volume the
+# soft top folds into. This waits for scan session S2, not for more modelling.
 
 
 def table_z(table, spec_x):

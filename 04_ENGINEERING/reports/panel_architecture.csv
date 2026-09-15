@@ -1,0 +1,28 @@
+ID,PART,SIDE,GROUP,ASSEMBLY_STEP,INSTALL_VECTOR,METHOD,SHAPE_DRIVER,INTERFACE_CLASS,REMOVABLE,SCAN_STATUS,INTERFACES_ABC,SHAPE_GOVERNED_BY
+P01,FRONT_FASCIA,-,FRONT,3,+X,printed master -> composite,OURS,C,yes,RED,A2 B1 C3,our nose form; the donor only sets how far forward it may sit
+P02,HOOD,-,FRONT,4,+Z,printed master -> composite,MIXED,C,yes,YELLOW,A1 B2 C3,outer shape ours; rear edge lands on the donor cowl
+P03,FRONT_FENDER_L,L,FRONT,4,+Y,printed master -> composite,DONOR,C,yes,YELLOW,A2 B1 C3,arch opening and the front shut line govern it
+P04,FRONT_FENDER_R,R,FRONT,4,-Y,printed master -> composite,DONOR,C,yes,YELLOW,A2 B1 C3,arch opening and the front shut line govern it
+P05,FENDER_CHANNEL_L,L,FRONT,5,+Y,direct print,OURS,C,yes,YELLOW,A2 B1 C3,insert inside our own channel
+P06,FENDER_CHANNEL_R,R,FRONT,5,-Y,direct print,OURS,C,yes,YELLOW,A2 B1 C3,insert inside our own channel
+P07,ROCKER_L,L,SIDE,6,+Y,printed master -> composite,MIXED,C,yes,YELLOW,A2 B2 C2,outer form ours; the sill profile governs where it can bond
+P08,ROCKER_R,R,SIDE,6,-Y,printed master -> composite,MIXED,C,yes,YELLOW,A2 B2 C2,outer form ours; the sill profile governs where it can bond
+P09,DOOR_SKIN_L,L,SIDE,7,+Y,printed master -> composite,DONOR,C,yes,YELLOW,A0 B2 C3,"overlay on the OEM door skin, between two donor shut lines"
+P10,DOOR_SKIN_R,R,SIDE,7,-Y,printed master -> composite,DONOR,C,yes,YELLOW,A0 B2 C3,"overlay on the OEM door skin, between two donor shut lines"
+P11,SIDE_INTAKE_L,L,SIDE,8,+Y,printed master -> composite,DONOR,C,yes,RED,A0 B1 C3,the real opening behind it governs the mouth
+P12,SIDE_INTAKE_R,R,SIDE,8,-Y,printed master -> composite,DONOR,C,yes,RED,A0 B1 C3,the real opening behind it governs the mouth
+P13,INTAKE_BLADE_L,L,SIDE,9,+Y,direct print or CNC,OURS,C,yes,RED,A0 B1 C3,blade inside our own mouth
+P14,INTAKE_BLADE_R,R,SIDE,9,-Y,direct print or CNC,OURS,C,yes,RED,A0 B1 C3,blade inside our own mouth
+P15,REAR_HAUNCH_L,L,REAR,10,+Y,printed master -> composite,DONOR,C,no,RED,A3 B0 C3,overlay bonded to the welded quarter; the quarter governs it
+P16,REAR_HAUNCH_R,R,REAR,10,-Y,printed master -> composite,DONOR,C,no,RED,A3 B0 C3,overlay bonded to the welded quarter; the quarter governs it
+P17,BUTTRESS_L,L,REAR,11,+Z,printed master -> composite,MIXED,C,no,YELLOW,A2 B3 C2,"our blade, but it sits in the roof fold envelope"
+P18,BUTTRESS_R,R,REAR,11,+Z,printed master -> composite,MIXED,C,no,YELLOW,A2 B3 C2,"our blade, but it sits in the roof fold envelope"
+P19,REAR_DECK,-,REAR,12,+Z,printed master -> composite,MIXED,C,no,RED,A0 B3 C3,"our deck, height governed by the roof fold envelope"
+P20,ENGINE_COVER,-,REAR,13,+Z,printed master -> composite,MIXED,C,yes,RED,A0 B1 C3,"our cover, aperture governed by the donor engine lid"
+P21,REAR_FASCIA,-,REAR,14,-X,printed master -> composite,OURS,C,yes,YELLOW,A1 B1 C2,our rear form
+P22,DIFFUSER,-,REAR,15,-X,printed master -> composite,OURS,C,yes,RED,A1 B0 C3,our diffuser; only its top edge meets the donor floor
+P23,REAR_SPOILER,-,REAR,16,+Z,direct print or composite,OURS,C,yes,RED,A0 B0 C1,our ducktail
+P24,HEADLIGHT_HOUSING_L,L,LIGHTS,17,+X,"direct print, ASA",OURS,C,yes,YELLOW,A0 B0 C2,housing around a bought E-marked module; the module is fixed
+P25,HEADLIGHT_HOUSING_R,R,LIGHTS,17,+X,"direct print, ASA",OURS,C,yes,YELLOW,A0 B0 C2,housing around a bought E-marked module; the module is fixed
+P26,TAIL_HOUSING_L,L,LIGHTS,18,-X,"direct print, ASA",OURS,C,yes,YELLOW,A0 B0 C1,housing around a bought E-marked module; the module is fixed
+P27,TAIL_HOUSING_R,R,LIGHTS,18,-X,"direct print, ASA",OURS,C,yes,YELLOW,A0 B0 C1,housing around a bought E-marked module; the module is fixed

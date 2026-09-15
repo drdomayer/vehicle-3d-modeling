@@ -87,7 +87,7 @@ ASSEMBLY_ORDER = [
 NOT_YET = [
     "flanges and their bolt patterns — need the scan and the shop's flange width",
     "panel overlaps — need adjacent surfaces to exist",
-    "manufacturing splits and print orientation — need the shop's build volume (docs/13 Q9)",
+    "manufacturing splits and print orientation — need the PRINTER's usable build volume\n     (docs/13 Q26), the largest flat area it can lay down without lifting (Q31) and the\n     maximum unsupported overhang (Q32). Q9 is a different number: what the composite shop\n     can handle, not what the printer can build.",
     "mass and centre of mass — need solids with real thickness",
     "the exploded view itself — needs the panels",
     "door operation envelope — needs hinge positions from the scan",

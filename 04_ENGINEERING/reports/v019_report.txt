@@ -1,0 +1,70 @@
+STATEV 001 — v019. One parameter changed from v018: REAR_UNDERCUT_FIELD.xb 3150 -> 2950.
+v018 kept as the rollback baseline, byte-identical. Nothing frozen. Nothing committed at the time
+this file was written.
+
+=== THE SELECTION ==========================================================
+xb = 2950 was chosen from a controlled A/B/C experiment run on the exact v018 baseline, in which
+xb was the ONLY parameter that differed between variants. depth 108, x0 2260, xa 2560, x1 3400,
+trans 72 and the edge table were identical in every variant and are identical in v019.
+
+  A  xb 3050  REJECTED — the visual change against v018 was not enough to justify a change at all.
+  B  xb 2950  SELECTED.
+  C  xb 2850  REJECTED — the release became unnecessarily aggressive: the largest station-to-station
+              change went to 58 mm against 50 in v018 itself, at specX 2965..3060.
+
+2950 IS A VISUAL AND DESIGN SELECTION, NOT AN ENGINEERING-DERIVED VALUE. It was picked by looking
+at rendered views, not calculated from anything. This is stated plainly so that no later session
+treats it as a derived figure.
+
+The only engineering anchors in this region are:
+  rear wheel arch ends   specX 2780   (365 mm cylinder on the rear axle at 2415)
+  diffuser tunnel starts specX 3145   (DIFFUSER_TUNNEL in statev_skeleton.py)
+All three candidate values lay between those two anchors. Nothing in the packaging distinguishes
+them; only the eye does.
+
+Also recorded, because it was tested and disproved rather than assumed: xa is a DEAD LEVER for this
+shape. Moving it from 2560 to 2780 changed the measured undercut by at most 1 mm at every station,
+because between those two stations the undercut band sits inside the rear wheel arch aperture,
+where the body has already been cut away. The earlier claim that the plateau was problematic for
+starting inside the arch is withdrawn.
+
+=== WHAT CHANGED ===========================================================
+  undercut depth, same stations as the v018 report
+    specX     2775   2870   2965   3060   3155   3250   3345
+    v018       274    287    287    267    250    227    177
+    v019       274    287    286    258    215    169    170
+    change       0      0     -1     -9    -35    -58     -7
+
+  Peak preserved: 287.3 mm at specX 2870, unchanged. The depth immediately behind the rear wheel is
+  exactly as it was; only the release is earlier.
+  Largest station-to-station change 46.5 mm, against 50 in v018 — the transition is smoother than
+  the one it replaces, not sharper. No new step or discontinuity.
+
+=== WHAT DID NOT CHANGE ====================================================
+  length 4370.0      width 1849.438      floor 120.0      crown 996.451
+  wheelbase 2415     track 1465 / 1528   glass 970 / 1255
+  hoops Z 1235 at specX 1760             door shut lines specX 440 / 1635
+  STATEV_WHEEL_F_L/R  specX 0     Y +-732.5  Z 323.5
+  STATEV_WHEEL_R_L/R  specX 2415  Y +-764.0  Z 337.5
+  faces 8899 (identical)   volume 3.906934 -> 3.911282 m3
+
+  rear silhouette, crown line
+    specX   2000   2200   2400   2600   2800   3000   3200   3420
+    v018   967.2  993.2  989.6  938.2  858.3  759.4  642.4  513.1
+    v019   967.2  993.2  989.6  938.2  858.3  759.4  642.5  513.1
+  Unchanged to within rounding. The silhouette is not touched by this change and cannot be: the
+  slab-tail fault corrected in v015 lived in the crown line, and the crown line is identical.
+
+  Untouched and explicitly out of scope for this pass: fender, cabin, beltline, hood, door channel,
+  nose, deck edge, wheel geometry, every locked dimension. No new field, no new mechanism, no new
+  boolean — still six cut FEATURES (cabin, four wheel arches, nose mouth), which is seven
+  boolean OPERATIONS because the nose mouth is mirrored. Unchanged from v018.
+
+=== HOW v019 WAS PRODUCED ==================================================
+statev_master_volumes.py carries xb = 2950 and v019 was rebuilt by executing that file directly
+against the v018 baseline opened from disk. Not an in-memory substitution, and not a copy of the
+experiment.
+
+Verified rather than asserted: 9959 vertices, 8899 faces, volume 3.911282 m3, and a sorted-vertex
+SHA-256 of 8a29a19de3ae440f58d5f578341cd95ad54e25eac148f5b3043e1296b20fe265 — identical to the
+validated xb=2950 experiment. v019 is regenerable from source, as the project rule requires.

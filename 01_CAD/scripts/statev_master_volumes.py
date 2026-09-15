@@ -93,9 +93,6 @@ NOSE_BLADE_X0, NOSE_BLADE_X1 = -965.0, -640.0
 NOSE_BLADE_Z = 350.0        # everything above this at the nose is drawn in
 NOSE_BLADE_THIN = 46.0      # mm taken off the half-width at the top of the blade
 
-REAR_UNDERCUT = [(2350, 0, 90, 300), (2600, 70, 90, 330), (2950, 95, 90, 340),
-                 (3250, 60, 90, 320), (3400, 0, 90, 280)]
-
 CABIN_Y, CABIN_Z = 700, 640
 
 # Beltline. The A-pillar measured 217 mm below the screen base while the rear of the cabin was at

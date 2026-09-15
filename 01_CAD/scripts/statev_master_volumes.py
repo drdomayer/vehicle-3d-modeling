@@ -440,6 +440,17 @@ def ring(spec_x):
              * (1.0 - smoothstep(BELT_DIP_PEAK, BELT_DIP_X1, spec_x)) * 4.0)
         crown -= BELT_DIP * min(1.0, f)
     narrow, drop = tail_factor(spec_x)
+    # NOTE, 2026-09-15. This guard stops the crown falling below the section's own top, and through
+    # the NOSE that is not a guard, it is the author. Measured at six stations from specX -950 to
+    # -450, the section wins at four of them: S00 to S03 carry top points at Z 450, 550, 650 and
+    # 700, a staircase that overrides whatever HOOD_SPINE asks for. HOOD_SPINE only becomes
+    # authoritative from about specX -250 rearward.
+    #
+    # Consequence: docs/16 asks the nose to be "longitudinally almost flat" and says "do not lift
+    # the centre", and it is not — it climbs 100 mm in the first 200. Three different HOOD_SPINE
+    # tables were tried and all three produced the same nose to within 4 mm, because none of them
+    # is what sets it. The lever is SECTIONS S00-S03 in statev_skeleton.py, and moving it changes
+    # the nose silhouette that CHECKPOINT 01 looked at, so it is a design decision and not a fix.
     crown = max(crown - drop, z_top + 10)
     # Inside the cabin the crown is cut away entirely, so it costs nothing to hold it above the
     # door top — and it has to be held, or BELT_DIP drags the centreline below the shelf and the

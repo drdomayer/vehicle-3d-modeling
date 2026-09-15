@@ -1,0 +1,162 @@
+STATEV 001 — v018 refinement pass on v017. v017 kept, byte-identical.
+Blockout only. No lights, vents, trim, seams or materials. No new booleans: still six.
+
+=== LOCKED — VERIFIED, NOT ASSUMED =========================================
+  length      4370.0      identical to v017
+  width       1849.438    v017 1849.441   (-0.003)
+  floor       120.0       identical
+  crown       996.451     v017 996.394    (+0.057)
+  wheelbase 2415   track 1465 / 1528   glass 970 / 1255   hoops 1235 at specX 1760
+  door shut lines 440 / 1635
+  STATEV_WHEEL_F_L/R  0     +-732.5  323.5   |  R_L/R  2415  +-764.0  337.5
+  all four wheel centres byte-identical to v017
+  volume 3.914 -> 3.907 m3    faces 8486 -> 8899 (the nose cutter, see #4)
+
+=== 1. FRONT FENDER TOP — the flagged +161 mm ==============================
+Six parameter tests before choosing anything. Every test measured with the X-smoothing that
+build() applies, because ring() alone does not predict the built surface — that is exactly how
+this fault was introduced in v017.
+
+  test                              fend350  door440  gap440  hood350  hood420
+  CURRENT v017                          839      856     114      924      950
+  A  X0 340 / ramp 110                  780      844     126      922      949
+  B  X0 385 / ramp  80                  744      814     156      922      949
+  C  X0 420 / ramp  55                  738      789     181      922      949
+  D  X0 285 / ramp 155 + BELT_Z falls   763      827     143      922      949
+  E  X0 320 / ramp 120 + BELT_Z falls   758      827     143      922      949
+  G  X0 340 / ramp 110 + BELT_Z falls   764      841     129      922      949
+  J  same, BELT_Z 345:740 420:920       764      841     129      922      949
+
+  The two parameters move the fender and the door top together at close to 1:1 — the X-smoothing
+  couples them and there is no setting that separates them. Giving BELT_Z an explicit low value
+  at specX 345 is the one lever that does separate them, and it SATURATES: G and J are identical
+  although their BELT_Z values differ by 15 and 8 mm. Below about 755 the shelf drops under the
+  section's own profile and cabin_flank has nothing left to pull. G is therefore the frontier,
+  not a preference.
+
+  Chosen: CABIN_X0 285 -> 340, CABIN_RAMP 155 -> 110, BELT_Z gains (345, 755) and (420, 880->912),
+  plus (560, 864 -> 838) to keep the belt line smooth after the front moved.
+
+  MEASURED RESULT, same method as the v017 report:
+    specX      v016     v017     v018   v018-v017
+      150     700.6    700.2    694.4       -5.8
+      250     701.1    771.1    715.5      -55.6
+      350     678.3    839.0    763.1      -75.9
+      420     697.1    856.1    835.8      -20.3
+  The unapproved excess over v016 is halved: +161 mm becomes +85 mm at specX 350.
+
+  It is not returned to 678 and that is deliberate, stated rather than quietly decided. The front
+  arch crown is at Z 673.5, so v016's 678 left 4.5 mm of body above the wheel opening — there was
+  no fender top there at all, only the edge of the arch. v015's own commit had already widened the
+  front "so there is real volume above the arch crown". 763 leaves 90 mm. Going lower re-creates a
+  fault the project had already identified.
+
+  COST, stated plainly. The beltline gap opens at the front:
+    specX      440    600    800   1000   1200   1400   1600   1635
+    v017     113.9  104.3  114.2  126.0  128.5  128.9  122.7  115.1
+    v018     134.2  116.6  117.3  126.0  128.5  128.9  122.7  115.8
+  Only the three front stations moved; from specX 1000 back the line is unchanged to the decimal.
+  Range tightens from 104..129 to 116..134. The A-pillar is now the loosest point rather than the
+  tightest, which is the price of the fender. Both numbers are proxies: 970 is the screen base on
+  the CENTRELINE, and the frame's lower corner beside the door sits well below it, so neither
+  figure is the real step. That only resolves on the scan.
+
+  Hood crown on the centreline did not move: specX 350 is 921.8 against 924, specX 420 is 947.5
+  against 950 — inside the smoothing neighbourhood.
+
+=== 2. DOOR CHANNEL — NO CHANGE MADE, AND WHY ==============================
+I was told the cause was the depth table and not the measurement. It is the measurement, and the
+number I reported in v017 was wrong. Reporting that rather than adjusting a field that is correct.
+
+  The field itself, evaluated directly, through the stations in question:
+    specX      505    610    715    820    925   1030
+    asks     126.8  126.9  120.9  115.6  113.5  111.4       monotone, no dip anywhere
+
+  The built surface, measured exactly on the smoothed rings that build() writes as vertices:
+    400:21 505:41 610:52 715:57 820:58 925:63 1030:66 1135:69 1240:71 1345:72 1450:72 1555:72
+    1660:71 1765:71 1870:67 1975:68 2080:61 2185:19
+    neighbour deltas: 19 12 4 2 4 3 3 3 0 1 1 1 0 3 1 8 42
+  Through specX 715..820 the deltas are 2 and 4 — the SMALLEST on the car, not the largest.
+
+  The "80, 66, 65, 80" in the v017 report came from binning Z into 30 mm buckets before taking the
+  shoulder reference. The bucket boundary lands differently at each station, which injects about
+  +-15 mm of noise. Rerun on the same mesh at the same moment, the two methods disagree by 23 mm at
+  specX 715 and by 9 mm at 505. The exact method needs no bins because the rings are already the
+  surface.
+
+  Two roughnesses in the channel ARE real and neither is at specX 715:
+    - the run-in, deltas 19 and 12 at specX 400..610. By design; it starts from zero.
+    - the release at specX 2185, delta 42. The largest single change anywhere on the car. It is the
+      intake mouth closing before the rear arch. Flagged, not touched — the intake is a functional
+      opening and shaping its mouth is stage 02 work.
+
+=== 3. REAR DECK EDGE ======================================================
+The crest was ONE control point, so the 60-point resample rounded it. Below it sat 200 mm of dead
+straight 45 degree ramp. Two points make a corner the resample cannot smooth away: a short steep
+approach, then the crest. Control geometry, no boolean.
+
+  DECK_EDGE_OUT 12 mm, DECK_EDGE_DROP 34 mm, capped at 60 % of the height actually available above
+  the section top — a fixed drop was simply skipped wherever the buttress is low.
+
+  sharpest turn in the section, degrees        crown deviation
+    specX    v017    v018                        specX   delta
+     1900    30.5    36.8                         2000   +0.08
+     2000    25.7    35.0                         2200   +0.06
+     2200    30.5    29.2   no change             2400   +0.05
+     2415    41.9    55.3                         2600   +0.06
+     2650    31.2    34.6                         2800   -0.42
+     2900    25.5    43.5                         3000   -0.69
+     3100    22.9    23.8   no change             3200   -0.14
+     3250    29.9    29.9   no change             3420   +0.00
+  Sharper at five stations, unchanged at three, softer at none.
+  Max crown deviation 0.69 mm against the established 1.2 mm limit.
+
+  Where it did not take, the reason is structural, not a bug: at specX 2200 the buttress crest
+  stands only 12 mm above the section's own top, so there is no blade there to put an edge on.
+
+=== 4. NOSE FACETING =======================================================
+Diagnosed before changing anything, and the stated cause was wrong. The body is NOT short of
+sections at the nose — it carries stations every 17 to 33 mm, fourteen of them across the mouth.
+
+  The CUTTER was the facet. It was a four-corner rectangle lofted through six stations up to 80 mm
+  apart: a box. So the opening had flat panels along its length and a 90 degree knife edge where it
+  met the skin.
+
+  Resampled to 12 mm through Catmull-Rom, so a coarse table is not just replaced by short facets
+  joined at the same kinks, and the two INNER corners are filleted at 26 mm, capped by the
+  opening's own height and depth. Same position, same depth, same height — sampling and a radius.
+
+  Nose half-width and top, unchanged where it matters:
+    specX  -965:362  -930:429  -880:519  -830:591  -780:636  -730:677  -680:729  -640:750
+  faces 8486 -> 8899, all of it in the nose.
+
+=== 5. REAR UNDERCUT — EVALUATION ONLY, NOT TOUCHED ========================
+  v017: 2735:274 2830:283 2925:288 3020:280 3115:250 3210:236 3305:192 3400:148
+  v018: 2735:273 2830:282 2925:287 3020:279 3115:250 3210:236 3305:192 3400:148
+  (the 1 mm is the deck edge changing the shoulder reference, not the undercut)
+
+  RECOMMENDATION: B — soften, and reshape rather than simply reduce.
+
+  Why not A. At 288 mm it is four times the side channel's 72 mm. In a blockout where every other
+  void is a considered 60-90 mm, one void at 288 does not read as emphasis, it reads as a different
+  decision made by somebody else. The rear profile shows the consequence: the body appears to sit
+  ON a lower structure rather than to be one body.
+
+  Why not C. Integrating it away would return the slab tail that v015 was fixing. The tail needs
+  the lightness.
+
+  What I would actually do, if you approve it: hold the depth near its current value immediately
+  behind the rear wheel where it does the work, and release it faster into the diffuser instead of
+  carrying 250-290 mm across the whole 2560-3150 plateau. That keeps the lightness, removes the
+  shelf read, and brings the deepest void to roughly twice the side channel rather than four times.
+  One number: REAR_UNDERCUT_FIELD's xb, from 3150 to about 2850.
+
+  Not changed. Your call.
+
+=== REMAINING ISSUES =======================================================
+  1. The front fender is still +85 mm over v016 and still UNAPPROVED. docs/14 carries it.
+  2. The A-pillar beltline gap is now the loosest point at 134 mm, up from 114. Consequence of 1.
+  3. Side channel release at specX 2185 changes 42 mm in one 105 mm step. Intake mouth, stage 02.
+  4. Deck edge does not take at specX 2200 and 3100 — the buttress is too low there to carry one.
+  5. Panels: RED 11, YELLOW 16 of 27 parts; 7 RED / 8 YELLOW / 0 GREEN of 15 panels. Unchanged.
+     Every one of them is waiting on the scan, not on geometry.

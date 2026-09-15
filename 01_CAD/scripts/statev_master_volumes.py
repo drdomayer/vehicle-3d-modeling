@@ -116,9 +116,16 @@ CABIN_Y, CABIN_Z = 700, 640
 # for. Architecturally, the top of the front fender and the top of the door are the same line: it
 # should arrive at the A-pillar already at belt height, not step up to it. The cabin APERTURE is
 # untouched at specX 420 — this moves our surface, not the donor opening.
-CABIN_X0, CABIN_X1 = 285.0, 1780.0
-CABIN_RAMP = 155.0
-BELT_Z = [(420, 880), (560, 864), (800, 859), (1000, 853), (1200, 850),
+CABIN_X0, CABIN_X1 = 340.0, 1780.0
+CABIN_RAMP = 110.0
+# The first two entries are the A-pillar foot, not the door. v017 let table_z clamp forward of
+# specX 420, so the shelf asked for 880 all the way back to where it started and carried the front
+# fender top up with it — 678 to 839 at specX 350, a 161 mm rise nobody approved. Giving the line an
+# explicit, low value at 345 lets the shelf ramp in without lifting the fender: measured over five
+# parameter tests, X0 340 / ramp 110 with these two entries puts the fender top at 764 instead of
+# 839 while the door top only falls 15 mm. Below about 755 at 345 the value stops doing anything —
+# the shelf drops under the section's own profile and cabin_flank has nothing left to pull.
+BELT_Z = [(345, 755), (420, 912), (560, 838), (800, 859), (1000, 853), (1200, 850),
           (1400, 853), (1600, 861), (1780, 872)]
 CABIN_FLANK_LO = 470.0      # from just above the rocker up to BELT_Z the door side is near vertical
 CABIN_FLANK_PULL = 0.92
@@ -239,6 +246,15 @@ TAIL_DROP = 140.0         # mm the crown falls over the same run; the tail sits 
 
 # 5. Buttress crest (used in the blade loft): top width as a fraction of base
 BUTTRESS_TOP_FRAC = 0.20
+
+# 5b. Deck edge. The crest was ONE control point, so the 60-point resample rounded it and the deck
+# read as a pillow: below it sat 200 mm of dead straight 45 degree ramp with nothing on it, and the
+# corner itself measured only 26 degrees at specX 2000 and 2900. Two points make it a corner the
+# resample cannot smooth away — a short steep approach, then the crest — which is what gives the
+# top of the rear quarter a line for light to break on. Geometry, not a boolean, and it does not
+# touch the crown: the centreline still closes at max(crown, b_top - 40) exactly as before.
+DECK_EDGE_OUT = 12.0     # mm outboard of the crest where the approach starts
+DECK_EDGE_DROP = 34.0    # mm below the crest at that point -> a 70 degree final approach
 
 
 def table_z(table, spec_x):
@@ -460,7 +476,14 @@ def ring(spec_x):
             else:
                 half = [(0.0, z_floor)] + pts
     if b_top is not None and b_top > pts[-1][1] + 8:
-        half.append((b["y"] + b["w"] * BUTTRESS_TOP_FRAC / 2, b_top))    # the blade crest
+        y_crest = b["y"] + b["w"] * BUTTRESS_TOP_FRAC / 2
+        # The drop is capped at 60 % of the height actually available above the section top. A
+        # fixed 34 mm was simply skipped wherever the buttress is low — at specX 2200 and again
+        # out at 3100 — which left the edge strong over the wheel and absent at both ends of it.
+        drop = min(DECK_EDGE_DROP, 0.60 * (b_top - pts[-1][1]))
+        if drop > 6:
+            half.append((y_crest + DECK_EDGE_OUT, b_top - drop))   # steep approach into the crest
+        half.append((y_crest, b_top))                              # the blade crest
     half.append((0.0, max(crown, (b_top - 40) if b_top else crown)))
     half = resample(half, N_HALF)
     return list(half) + [(-y, z) for y, z in reversed(half[1:-1])]
@@ -484,26 +507,84 @@ def built_hw(spec_x, z_lo, z_hi):
     return sum(v for _, v in near[:k]) / k
 
 
+# Cutter resolution. The nose mouth is the only boolean left on the body, and the faceting under it
+# was never the body's fault: the body carries sections every 17-33 mm through the nose. The CUTTER
+# was a box — a four-corner rectangle lofted through six stations up to 80 mm apart — so the hole it
+# left had flat panels along its length and a 90 degree knife edge where it met the skin. Neither of
+# these changes the mouth: same position, same depth, same height. It is sampling and a fillet.
+CUTTER_STEP = 12.0      # mm between lofted stations after resampling
+CUTTER_ARC = 5          # points per rounded inner corner
+CUTTER_FILLET = 26.0    # mm radius on the two inner corners, capped by the opening's own size
+
+
+def _catmull(ts, vs, t):
+    """Catmull-Rom through the control values, so resampling a coarse table does not just replace
+    long flat facets with short ones joined at the same kinks."""
+    if t <= ts[0]:
+        return vs[0]
+    if t >= ts[-1]:
+        return vs[-1]
+    i = max(j for j in range(len(ts) - 1) if ts[j] <= t)
+    p1, p2 = vs[i], vs[i + 1]
+    p0 = vs[i - 1] if i > 0 else p1
+    p3 = vs[i + 2] if i + 2 < len(vs) else p2
+    u = (t - ts[i]) / (ts[i + 1] - ts[i])
+    return 0.5 * ((2 * p1) + (-p0 + p2) * u
+                  + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u * u
+                  + (-p0 + 3 * p1 - 3 * p2 + p3) * u ** 3)
+
+
+def _cutter_section(hw, depth, z_lo, z_hi):
+    """(y, z) ring for one station: outboard corners square, the two INNER corners filleted.
+    Only the inner face and the two lips ever become visible surface; the outer face is buried."""
+    y_out, y_in = hw + 150, hw - depth
+    r = max(0.0, min(CUTTER_FILLET, (z_hi - z_lo) / 3.0, depth / 2.0))
+    if r < 1.0:
+        return [(y_out, z_lo), (y_in, z_lo), (y_in, z_hi), (y_out, z_hi)]
+    pts = [(y_out, z_lo)]
+    cy, cz = y_in + r, z_lo + r
+    for k in range(CUTTER_ARC):                     # bottom inner corner, 270 deg -> 180 deg
+        a = math.radians(270 - 90 * k / (CUTTER_ARC - 1))
+        pts.append((cy + r * math.cos(a), cz + r * math.sin(a)))
+    cz = z_hi - r
+    for k in range(CUTTER_ARC):                     # top inner corner, 180 deg -> 90 deg
+        a = math.radians(180 - 90 * k / (CUTTER_ARC - 1))
+        pts.append((cy + r * math.cos(a), cz + r * math.sin(a)))
+    pts.append((y_out, z_hi))
+    return pts
+
+
 def make_cutter(name, stations, coll, mirror=True):
     """Loft a cutter from (spec_x, depth, z_lo, z_hi). It sits outboard of the body and eats in."""
+    xs = [t[0] for t in stations]
+    fine = []
+    x = xs[0]
+    while x < xs[-1]:
+        fine.append(x)
+        x += CUTTER_STEP
+    fine.append(xs[-1])
+    sampled = [(t,
+                _catmull(xs, [q[1] for q in stations], t),
+                _catmull(xs, [q[2] for q in stations], t),
+                _catmull(xs, [q[3] for q in stations], t)) for t in fine]
     objs = []
     for sgn in ((1, -1) if mirror else (1,)):
         verts, faces, rings = [], [], []
-        for spec_x, depth, z_lo, z_hi in stations:
+        for spec_x, depth, z_lo, z_hi in sampled:
             hw = built_hw(spec_x, z_lo, z_hi)
-            y_out, y_in = hw + 150, hw - depth
-            quad = [(y_out, z_lo), (y_in, z_lo), (y_in, z_hi), (y_out, z_hi)]
+            sec = _cutter_section(hw, depth, z_lo, z_hi)
             if sgn < 0:
-                quad.reverse()      # mirroring by negating Y reverses the winding; undo it here,
-                                    # by construction, instead of hoping recalc_face_normals fixes it
+                sec = list(reversed(sec))   # mirroring by negating Y reverses the winding; undo it
+                                            # here, by construction, instead of hoping recalc fixes it
             idx = []
-            for y, z in quad:
+            for y, z in sec:
                 idx.append(len(verts))
                 verts.append((mm(sx(spec_x)), mm(sgn * y), mm(z)))
             rings.append(idx)
+        n = len(rings[0])
         for a, b in zip(rings[:-1], rings[1:]):
-            for i in range(4):
-                j = (i + 1) % 4
+            for i in range(n):
+                j = (i + 1) % n
                 faces.append((a[i], a[j], b[j], b[i]))
         faces.append(tuple(reversed(rings[0])))
         faces.append(tuple(rings[-1]))

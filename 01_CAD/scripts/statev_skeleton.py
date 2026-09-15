@@ -181,9 +181,13 @@ BOXES = [
     ("ROCKER_CHANNEL", "03_AERO",  1038,  810,  240, 1195,   80,   90, "DECIDED",
      "deep undercut along the sill, running the full length of the door aperture, ref-08. Feeds the "
      "side intake and visually lowers the car. Length taken from the donor shut lines, not the render."),
-    ("REAR_SPOILER", "03_AERO",    3120,    0,  770,  240, 1450,   55, "DECIDED",
+    ("REAR_SPOILER", "03_AERO",    3120,    0,  720,  240, 1450,   55, "DECIDED",
      "integrated lip / ducktail growing out of the rear deck, NOT a fixed wing on stalks. The render "
-     "does not need a wing and a wing would read as a track conversion rather than a designed tail."),
+     "does not need a wing and a wing would read as a track conversion rather than a designed tail. "
+     "LOWERED 2026-09-15 from Z 770 to 720. At 770 its top edge stood 69.6 mm clear of the built "
+     "deck, which is a wing on invisible stalks and the exact opposite of what this entry asks for. "
+     "The deck reads 727.9 there, so the lip now tops out about 20 mm proud of it and grows out of "
+     "the surface as intended. Found by check_packaging.py, not by eye."),
     ("ROCKER",      "02_BODY",     1038,  830,  260, 1300,   60,  140, "DECIDED",
      "thin low technical rocker, deliberately NOT a massive side skirt. Visually links front aero to "
      "the door to the diffuser and makes the car read low without dropping the chassis."),

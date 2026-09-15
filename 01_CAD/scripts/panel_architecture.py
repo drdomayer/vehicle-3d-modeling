@@ -138,34 +138,27 @@ ARCH = {
     "P25": ("OURS",  "yes", "housing around a bought E-marked module; the module is fixed"),
     "P26": ("OURS",  "yes", "housing around a bought E-marked module; the module is fixed"),
     "P27": ("OURS",  "yes", "housing around a bought E-marked module; the module is fixed"),
+    # approved 2026-09-15, formerly PROPOSED_PARTS
+    "P28": ("OURS",  "yes", "our splitter; the first thing to ground out, so replaceable alone"),
+    "P29": ("OURS",  "yes", "body-colour surround around a bought module; the module is fixed"),
+    "P30": ("OURS",  "yes", "body-colour surround around a bought module; the module is fixed"),
+    "P31": ("DONOR", "yes", "what the eye sees through the intake; the real opening governs it"),
+    "P32": ("DONOR", "yes", "what the eye sees through the intake; the real opening governs it"),
+    "P33": ("MIXED", "yes", "our louvres; the engine lid aperture governs where they can sit"),
+    "P34": ("OURS",  "yes", "our centre mask between the light bar and the diffuser"),
+    "P35": ("OURS",  "yes", "our surround around bought tips; sees exhaust heat"),
+    "P36": ("OURS",  "yes", "our recess; the plate size is legislated, not donor"),
+    "P37": ("DONOR", "yes", "cap over the OEM mirror body — its inner surface must match it"),
+    "P38": ("DONOR", "yes", "cap over the OEM mirror body — its inner surface must match it"),
 }
 
 # --------------------------------------------------------------- parts the render shows and the
 # register does not yet carry. PROPOSED — they are NOT in PARTS and nothing downstream uses them
 # until the owner approves. Each one cites why it must be a separate part rather than a feature.
+# All eight proposals were approved on 2026-09-15 and moved into panel_registry.PARTS as P28-P38.
+# The list is kept empty rather than deleted, so the next proposal has an obvious place to go and
+# so it stays visible that proposals are staged here before they become parts.
 PROPOSED_PARTS = [
-    ("FRONT_SPLITTER", "-", "FRONT", "OURS",
-     "clearly separate in the reference and it is the first thing to ground out; must be "
-     "replaceable without touching the fascia"),
-    ("HEADLIGHT_SURROUND_L/R", "L+R", "FRONT", "OURS",
-     "the light blade in the reference runs across the nose. Body-colour surround and E-marked "
-     "module are different materials and different suppliers, so different parts"),
-    ("INTAKE_DUCT_L/R", "L+R", "SIDE", "DONOR",
-     "the reference shows visible structure inside the side intake. Only the blade is registered; "
-     "what the eye sees behind it is not"),
-    ("ENGINE_COVER_LOUVRES", "-", "REAR", "OURS",
-     "the reference deck is slatted. As a separate part it prints flat, which is the difference "
-     "between one print and a support nightmare"),
-    ("REAR_CENTRE_MASK", "-", "REAR", "OURS",
-     "the dark centre panel carrying the STATEV lettering between the light bar and the diffuser"),
-    ("EXHAUST_SURROUND", "-", "REAR", "OURS",
-     "three tips in the reference, in a surround that sees exhaust heat — a different material "
-     "from a laminated body panel"),
-    ("PLATE_RECESS", "-", "REAR", "OURS",
-     "legal requirement with a lamp; it has to exist somewhere and it changes the rear form"),
-    ("MIRROR_CAP_L/R", "L+R", "SIDE", "OURS",
-     "already the agreed learning part and the only one that can reach a real print before the "
-     "donor exists; it belongs in the register"),
 ]
 
 
@@ -256,7 +249,13 @@ def main(argv):
     print("\n\nE. PROPOSED ADDITIONS — NOT IN THE REGISTER, NOT APPROVED\n")
     for name, side, grp, drv, why in PROPOSED_PARTS:
         print(f"  {name:<26}{grp:<7}{drv:<7}{why}")
-    print(f"\n  {len(PROPOSED_PARTS)} proposals. None is in PARTS; nothing downstream uses them.")
+    if PROPOSED_PARTS:
+        print(f"\n  {len(PROPOSED_PARTS)} proposals. None is in PARTS; nothing downstream uses them.")
+    else:
+        print("  none open. The eight from 2026-09-15 were approved and are now P28-P38 in the")
+        print("  register. P37/P38, the mirror caps, went in with SHAPE_DRIVER=DONOR rather than")
+        print("  OURS: a cap over the OEM mirror has to match a mirror body nobody has measured,")
+        print("  which corrects the claim in docs/11 that it is a donor-free part.")
 
     print("\n\nF. FIRST FIT-TEST PANEL — TWO OF THEM, AND THEY ANSWER DIFFERENT QUESTIONS\n")
     print("  BEFORE the scan:  MIRROR_CAP  (proposed, not yet registered)")

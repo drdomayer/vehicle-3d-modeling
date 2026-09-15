@@ -42,6 +42,7 @@ ZONES = {"STATEV_FRONT": (-1000, 340), "STATEV_SIDE": (340, 1900), "STATEV_REAR"
 
 MAX_HALF_WIDTH = 925.0    # 1850 overall. A soft cap: only the widest band near the rear axle is
                           # touched, so the shoulder line everywhere else is left alone.
+PROFILE_STEP = 6.0   # mm between Z samples of the section BEFORE the character fields are applied
 N_HALF = 60
 SUBDIV = 6        # sub-stations between master sections; 6 gives ~85 rings over the car
 CROWN_FACTOR = 0.10
@@ -467,6 +468,40 @@ def ring(spec_x):
         for i in range(1, 6):
             prof = prof + [(z_top + (bz - z_top) * i / 5.0, hw_top)]
         z_top, hw_top = prof[-1]
+    # Densify the profile in Z BEFORE shaping. This is the fix for a fault that had been quietly
+    # halving every character field in the script since the fields were written.
+    #
+    # section_profile() returns the section's own control points and there are only about six of
+    # them, 130 to 150 mm apart. character() was evaluated at those points and nowhere else, so a
+    # field with a 10 mm transition — the rocker edge — was sampled at Z 250 and again at Z 400 and
+    # the loft drew a straight line between them. The 34 mm tuck came out as a 150 mm ramp with no
+    # edge at all, and measured as a 0.0 mm step.
+    #
+    # It explains a run of things that looked unrelated: why REAR_UNDERCUT_FIELD's `trans` was inert
+    # at 18 mm and at 72, why the channel's w and n made no difference, and why raising N_HALF never
+    # helped. N_HALF resamples the finished polyline; it cannot recover detail the polyline never
+    # carried. The sampling has to be dense where the FIELDS are evaluated, not where the result is
+    # resampled.
+    #
+    # Measured effect at specX 1200, with every locked dimension unchanged: the rocker step goes
+    # from unreadable to 30.2 mm against the 34 asked for, the channel entry from unreadable to
+    # 115 degrees, and the channel's chord depth from 69.9 mm to 99.0. 6 mm is used because 12, 6
+    # and 3 give the same answer to within half a degree, so 6 is inside the plateau.
+    _zs = [p[0] for p in prof]
+    _fine, _z = [], _zs[0]
+    while _z <= _zs[-1] + 1e-6:
+        _hw = prof[-1][1]
+        for _i in range(len(prof) - 1):
+            (_z0, _y0), (_z1, _y1) = prof[_i], prof[_i + 1]
+            if _z0 <= _z <= _z1:
+                _f = 0.0 if _z1 == _z0 else (_z - _z0) / (_z1 - _z0)
+                _hw = _y0 + _f * (_y1 - _y0)
+                break
+        _fine.append((_z, _hw))
+        _z += PROFILE_STEP
+    if _fine[-1][0] < _zs[-1] - 1e-6:
+        _fine.append(prof[-1])
+    prof = _fine
     shaped = [(z, zone_shape(spec_x, z, hw, z_top) + character(spec_x, z)) for z, hw in prof]
     hw_max = max(y for _, y in shaped)
     pts = []

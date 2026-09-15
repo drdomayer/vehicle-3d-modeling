@@ -1,0 +1,93 @@
+STATEV 001 — CHECKPOINT 01.  Measured on STATEV_001_v019.blend.
+The criterion is docs/17 line 30: the PROFILE — length, height, relationship to the wheels, roof,
+nose, rear shoulder, shoulder line. Headlights and diffuser are explicitly NOT judged here.
+
+Nothing is frozen by this document. It records what the seven criteria measure and which of them
+can be decided today. The decision itself is the owner's.
+
+=== 1. OVERALL LENGTH — PASS ==============================================
+  4370.0 mm.  nose at specX -950, tail at specX 3420.
+  Donor OEM length 4315, PUBLISHED. Ours is 55 mm longer, all of it at the front: our nose sits at
+  -950 against the donor's front overhang of 1007, which is APPROX.
+  MEASURED FACT on our geometry. The comparison to the donor rests on one approx value.
+
+=== 2. OVERALL HEIGHT — OPEN ==============================================
+  body 876.5 mm.  floor 120, crown 996.5.
+  But the highest point of the CAR is not our body. The windshield header sits at Z 1255 and the
+  roll hoops at Z 1235, both donor, both APPROX, both above our crown by 238 and 259 mm.
+  Donor OEM height 1290, PUBLISHED.
+  This cannot be called PASS while the roof criterion below is BLOCKED, because the two are the
+  same question asked twice.
+
+=== 3. WHEEL RELATIONSHIP — PASS, with one caveat ==========================
+  front  specX 0     Y +-732.5  Z 323.5   tyre OD 647   tyre top Z 647.0
+         body half-width around it 888.1, body top 847.7 — 200 mm of body above the tyre
+  rear   specX 2415  Y +-764.0  Z 337.5   tyre OD 675   tyre top Z 675.0
+         body half-width around it 923.6, body top 996.5 — 321 mm of body above the tyre
+  wheelbase 2415 and track 1465 / 1528 are PUBLISHED, from the workshop manual.
+  Caveat: tyre OD is APPROX. If the real tyre is 10 mm larger the arch clearance changes, not the
+  wheel position.
+
+=== 4. ROOF — BLOCKED =====================================================
+  Our deck at the hoop plane, specX 1760, is Z 917.3.
+  Windshield base Z 970, header Z 1255, hoops Z 1235 — all three APPROX, all three donor.
+  docs/14 marks DECK_SPINE explicitly BLOCKED: its heights were read off the reference render and
+  they sit inside the volume the soft top folds into. That volume does not exist as data anywhere.
+  The scan plan puts it first for this reason — session S2, the roof in four positions, before
+  anything else is touched.
+  This is not a fault in the geometry. It is an absence of information, and no amount of modelling
+  removes it.
+
+=== 5. NOSE — OPEN ========================================================
+    specX  -950  top 460.0  half-width 434.1
+    specX  -850  top 531.2  half-width 590.7
+    specX  -750  top 567.5  half-width 679.2
+    specX  -650  top 654.1  half-width 749.6
+    specX  -500  top 694.4  half-width 835.0
+  A continuous rise with no step. The blade over the mouth is built and the mouth cutter was
+  refined in v018. What is NOT here is the front splitter and the light blade, both of which the
+  reference shows and both of which are stage-03 detail. The profile of the nose can be judged;
+  the nose as a finished form cannot.
+
+=== 6. REAR SHOULDER — PASS ===============================================
+    specX  1900   955.6
+    specX  2100   986.9   +31.3
+    specX  2300   996.5    +9.5
+    specX  2415   989.6    -6.8      crown peak sits ON the rear axle
+    specX  2600   938.2   -51.4
+    specX  2800   858.3   -79.9
+    specX  3000   759.4   -98.9
+    specX  3200   642.5  -116.9
+    specX  3420   513.1  -129.4
+  Rises to a peak over the rear wheel, then falls monotonically and with an accelerating rate.
+  No step anywhere. This is the criterion that has been worked hardest — the 201 mm discontinuity
+  at specX 2800 that existed in v015 is gone, and the buttress is profile geometry rather than a
+  boolean.
+
+=== 7. SHOULDER LINE — OPEN ===============================================
+  Side channel, chord depth measured on the built rings:
+    specX 505:41  715:57  925:63  1240:71  1450:72  1765:71  2080:61
+  One continuous line from behind the front arch to the intake mouth, largest change between
+  neighbouring stations 6 mm through the door itself.
+  OPEN and not PASS for one reason: docs/14 carries THREE entries marked "ЗА ПРЕГЛЕД" — the front
+  fender top at +85 mm over v016, and the side channel no longer starting over the wheel. A
+  criterion cannot pass while its own deviation register has unapproved entries against it.
+
+=== VERDICT ===============================================================
+  PASS    3   length, wheel relationship, rear shoulder
+  OPEN    3   height, nose, shoulder line
+  BLOCKED 1   roof
+
+  CHECKPOINT 01 therefore does NOT pass today, and the reason is not the shape.
+  Two of the three OPEN items are waiting for a decision from the owner, not for work.
+  The BLOCKED item is waiting for a car.
+
+  What would change the verdict:
+    - approve or reject the three deviations in docs/14  -> shoulder line and height move
+    - accept that the nose profile is judged without its stage-03 details -> nose moves
+    - the roof cannot move without scan session S2. It is the only true blocker.
+
+  A defensible alternative, and the owner's call: pass CHECKPOINT 01 for the FRONT, SIDE and REAR
+  zones on the profile evidence above, and leave ROOF explicitly out of the checkpoint until the
+  car exists. docs/17 does not forbid a partial checkpoint; it does not describe one either, so
+  this would be a new rule and should be recorded as one if chosen.

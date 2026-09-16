@@ -268,7 +268,12 @@ ROCKER_X0, ROCKER_X1 = 330.0, 1820.0
 # In the reference the flank is near vertical between the shoulder and the undercut.
 FLANK_X0, FLANK_X1 = 1900.0, 3050.0
 FLANK_Z_LO, FLANK_Z_HI = 300.0, 660.0      # the band held near constant width
-FLANK_PULL = 0.88                          # how strongly it is pulled to the station maximum
+# 0.88 -> 0.95 on 2026-09-16. check_donor_fit measured the rear quarter with ONE millimetre of air
+# over the donor's own skin at spec X 2107 -- our 883 against the donor's 882 -- and that panel is an
+# OVERLAY, so it has to sit outside the OEM skin by the 15 to 20 mm CLAUDE.md requires, plus its own
+# laminate. Pulling the flank harder onto the station maximum is width the locked 1850 already
+# allows: the rear is +-925 at its widest and this band was sitting 42 mm inside that.
+FLANK_PULL = 0.95                          # how strongly it is pulled to the station maximum
 FLANK_EASE_TOP = 34.0                      # short: a crisp shoulder edge, not a roll
 FLANK_SHOULDER = 16.0                      # extra mass in the shoulder just above the flank
 

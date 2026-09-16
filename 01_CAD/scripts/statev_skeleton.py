@@ -103,8 +103,17 @@ DECISIONS = {
 # local widening around each axle: (spec_x, delta_mm, taper_half_length_mm, z_lo, z_hi)
 # Cut back 2026-09-14 to hit the 1850 target. The width comes out of the volume around the wheels,
 # not out of the cabin or the shoulder line.
+# Front widening raised 6 -> 58 on 2026-09-16. It was cut to 6 on 2026-09-14 to bring the overall
+# width down to the locked 1850, at a time when the REAR was the part that was over. It still is the
+# rear that sets 1850, at +-925, and the front had been left 74 mm narrower than it needed to be:
+# check_donor_fit measured the front arch opening reaching Y 907.5 with only 851 mm of body to cut
+# it into, and the front tyre's outer face standing 23 mm proud of the body at the arch crown. The
+# band is carried up to 730 so it covers the arch crown at Z 674 rather than stopping just below it.
+# The taper half-length went 620 -> 900 in the same pass: at 620 the widening had decayed to +10 mm
+# by the edge of the arch at spec X -410, which is where the opening is cut and therefore the only
+# place the extra width is any use.
 AXLE_WIDENING = [
-    (0,     6, 600, 200, 700),
+    (0,    58, 900, 200, 730),
     (2415,  0, 600, 200, 750),
 ]
 

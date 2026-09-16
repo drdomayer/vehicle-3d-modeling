@@ -49,20 +49,45 @@ DEFROWS = {r["PANEL_ID"]: r for r in _pd["rows"]()}
 COMMON = _pd["COMMON"]
 ROOF_BLOCKED = _pd["ROOF_BLOCKED"]
 
-# Zones of influence, in spec X. A panel is exposed to an entry if its own X span overlaps.
+# Zones of influence, in spec X. This table is a SCREEN, not a measurement: overlapping a zone
+# means a donor value could be near the panel, which is a different question from whether it moves
+# the panel. Where donor_exposure.csv exists it is measured per panel and this table is only used
+# for parts that have no geometry to measure. The distinction cost the rockers a wrong
+# classification: they overlap both shut-line zones and both arch zones and are moved by none.
 #   name: (x_lo, x_hi, provenance, what it does to the panel)
 INFLUENCE = {
     "cabin cut":      (420.0, 1760.0, "APPROX",
                        "cowl_x and hoop_x place the aperture that cuts this panel's top"),
-    "front arch cut": (-350.0, 350.0, "PUBLISHED+APPROX",
-                       "X and Y from wheelbase and track, both published; vertical centre from "
-                       "tyre OD, which is approx"),
-    "rear arch cut":  (2050.0, 2780.0, "PUBLISHED+APPROX",
-                       "X and Y from wheelbase and track, both published; vertical centre from "
-                       "tyre OD, which is approx"),
+    # CORRECTED 2026-09-16. Both arch entries said PUBLISHED+APPROX, on the grounds that the cut's
+    # vertical centre came from tyre OD. It does not. The centre is ARCHES tod in statev_skeleton,
+    # 647 and 675, which is 19*25.4 + 2*235*0.35 and 19*25.4 + 2*275*0.35 -- arithmetic on the tyre
+    # sizes we chose, exact to 0.1 mm. DIMS["tire_od"] is never read by statev_master_volumes.py,
+    # statev_skeleton.py or panel_map.py; the whole body reads four donor values and that is not
+    # one of them. Because classify() matched the substring APPROX, every panel an arch reached was
+    # pushed to CONDITIONAL by a number the geometry does not use.
+    "front arch cut": (-350.0, 350.0, "PUBLISHED",
+                       "X from wheelbase and Y from track, both published; radius ours; vertical "
+                       "centre is our own 235/35R19 arithmetic, not a donor value"),
+    "rear arch cut":  (2050.0, 2780.0, "PUBLISHED",
+                       "X from wheelbase and Y from track, both published; radius ours; vertical "
+                       "centre is our own 275/35R19 arithmetic, not a donor value"),
     "front shut line": (430.0, 450.0, "APPROX", "door_front_x bounds this panel"),
     "rear shut line":  (1625.0, 1645.0, "APPROX", "door_rear_x bounds this panel"),
 }
+
+# Measured exposure, written by donor_exposure.py: panel -> list of approx donor values that were
+# shown to move its boundary when perturbed by the recorded uncertainty. Absent means not measured,
+# which is not the same as measured clean, so the screen is used instead and the PROOF column says
+# which of the two answered.
+EXPOSURE_CSV = os.path.join(REPO, "04_ENGINEERING", "reports", "donor_exposure.csv")
+
+
+def measured_exposure():
+    if not os.path.exists(EXPOSURE_CSV):
+        return {}
+    with open(EXPOSURE_CSV, encoding="utf-8") as f:
+        return {r["PANEL"]: [v for v in r["BOUNDED_BY"].split(";") if v]
+                for r in csv.DictReader(f)}
 
 # Panels whose SHAPE, not merely whose boundary, is a donor feature. These cannot be derived from
 # the influence zones because the dependency is on a surface or an opening, not on a coordinate.
@@ -107,7 +132,7 @@ def exposure(pid, span):
     return hit
 
 
-def classify(pid, hits, span):
+def classify(pid, hits, span, measured=None):
     # A panel with no extents cannot be proven anything. These are the Stage 03 detail parts —
     # inserts, blades, housings, louvres, masks — which the register carries as parts but which do
     # not yet exist as geometry, so nothing can be measured about them. Defaulting them into
@@ -118,14 +143,29 @@ def classify(pid, hits, span):
         return 3, "roof fold envelope, which exists nowhere as data"
     if pid in SHAPE_IS_DONOR:
         return 3, SHAPE_IS_DONOR[pid]
+    # Measured beats screened. donor_exposure.py perturbs each approx donor value by the band
+    # cage_986 records for it and reports which panels actually changed; where that answer exists
+    # for this panel it is the answer, because the screen can only say "nearby".
+    if measured is not None and pid in measured:
+        by = measured[pid]
+        if by:
+            return 2, "measured: boundary moves with " + ", ".join(by)
+        return 1, ("measured: no approx donor value moves its boundary, and the cabin cut -- the "
+                   "only thing cowl_x and hoop_x reshape -- does not reach it")
     approx = [h for h in hits if "APPROX" in h[1]]
     if approx:
-        return 2, "; ".join(f"{n}: {w}" for n, _, w in approx)
+        return 2, "screened only: " + "; ".join(f"{n}: {w}" for n, _, w in approx)
     return 1, "only our own data and published donor values reach it"
 
 
 def main():
     ext = panel_extents()
+    meas = measured_exposure()
+    # Mirrored panels share one extracted region and one measurement with their partner.
+    for a, b in (("P04", "P03"), ("P08", "P07"), ("P10", "P09"), ("P12", "P11"),
+                 ("P16", "P15"), ("P18", "P17")):
+        if b in meas and a not in meas:
+            meas[a] = meas[b]
     if ext is None:
         print("no STATEV_PANELS collection — run panel_extract.py first")
         return
@@ -138,7 +178,7 @@ def main():
         span = ext.get(pid) or ext.get({"P04": "P03", "P08": "P07", "P10": "P09", "P12": "P11",
                                         "P16": "P15", "P18": "P17"}.get(pid, ""))
         hits = exposure(pid, span)
-        cat, why = classify(pid, hits, span)
+        cat, why = classify(pid, hits, span, meas)
         buckets[cat].append(pid)
         rows.append(dict(
             PANEL=pid, NAME=d["NAME"],

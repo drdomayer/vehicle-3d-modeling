@@ -23,6 +23,12 @@ import os
 REPO = "/Users/miroslavstatev/vehicle-3d-modeling"
 PANEL = globals().get("PANEL", "P22")
 
+# panel_map keys on |Y|, so a mirrored region answers for both sides of the car and extract() returns
+# the pair as one object. P21, P22, P01 and P28 are centre panels and unaffected, which is why this
+# never surfaced before P07. The repo convention is +Y left, so the side is a fact, not a choice.
+SIDE_OF = {"P03": +1, "P04": -1, "P07": +1, "P08": -1, "P09": +1, "P10": -1,
+           "P11": +1, "P12": -1, "P15": +1, "P16": -1, "P17": +1, "P18": -1}
+
 _pm = {"__file__": os.path.join(REPO, "01_CAD/scripts/panel_map.py"), "__name__": "_pm"}
 with open(os.path.join(REPO, "01_CAD/scripts/panel_map.py"), encoding="utf-8") as f:
     exec(f.read().split("\ndef main(")[0], _pm)
@@ -54,21 +60,42 @@ INTERFACE_BY_PANEL = {
         "lowest_safe_lip_z":         None,  # SCAN
         "fascia_lower_edge":         None,  # derivable once P01 is built, not a donor value
     },
+    # The rocker joined PROCEED on 2026-09-16, when donor_exposure.py showed no approx donor value
+    # moves its boundary. Its interface list is longer than the others and that is the point: being
+    # provable does not make it independent of the car, it makes it independent of the four
+    # approximate NUMBERS. Everything it has to physically meet is still a measurement on the donor.
+    "P07": {
+        "sill_outer_surface":        None,  # SCAN: what the rocker sits on for its whole length
+        "jacking_points":            None,  # SCAN: must stay usable, and nothing may foul them
+        "floor_pan_outer_edge":      None,  # SCAN: where the underside actually ends
+        "door_bottom_edge":          None,  # SCAN: the gap the rocker closes under a shut door
+        "ride_height_static":        None,  # SCAN: measured, not the published 95 mm nominal
+        "sill_mount_points":         None,  # SCAN: nothing to bolt to is known today
+        "exhaust_heat_path":         None,  # SCAN: how close the pipework runs behind it
+    },
 }
 
 # Pairs where both panels are PROCEED, so the seam LINE can be derived. The Z is the boundary
 # panel_map already uses to separate them, not a plane invented here.
+# (a, b) -> (axis, plane, why). Axis "z" is a height, axis "x" is a spec-X station. Both kinds of
+# boundary already exist in panel_map.B; the seam finder used to assume every seam was horizontal,
+# which silently excluded every pair that meets across the car rather than along it.
 SEAM_PAIRS = {
-    ("P21", "P22"): (B["rocker_top"],
+    ("P21", "P22"): ("z", B["rocker_top"],
                      "both PROCEED. The boundary is the rocker-line Z in panel_map.B, and neither "
                      "surface moves with the scan, so the seam line is derivable today."),
-    ("P01", "P28"): (B["splitter_top"],
+    ("P01", "P28"): ("z", B["splitter_top"],
                      "both PROCEED. panel_map separates them at the splitter line ahead of the "
                      "nose mouth; both surfaces are ours and neither moves with the scan."),
+    ("P07", "P22"): ("x", B["fascia_front"],
+                     "both PROCEED as of 2026-09-16. They meet across the car at the rear fascia "
+                     "station, below the rocker line; the station is our own seam, not a donor "
+                     "value, and donor_exposure.py measured neither panel to move with one."),
 }
 
 
 def extract(pid):
+    side = SIDE_OF.get(pid)
     master = bpy.data.collections["STATEV_MASTER"]
     verts, faces = [], []
     for src in [o for o in master.all_objects if o.type == "MESH" and "VOLUME" in o.name]:
@@ -81,6 +108,8 @@ def extract(pid):
             sx, ay, z = -c.x * 1000, abs(c.y * 1000), c.z * 1000
             ny = -n.y if c.y > 0 else n.y
             if not_panel(sx, ay, z, n.z, ny) or panel_of(sx, ay, z) != pid:
+                continue
+            if side is not None and c.y * side <= 0:
                 continue
             base = len(verts)
             for v in f.verts:
@@ -101,6 +130,27 @@ def extract(pid):
     bm.free()
     me.update()
     return ob
+
+
+def shells(ob):
+    """How many disconnected pieces the region is in. A part that prints as two pieces is not one
+    part, and the register is what decides whether it becomes two -- not this script."""
+    bm = bmesh.new()
+    bm.from_mesh(ob.data)
+    seen, n = set(), 0
+    for v in bm.verts:
+        if v in seen:
+            continue
+        n += 1
+        stack = [v]
+        while stack:
+            u = stack.pop()
+            if u in seen:
+                continue
+            seen.add(u)
+            stack.extend(e.other_vert(u) for e in u.link_edges)
+    bm.free()
+    return n
 
 
 def surface_hash(pid):
@@ -129,27 +179,33 @@ def prove_separation(pid, iface):
     return ok
 
 
-def seam_between(a, b, z_plane, tol=8.0):
-    """The shared edge of two panels, as the run of vertices both carry at their boundary.
-    Derivable only where both panels are PROCEED; returns its extent, not a guessed flange."""
+def seam_between(a, b, axis, plane, tol=8.0):
+    """The shared edge of two panels: the vertices both carry on their common boundary plane.
+    Derivable only where both panels are PROCEED; returns its extent, never a guessed flange."""
     oa, ob_ = extract(a), extract(b)
     if oa is None or ob_ is None:
         return None
-    pa = {(round(-(oa.matrix_world @ v.co).x * 1000, 1),
-           round((oa.matrix_world @ v.co).y * 1000, 1))
-          for v in oa.data.vertices if abs((oa.matrix_world @ v.co).z * 1000 - z_plane) < tol}
-    pb = {(round(-(ob_.matrix_world @ v.co).x * 1000, 1),
-           round((ob_.matrix_world @ v.co).y * 1000, 1))
-          for v in ob_.data.vertices if abs((ob_.matrix_world @ v.co).z * 1000 - z_plane) < tol}
-    shared = sorted(pa & pb)
+
+    def on_plane(ob):
+        out = set()
+        for v in ob.data.vertices:
+            w = ob.matrix_world @ v.co
+            sx, y, z = -w.x * 1000, w.y * 1000, w.z * 1000
+            if abs((sx if axis == "x" else z) - plane) >= tol:
+                continue
+            out.add((round(y, 1), round(z if axis == "x" else sx, 1)))
+        return out
+
+    shared = sorted(on_plane(oa) & on_plane(ob_))
     for o in (oa, ob_):
         bpy.data.objects.remove(o, do_unlink=True)
     if not shared:
         return None
-    xs = [p[0] for p in shared]
-    ys = [p[1] for p in shared]
-    return dict(points=len(shared), x_min=min(xs), x_max=max(xs),
-                y_min=min(ys), y_max=max(ys), z=z_plane)
+    ys = [p[0] for p in shared]
+    os_ = [p[1] for p in shared]
+    return dict(points=len(shared), axis=axis, plane=plane,
+                y_min=min(ys), y_max=max(ys), o_min=min(os_), o_max=max(os_),
+                o_label="Z" if axis == "x" else "specX")
 
 
 def main():
@@ -172,10 +228,23 @@ def main():
     z = [v.z * 1000 for v in vs]
     bm = bmesh.new(); bm.from_mesh(ob.data)
     area = sum(f.calc_area() for f in bm.faces); bm.free()
+    n_shell = shells(ob)
     print("\n1. DESIGN — measured, ours")
     print(f"   spec X {min(sx):.0f} .. {max(sx):.0f}   width {max(y)-min(y):.1f}   "
           f"Z {min(z):.0f} .. {max(z):.0f}")
-    print(f"   outer surface {area:.3f} m2   {len(ob.data.polygons)} faces")
+    print(f"   outer surface {area:.3f} m2   {len(ob.data.polygons)} faces   "
+          f"{n_shell} disconnected piece{'s' if n_shell != 1 else ''}")
+    if n_shell != 1:
+        print(f"\n   STOP. The register carries {pid} as ONE part and the mapped region is "
+              f"{n_shell} separate")
+        print("   pieces. On this panel the wheel openings cut through it, so what the map calls one")
+        print("   part would print as several and bolt on as several. Which of these is the answer is")
+        print("   a register decision and not one this script may take:")
+        print("     - split the register entry, each piece its own part and its own seam, or")
+        print("     - move a piece into the neighbouring part it is really a lobe of, or")
+        print("     - keep one part and bridge the pieces above the opening, which changes the map.")
+        print("   No STL is written for a region that is not a part.")
+        return
 
     print("\n2. INTERFACE — the real car only")
     for k in iface:
@@ -183,15 +252,17 @@ def main():
 
     print("\n3. SEAMS to neighbours")
     touched = False
-    for (a, b), (z_plane, why) in SEAM_PAIRS.items():
+    for (a, b), (axis, plane, why) in SEAM_PAIRS.items():
         if pid not in (a, b):
             continue
         touched = True
-        s = seam_between(a, b, z_plane)
+        s = seam_between(a, b, axis, plane)
         print(f"   {a} <-> {b}: {why}")
         if s:
-            print(f"      shared boundary: {s['points']} points at Z {s['z']:.0f}, "
-                  f"specX {s['x_min']:.0f}..{s['x_max']:.0f}, Y {s['y_min']:.0f}..{s['y_max']:.0f}")
+            print(f"      shared boundary: {s['points']} points at "
+                  f"{'specX' if axis == 'x' else 'Z'} {plane:.0f}, "
+                  f"Y {s['y_min']:.0f}..{s['y_max']:.0f}, "
+                  f"{s['o_label']} {s['o_min']:.0f}..{s['o_max']:.0f}")
             print("      the seam LINE is derived. The flange WIDTH is not: docs/13 Q15.")
         else:
             print("      no shared boundary found at the mapped Z — seam not derivable this way")

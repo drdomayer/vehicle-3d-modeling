@@ -119,6 +119,10 @@ ARCH = {
     "P06": ("OURS",  "yes", "insert inside our own channel"),
     "P07": ("MIXED", "yes", "outer form ours; the sill profile governs where it can bond"),
     "P08": ("MIXED", "yes", "outer form ours; the sill profile governs where it can bond"),
+    "P39": ("OURS",  "yes", "our corner behind the rear wheel; all four of its edges are ours "
+                            "or published, so nothing donor-derived shapes it"),
+    "P40": ("OURS",  "yes", "our corner behind the rear wheel; all four of its edges are ours "
+                            "or published, so nothing donor-derived shapes it"),
     "P09": ("DONOR", "yes", "overlay on the OEM door skin, between two donor shut lines"),
     "P10": ("DONOR", "yes", "overlay on the OEM door skin, between two donor shut lines"),
     "P11": ("DONOR", "yes", "the real opening behind it governs the mouth"),
@@ -130,6 +134,7 @@ ARCH = {
     "P17": ("MIXED", "no",  "our blade, but it sits in the roof fold envelope"),
     "P18": ("MIXED", "no",  "our blade, but it sits in the roof fold envelope"),
     "P19": ("MIXED", "no",  "our deck, height governed by the roof fold envelope"),
+    "P42": ("MIXED", "no",  "our deck, height governed by the roof fold envelope"),
     "P20": ("MIXED", "yes", "our cover, aperture governed by the donor engine lid"),
     "P21": ("OURS",  "yes", "our rear form"),
     "P22": ("OURS",  "yes", "our diffuser; only its top edge meets the donor floor"),
@@ -140,6 +145,7 @@ ARCH = {
     "P27": ("OURS",  "yes", "housing around a bought E-marked module; the module is fixed"),
     # approved 2026-09-15, formerly PROPOSED_PARTS
     "P28": ("OURS",  "yes", "our splitter; the first thing to ground out, so replaceable alone"),
+    "P41": ("OURS",  "yes", "our splitter; the first thing to ground out, so replaceable alone"),
     "P29": ("OURS",  "yes", "body-colour surround around a bought module; the module is fixed"),
     "P30": ("OURS",  "yes", "body-colour surround around a bought module; the module is fixed"),
     "P31": ("DONOR", "yes", "what the eye sees through the intake; the real opening governs it"),

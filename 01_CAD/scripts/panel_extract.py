@@ -93,7 +93,8 @@ def extract_panels(coll_name="STATEV_PANELS"):
 
 # panel_map keys on |Y|, so these regions answer for both sides at once and come out of extraction
 # as a mirrored pair. Their piece count has to be read per side or every one of them looks split.
-MIRRORED = {"P03", "P04", "P07", "P08", "P09", "P10", "P11", "P12", "P15", "P16", "P17", "P18"}
+MIRRORED = {"P03", "P04", "P07", "P08", "P09", "P10", "P11", "P12", "P15", "P16",
+            "P17", "P18", "P28", "P41", "P39", "P40", "P19", "P42"}
 
 
 def measure(ob):

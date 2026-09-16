@@ -163,7 +163,7 @@ def main():
     meas = measured_exposure()
     # Mirrored panels share one extracted region and one measurement with their partner.
     for a, b in (("P04", "P03"), ("P08", "P07"), ("P10", "P09"), ("P12", "P11"),
-                 ("P16", "P15"), ("P18", "P17")):
+                 ("P16", "P15"), ("P18", "P17"), ("P40", "P39"), ("P41", "P28"), ("P42", "P19")):
         if b in meas and a not in meas:
             meas[a] = meas[b]
     if ext is None:
@@ -176,7 +176,8 @@ def main():
     for pid, d in DEFROWS.items():
         # mirrored parts share one extracted region; P04 reads P03's span and so on
         span = ext.get(pid) or ext.get({"P04": "P03", "P08": "P07", "P10": "P09", "P12": "P11",
-                                        "P16": "P15", "P18": "P17"}.get(pid, ""))
+                                        "P16": "P15", "P18": "P17", "P40": "P39",
+                                        "P41": "P28", "P42": "P19"}.get(pid, ""))
         hits = exposure(pid, span)
         cat, why = classify(pid, hits, span, meas)
         buckets[cat].append(pid)

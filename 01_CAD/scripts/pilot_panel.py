@@ -27,7 +27,9 @@ PANEL = globals().get("PANEL", "P22")
 # the pair as one object. P21, P22, P01 and P28 are centre panels and unaffected, which is why this
 # never surfaced before P07. The repo convention is +Y left, so the side is a fact, not a choice.
 SIDE_OF = {"P03": +1, "P04": -1, "P07": +1, "P08": -1, "P09": +1, "P10": -1,
-           "P11": +1, "P12": -1, "P15": +1, "P16": -1, "P17": +1, "P18": -1}
+           "P11": +1, "P12": -1, "P15": +1, "P16": -1, "P17": +1, "P18": -1,
+           "P28": +1, "P41": -1, "P39": +1, "P40": -1,
+           "P19": +1, "P42": -1}
 
 _pm = {"__file__": os.path.join(REPO, "01_CAD/scripts/panel_map.py"), "__name__": "_pm"}
 with open(os.path.join(REPO, "01_CAD/scripts/panel_map.py"), encoding="utf-8") as f:
@@ -73,6 +75,15 @@ INTERFACE_BY_PANEL = {
     # moves its boundary. Its interface list is longer than the others and that is the point: being
     # provable does not make it independent of the car, it makes it independent of the four
     # approximate NUMBERS. Everything it has to physically meet is still a measurement on the donor.
+    # The severed corner behind the rear wheel. Shorter list than the sill because it meets less of
+    # the car, but every entry is still a measurement on the donor and not a choice here.
+    "P39": {
+        "floor_pan_outer_edge":      None,  # SCAN: where the underside actually ends behind the wheel
+        "rear_wheelarch_liner":      None,  # SCAN: what sits inboard of it
+        "exhaust_routing_silencer":  None,  # SCAN: the pipework runs out right behind this corner
+        "ride_height_static":        None,  # SCAN: measured, not the published 95 mm nominal
+        "corner_mount_points":       None,  # SCAN: nothing to bolt to is known today
+    },
     "P07": {
         "sill_outer_surface":        None,  # SCAN: what the rocker sits on for its whole length
         "jacking_points":            None,  # SCAN: must stay usable, and nothing may foul them
@@ -96,10 +107,13 @@ SEAM_PAIRS = {
     ("P01", "P28"): ("z", B["splitter_top"],
                      "both PROCEED. panel_map separates them at the splitter line ahead of the "
                      "nose mouth; both surfaces are ours and neither moves with the scan."),
-    ("P07", "P22"): ("x", B["fascia_front"],
-                     "both PROCEED as of 2026-09-16. They meet across the car at the rear fascia "
-                     "station, below the rocker line; the station is our own seam, not a donor "
-                     "value, and donor_exposure.py measured neither panel to move with one."),
+    # This pair was written as P07 <-> P22 before the rocker was split. The piece that actually
+    # meets the diffuser is the severed corner, not the sill; the sill stops 878 mm short of it at
+    # the rear arch and never reaches the fascia station.
+    ("P39", "P22"): ("x", B["fascia_front"],
+                     "both PROCEED. They meet across the car at the rear fascia station, below the "
+                     "rocker line; the station is our own seam, not a donor value, and "
+                     "donor_exposure.py measured neither panel to move with one."),
 }
 
 
@@ -320,9 +334,28 @@ def main():
         print("   none: this panel has no neighbour that is also PROCEED, so no seam line can be")
         print("   derived today without leaning on something unmeasured.")
 
+    # Bounding box of the DESIGN surface, kept before the wall goes on. A core is the surface plus
+    # a few millimetres; anything that escapes this box by more than the wall is not a core.
+    box0 = (min(sx), max(sx), min(y), max(y), min(z), max(z))
+
     wall = PROVISIONAL["core_wall_mm"][0]
     m = ob.modifiers.new("core", "SOLIDIFY")
-    m.thickness, m.offset, m.use_even_offset = wall / 1000.0, -1.0, True
+    # Offset along the normal, NOT even offset. Even offset divides by the cosine of the half-angle
+    # at each vertex, so where a surface folds back on itself that cosine goes to zero and the
+    # offset goes to infinity. P01 has six vertices with near-opposite adjacent normals, left by the
+    # nose-mouth boolean, and its first exported core carried a vertex at spec X 41159, Y 9074 -- a
+    # 41 metre spike in a 4.4 metre car, in a file that was otherwise valid and passed a
+    # single-shell check.
+    #
+    # thickness_clamp does not help: measured on P01 it leaves the spike exactly where it is at
+    # every setting and destroys the wall instead, 2595 cm3 falling to 934 at clamp 1.0 against an
+    # ideal 2685. Normal offset gives a core whose bounding box is the design surface's own, spec X
+    # -951..-654 against -950..-655, and 2413 cm3 -- about 10% under ideal, which is the expected
+    # shortfall of measuring along the normal rather than perpendicular through a curve.
+    #
+    # For this process that is also the right wall. The print IS the core and the glass goes over
+    # its outer face, so the outer surface must be exact and the inner face is what gives.
+    m.thickness, m.offset, m.use_even_offset = wall / 1000.0, -1.0, False
     bpy.context.view_layer.objects.active = ob
     bpy.ops.object.modifier_apply(modifier=m.name)
     bm = bmesh.new(); bm.from_mesh(ob.data)
@@ -330,6 +363,25 @@ def main():
     mass = vol / 1000.0 * PROVISIONAL["density_g_cm3"][0] / 1000.0
     print(f"\n4. SOLID at the provisional {wall} mm wall")
     print(f"   {vol/1000.0:.0f} cm3   ~{mass:.2f} kg   {len(ob.data.polygons)} faces")
+
+    # The gate. A clamp is a parameter and can be wrong; this is the guarantee.
+    w2 = [ob.matrix_world @ v.co for v in ob.data.vertices]
+    box1 = (min(-v.x * 1000 for v in w2), max(-v.x * 1000 for v in w2),
+            min(v.y * 1000 for v in w2), max(v.y * 1000 for v in w2),
+            min(v.z * 1000 for v in w2), max(v.z * 1000 for v in w2))
+    slack = wall * 2.0 + 1.0
+    esc = [(n, a, b) for n, a, b in
+           (("specX min", box0[0], box1[0]), ("specX max", box0[1], box1[1]),
+            ("Y min", box0[2], box1[2]), ("Y max", box0[3], box1[3]),
+            ("Z min", box0[4], box1[4]), ("Z max", box0[5], box1[5]))
+           if abs(b - a) > slack]
+    if esc:
+        print(f"\n   STOP. The core escapes the design surface by more than the {slack:.0f} mm a "
+              f"{wall} mm wall can explain:")
+        for n, a, b in esc:
+            print(f"      {n:<10} design {a:>10.1f}   core {b:>10.1f}   out by {abs(b-a):>9.1f} mm")
+        print("   That is a solidify artefact, not a panel. No STL is written.")
+        return
 
     print("\n5. STOPS — and what each is waiting for")
     print("   split        build volume unknown, docs/13 Q26")

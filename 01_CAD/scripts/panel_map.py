@@ -46,6 +46,9 @@ B = dict(
     intake_front    = 1780,   # SIDE_INTAKE field x0 in statev_master_volumes
     intake_rear     = 2300,   # SIDE_INTAKE field x1
     splitter_top    = 300,    # our splitter, below the nose mouth floor (NOSE_MOUTH z_lo 200-215)
+    rocker_end      = 2415,   # rear axle, PUBLISHED. The rear arch removes everything below the
+                              # rocker line between 2050 and 2780, so anything below that line aft
+                              # of the axle is the severed corner P39/P40, never the sill.
 )
 
 
@@ -128,7 +131,9 @@ def panel_of(sx, ay, z):
     if sx < B["intake_rear"] and B["rocker_top"] <= z < 700:
         return "P11"                           # side intake surround
     if z < B["rocker_top"]:
-        return "P22" if sx > B["fascia_front"] else "P07"
+        if sx > B["fascia_front"]:
+            return "P22"
+        return "P39" if sx > B["rocker_end"] else "P07"
     if sx >= B["fascia_front"]:
         return "P21"                           # rear fascia
     if sx >= B["cover_front"] and ay < B["cover_half_width"]:
@@ -140,7 +145,7 @@ def panel_of(sx, ay, z):
     return "P15"                               # rear haunch, everything else
 
 
-PALETTE_ORDER = ["P01", "P28", "P02", "P03", "P07", "P09", "P11", "P15", "P17", "P19",
+PALETTE_ORDER = ["P01", "P28", "P02", "P03", "P07", "P39", "P09", "P11", "P15", "P17", "P19",
                  "P20", "P21", "P22"]
 
 

@@ -42,7 +42,7 @@ PANEL_STATUS, interfaces, worst = _pa["PANEL_STATUS"], _pa["interfaces"], _pa["w
 
 # Panels that sit in or on the volume the soft top folds into. docs/14 marks DECK_SPINE BLOCKED
 # and the buttress measures a 10 mm lip against a 93 mm intent for the same reason.
-ROOF_BLOCKED = {"P17", "P18", "P19", "P20", "P23", "P33"}
+ROOF_BLOCKED = {"P17", "P18", "P19", "P42", "P20", "P23", "P33"}
 
 # Per-panel facts that are not derivable from the other three layers.
 #   pid: (design function, mounting strategy, trim allowance mm, access/service, split note)
@@ -52,8 +52,12 @@ T_OURS = "bolts or bonded tabs onto OUR adjacent panel, not onto the donor."
 DEF = {
     "P01": ("the wedge nose and its face", T_BOLT, 15, "removable for crash-beam access",
             "splits at the centreline and behind the light blade"),
-    "P28": ("lower aero lip; first thing to ground out", T_OURS, 10,
-            "replaceable alone without disturbing the fascia", "centreline split"),
+    "P28": ("lower aero lip, left half; first thing to ground out", T_OURS, 10,
+            "replaceable alone without disturbing the fascia",
+            "no centreline split needed: the nose mouth already ends it at the centre"),
+    "P41": ("lower aero lip, right half; first thing to ground out", T_OURS, 10,
+            "replaceable alone without disturbing the fascia",
+            "no centreline split needed: the nose mouth already ends it at the centre"),
     "P02": ("long low hood, two faint tension zones", T_BOLT, 15,
             "opens for frunk; hinge arc SCAN REQUIRED", "splits across, behind the vents"),
     "P03": ("sculpted fender over the front wheel", T_BOLT, 20,
@@ -68,6 +72,12 @@ DEF = {
             "jack points must stay usable with it on", "splits at the door shut line"),
     "P08": ("thin structural rocker blade", T_BONDED, 12,
             "jack points must stay usable with it on", "splits at the door shut line"),
+    "P39": ("corner between the rear wheel and the fascia, below the rocker line", T_OURS, 12,
+            "sits ahead of the exhaust exit; heat path SCAN REQUIRED",
+            "single piece at 264 mm long on any plausible machine"),
+    "P40": ("corner between the rear wheel and the fascia, below the rocker line", T_OURS, 12,
+            "sits ahead of the exhaust exit; heat path SCAN REQUIRED",
+            "single piece at 264 mm long on any plausible machine"),
     "P09": ("door skin overlay carrying the side channel", "bonded to the OEM door skin; "
             "no fasteners through the door. SCAN REQUIRED for the surface it sits on.", 10,
             "door must open and the glass must drop", "splits at the channel, hidden in the void"),
@@ -94,8 +104,12 @@ DEF = {
             "single piece, but the blade itself is BLOCKED"),
     "P18": ("buttress blade beside the deck", T_OURS, 12, "fixed; sits over the roof fold volume",
             "single piece, but the blade itself is BLOCKED"),
-    "P19": ("deck skin over the roof mechanism", T_OURS, 15,
-            "must clear the fold path in all four roof positions", "splits at the centreline"),
+    "P19": ("deck skin over the roof mechanism, left strip", T_OURS, 15,
+            "must clear the fold path in all four roof positions",
+            "no centreline split needed: the engine cover already ends it inboard"),
+    "P42": ("deck skin over the roof mechanism, right strip", T_OURS, 15,
+            "must clear the fold path in all four roof positions",
+            "no centreline split needed: the engine cover already ends it inboard"),
     "P20": ("engine cover carrying the louvres", T_BOLT, 12,
             "opens for the engine; aperture SCAN REQUIRED", "splits across, between louvre banks"),
     "P33": ("functional louvres, one common vanishing direction", T_OURS, 6,
@@ -193,7 +207,7 @@ def rows():
 def main(argv):
     R = rows()
     print("=" * 110)
-    print("STATEV 001 — PANEL MANUFACTURING DEFINITION.  38 panels. Nothing approved, nothing frozen.")
+    print("STATEV 001 — PANEL MANUFACTURING DEFINITION.  42 panels. Nothing approved, nothing frozen.")
     print("=" * 110)
     for tag in ("READY NOW", "SCAN REQUIRED", "BLOCKED"):
         sel = [r for r in R if r["READINESS"] == tag]

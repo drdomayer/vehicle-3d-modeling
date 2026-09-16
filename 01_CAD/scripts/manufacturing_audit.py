@@ -156,18 +156,27 @@ def main():
                               else "yes, but only the interface"),
             BLOCKER={0: "Stage 03 geometry does not exist yet", 1: "none",
                      2: "docs/13 supplier answers only", 3: "scan"}[cat],
+            VERDICT={0: "BLOCKED", 1: "PROCEED", 2: "CONDITIONAL", 3: "SCAN REQUIRED"}[cat],
             CATEGORY=cat, PROOF=why, X_SPAN=("--" if span is None
                                              else f"{span[0]:.0f}..{span[1]:.0f}")))
-    labels = {1: "1  FULLY MODELLABLE NOW", 2: "2  MODEL NOW, PARAMETRIC DONOR INTERFACE",
-              3: "3  MUST WAIT FOR THE SCAN",
-              0: "0  CANNOT BE AUDITED — the part has no geometry yet"}
+    # The four-level verdict. BLOCKED covers two different situations and the reason column keeps
+    # them apart: a panel behind the roof envelope is waiting on a measurement nobody can take yet,
+    # a Stage 03 detail part is waiting on geometry that has not been built. Neither can proceed,
+    # but they are not blocked by the same thing and they will not unblock at the same time.
+    labels = {1: "PROCEED        — shape provable, only our data and published donor values",
+              2: "CONDITIONAL    — model now, donor-derived boundary kept parametric",
+              3: "SCAN REQUIRED  — the scan changes the SHAPE, not just the position",
+              0: "BLOCKED        — no geometry exists yet; a Stage 03 detail part"}
     for cat in (1, 2, 3, 0):
         sel = [r for r in rows if r["CATEGORY"] == cat]
-        print(f"\n{labels[cat]}   —   {len(sel)} panels")
+        print(f"\n{labels[cat]}   ({len(sel)})")
         for r in sel:
             print(f"  {r['PANEL']:<6}{r['NAME']:<24}{r['X_SPAN']:>16}   {r['PROOF']}")
-    print(f"\n  category 1 {len(buckets[1])}   category 2 {len(buckets[2])}   "
-          f"category 3 {len(buckets[3])}   unauditable {len(buckets[0])}")
+    roof = [p for p in buckets[3] if p in ROOF_BLOCKED]
+    print(f"\n  PROCEED {len(buckets[1])}   CONDITIONAL {len(buckets[2])}   "
+          f"SCAN REQUIRED {len(buckets[3])}   BLOCKED {len(buckets[0])}")
+    print(f"  of the {len(buckets[3])} SCAN REQUIRED, {len(roof)} are behind the roof envelope and")
+    print("  the rest are donor-surface overlays or unmeasured openings. Different waits.")
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0]))

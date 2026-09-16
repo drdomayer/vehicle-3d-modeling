@@ -56,9 +56,15 @@ INTERFACE_BY_PANEL = {
     },
 }
 
+# Pairs where both panels are PROCEED, so the seam LINE can be derived. The Z is the boundary
+# panel_map already uses to separate them, not a plane invented here.
 SEAM_PAIRS = {
-    ("P21", "P22"): ("both PROCEED. The boundary is the rocker-line Z in panel_map.B, and neither "
+    ("P21", "P22"): (B["rocker_top"],
+                     "both PROCEED. The boundary is the rocker-line Z in panel_map.B, and neither "
                      "surface moves with the scan, so the seam line is derivable today."),
+    ("P01", "P28"): (B["splitter_top"],
+                     "both PROCEED. panel_map separates them at the splitter line ahead of the "
+                     "nose mouth; both surfaces are ours and neither moves with the scan."),
 }
 
 
@@ -176,10 +182,12 @@ def main():
         print(f"   {k:<28} None   SCAN REQUIRED")
 
     print("\n3. SEAMS to neighbours")
-    for (a, b), why in SEAM_PAIRS.items():
+    touched = False
+    for (a, b), (z_plane, why) in SEAM_PAIRS.items():
         if pid not in (a, b):
             continue
-        s = seam_between(a, b, B["rocker_top"])
+        touched = True
+        s = seam_between(a, b, z_plane)
         print(f"   {a} <-> {b}: {why}")
         if s:
             print(f"      shared boundary: {s['points']} points at Z {s['z']:.0f}, "
@@ -187,6 +195,9 @@ def main():
             print("      the seam LINE is derived. The flange WIDTH is not: docs/13 Q15.")
         else:
             print("      no shared boundary found at the mapped Z — seam not derivable this way")
+    if not touched:
+        print("   none: this panel has no neighbour that is also PROCEED, so no seam line can be")
+        print("   derived today without leaning on something unmeasured.")
 
     wall = PROVISIONAL["core_wall_mm"][0]
     m = ob.modifiers.new("core", "SOLIDIFY")

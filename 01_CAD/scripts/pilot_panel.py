@@ -38,9 +38,18 @@ _p21 = {"__file__": os.path.join(REPO, "01_CAD/scripts/pilot_P21.py"), "__name__
 with open(os.path.join(REPO, "01_CAD/scripts/pilot_P21.py"), encoding="utf-8") as f:
     exec(f.read().split("\ndef main():")[0], _p21)
 PROVISIONAL = _p21["PROVISIONAL"]
+P21_INTERFACE = _p21["INTERFACE"]
+
+_sk = {"__file__": os.path.join(REPO, "01_CAD/scripts/statev_skeleton.py"), "__name__": "_sk"}
+with open(os.path.join(REPO, "01_CAD/scripts/statev_skeleton.py"), encoding="utf-8") as f:
+    exec(f.read().split("\ndef build(")[0], _sk)
+ARCHES = _sk["ARCHES"]
 
 # Per-panel interface lists. Every entry is a measurement on the real car, never a choice here.
 INTERFACE_BY_PANEL = {
+    # P21 keeps its list where the pilot wrote it; it is imported rather than retyped so the two
+    # scripts cannot drift into two different answers about the same panel.
+    "P21": P21_INTERFACE,
     "P22": {
         "ride_height_at_rear":       None,  # SCAN: measured, not the published 95 mm nominal
         "underbody_floor_surface":   None,  # SCAN: what the diffuser's top edge meets
@@ -132,25 +141,57 @@ def extract(pid):
     return ob
 
 
-def shells(ob):
-    """How many disconnected pieces the region is in. A part that prints as two pieces is not one
-    part, and the register is what decides whether it becomes two -- not this script."""
+def pieces(ob):
+    """The region's disconnected parts, each with its extents. A part that prints in two pieces is
+    not one part, and the register is what decides what to do about it -- not this script."""
     bm = bmesh.new()
     bm.from_mesh(ob.data)
-    seen, n = set(), 0
+    bm.verts.ensure_lookup_table()
+    seen, groups = set(), []
     for v in bm.verts:
         if v in seen:
             continue
-        n += 1
-        stack = [v]
+        g, stack = set(), [v]
         while stack:
             u = stack.pop()
             if u in seen:
                 continue
             seen.add(u)
+            g.add(u)
             stack.extend(e.other_vert(u) for e in u.link_edges)
+        groups.append(g)
+    out = []
+    for g in groups:
+        w = [ob.matrix_world @ v.co for v in g]
+        out.append(dict(
+            x=(min(-p.x * 1000 for p in w), max(-p.x * 1000 for p in w)),
+            y=(min(p.y * 1000 for p in w), max(p.y * 1000 for p in w)),
+            z=(min(p.z * 1000 for p in w), max(p.z * 1000 for p in w)),
+            area=sum(f.calc_area() for f in bm.faces if all(v in g for v in f.verts))))
     bm.free()
-    return n
+    return sorted(out, key=lambda d: d["x"][0])
+
+
+def severed_by(ps):
+    """Which opening left the gap between two pieces. Derived from the gap's own position against
+    the cutters the build actually uses, so it names a cause or says it cannot."""
+    if len(ps) != 2:
+        return None
+    for ax, lbl in (("x", "spec X"), ("y", "Y"), ("z", "Z")):
+        a, b = sorted((ps[0][ax], ps[1][ax]))
+        if a[1] >= b[0]:
+            continue
+        lo, hi = a[1], b[0]
+        for key, (cx, radius, _ow, tod, _tw) in ARCHES.items():
+            if ax == "x" and cx - radius <= lo and hi <= cx + radius and tod / 2 - radius < 0:
+                return (f"the {key.lower()} wheel opening. Its centre is Z {tod/2:.1f} with radius "
+                        f"{radius}, so the cut reaches {tod/2 - radius:.1f} and passes below ground "
+                        f"-- it severs the region rather than notching it")
+        if ax == "y" and lo < 0 < hi:
+            return ("the nose mouth, which is cut on the centreline and reaches down into this "
+                    f"region: the gap runs Y {lo:.0f} to {hi:.0f}")
+        return f"a gap in {lbl} from {lo:.0f} to {hi:.0f}; the cause is not identified here"
+    return None
 
 
 def surface_hash(pid):
@@ -228,7 +269,8 @@ def main():
     z = [v.z * 1000 for v in vs]
     bm = bmesh.new(); bm.from_mesh(ob.data)
     area = sum(f.calc_area() for f in bm.faces); bm.free()
-    n_shell = shells(ob)
+    ps = pieces(ob)
+    n_shell = len(ps)
     print("\n1. DESIGN — measured, ours")
     print(f"   spec X {min(sx):.0f} .. {max(sx):.0f}   width {max(y)-min(y):.1f}   "
           f"Z {min(z):.0f} .. {max(z):.0f}")
@@ -237,9 +279,17 @@ def main():
     if n_shell != 1:
         print(f"\n   STOP. The register carries {pid} as ONE part and the mapped region is "
               f"{n_shell} separate")
-        print("   pieces. On this panel the wheel openings cut through it, so what the map calls one")
-        print("   part would print as several and bolt on as several. Which of these is the answer is")
-        print("   a register decision and not one this script may take:")
+        print("   pieces, so what the map calls one part would print as several and bolt on as")
+        print("   several.")
+        for i, d in enumerate(ps, 1):
+            print(f"      piece {i}: specX {d['x'][0]:.0f}..{d['x'][1]:.0f}   "
+                  f"Y {d['y'][0]:.0f}..{d['y'][1]:.0f}   Z {d['z'][0]:.0f}..{d['z'][1]:.0f}   "
+                  f"{d['area']:.3f} m2")
+        cause = severed_by(ps)
+        if cause:
+            print(f"      severed by {cause}")
+        print("   Which of these is the answer is a register decision and not one this script may")
+        print("   take:")
         print("     - split the register entry, each piece its own part and its own seam, or")
         print("     - move a piece into the neighbouring part it is really a lobe of, or")
         print("     - keep one part and bridge the pieces above the opening, which changes the map.")

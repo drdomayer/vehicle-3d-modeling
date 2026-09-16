@@ -91,12 +91,36 @@ def extract_panels(coll_name="STATEV_PANELS"):
     return made
 
 
+# panel_map keys on |Y|, so these regions answer for both sides at once and come out of extraction
+# as a mirrored pair. Their piece count has to be read per side or every one of them looks split.
+MIRRORED = {"P03", "P04", "P07", "P08", "P09", "P10", "P11", "P12", "P15", "P16", "P17", "P18"}
+
+
 def measure(ob):
     bm = bmesh.new()
     bm.from_mesh(ob.data)
     bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.0001)
     area = sum(f.calc_area() for f in bm.faces)
     bm.to_mesh(ob.data)
+    # How many disconnected pieces the region is in, per side. A region in two pieces is not one
+    # part, however tidy its area figure looks, and the area figure is what hid it: P07 and P28
+    # both measured plausibly and both print in two. Mirrored regions answer for both sides of the
+    # car, so their count is halved -- the mirror is not a second piece.
+    bm.verts.ensure_lookup_table()
+    seen, n = set(), 0
+    for v in bm.verts:
+        if v in seen:
+            continue
+        n += 1
+        stack = [v]
+        while stack:
+            u = stack.pop()
+            if u in seen:
+                continue
+            seen.add(u)
+            stack.extend(e.other_vert(u) for e in u.link_edges)
+    mirrored = ob.get("panel_id") in MIRRORED
+    pieces = n // 2 if mirrored and n % 2 == 0 else n
     bm.free()
     vs = [ob.matrix_world @ v.co for v in ob.data.vertices]
     sx = [-v.x * 1000 for v in vs]
@@ -105,7 +129,7 @@ def measure(ob):
     wall = WORKING["core_wall_mm"]
     vol_mm3 = area * 1e6 * wall                      # area m2 -> mm2, times the wall
     mass_g = vol_mm3 / 1000.0 * WORKING["density_g_cm3"]
-    return dict(LENGTH=round(max(sx) - min(sx), 1), WIDTH=round(max(y) - min(y), 1),
+    return dict(PIECES=pieces, LENGTH=round(max(sx) - min(sx), 1), WIDTH=round(max(y) - min(y), 1),
                 HEIGHT=round(max(z) - min(z), 1), AREA_M2=round(area, 3),
                 CORE_VOLUME_CM3=round(vol_mm3 / 1000.0, 1), EST_MASS_KG=round(mass_g / 1000.0, 2),
                 FACES=len(ob.data.polygons))
@@ -119,13 +143,20 @@ def main():
     made = extract_panels()
     rows = []
     print(f"\n{'ID':<6}{'PART':<22}{'L':>8}{'W':>8}{'H':>8}{'AREA m2':>10}"
-          f"{'core cm3':>11}{'mass kg':>9}")
+          f"{'core cm3':>11}{'mass kg':>9}{'pieces':>8}")
     for pid, ob in made.items():
         m = measure(ob)
         rows.append(dict(ID=pid, PART=NAME_OF.get(pid, "?"), **m))
         print(f"{pid:<6}{NAME_OF.get(pid,'?'):<22}{m['LENGTH']:>8.0f}{m['WIDTH']:>8.0f}"
               f"{m['HEIGHT']:>8.0f}{m['AREA_M2']:>10.3f}{m['CORE_VOLUME_CM3']:>11.0f}"
-              f"{m['EST_MASS_KG']:>9.2f}")
+              f"{m['EST_MASS_KG']:>9.2f}{m['PIECES']:>8}"
+              + ("" if m["PIECES"] == 1 else "   <-- not one part"))
+    split = [r["ID"] for r in rows if r["PIECES"] != 1]
+    if split:
+        print(f"\n  {len(split)} region(s) are NOT one connected part: {' '.join(split)}")
+        print("  The register carries each as one part. Whether to split the entry, absorb the")
+        print("  loose piece into a neighbour, or bridge over the opening is a register decision.")
+        print("  pilot_panel.py refuses to export an STL for any of them until it is taken.")
     tot_a = sum(r["AREA_M2"] for r in rows)
     tot_m = sum(r["EST_MASS_KG"] for r in rows)
     print(f"\n  {len(rows)} panel regions   total skin {tot_a:.3f} m2   "

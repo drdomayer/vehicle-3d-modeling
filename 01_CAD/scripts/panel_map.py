@@ -60,14 +60,47 @@ NOT_PANEL = {
 }
 
 
+# The cabin cutter and the arch cutters, as statev_master_volumes actually builds them. Named here
+# so the cap rules below can be read against their source instead of against bare numbers.
+CABIN = dict(x0=420.0, x1=1760.0, y=700.0, z=640.0)      # cowl_x .. hoop_x, |Y| < 700, Z 640 up
+ARCH_CUTS = ((0.0, 350.0, 323.5), (2415.0, 365.0, 337.5))  # spec X, radius, centre Z (tod/2)
+CAP_TOL = 12.0   # a boolean leaves its cap ON the cut plane; this is slack, not a search radius
+
+
 def not_panel(sx, ay, z, nz, ny):
     if z < 130 and nz < -0.4:
         return "X_FLOOR"
-    if 420 <= sx <= 1760 and ay <= 715 and z > 600 and ny > 0.4:
+    if CABIN["x0"] <= sx <= CABIN["x1"] and ay <= 715 and z > 600 and ny > 0.4:
         return "X_CABIN"
-    for ax, r in ((0.0, 350.0), (2415.0, 365.0)):
+    for ax, r, _cz in ARCH_CUTS:
         if abs(sx - ax) < r and z < 700 and ny > 0.4:
             return "X_ARCH"
+
+    # Boolean CAPS. Added 2026-09-16 after a face-size audit: nine faces larger than 0.05 m2 were
+    # passing all of the rules above and being counted as exterior skin, 3.953 m2 of it. The worst
+    # was a single four-vertex quad of 1.876 m2 lying flat at Z 640 across the whole cabin aperture
+    # -- the floor of the cabin cut, assigned to P09 DOOR_SKIN, and on its own half of that panel's
+    # reported area. The rules above screen on ny, so a cap whose normal points along X or Z passes
+    # them untouched however large it is, and nothing downstream looks at face size.
+    #
+    # A cap has a signature that needs no list: it sits ON a cut plane with its normal along that
+    # plane's axis. That is what is tested, against the cutters the build uses.
+    if CABIN["x0"] - CAP_TOL <= sx <= CABIN["x1"] + CAP_TOL and ay <= CABIN["y"] + CAP_TOL:
+        if abs(z - CABIN["z"]) < CAP_TOL and abs(nz) > 0.9:
+            return "X_CABIN_FLOOR"          # the aperture's floor, looking up into the cabin
+        if z > CABIN["z"] - CAP_TOL:
+            if min(abs(sx - CABIN["x0"]), abs(sx - CABIN["x1"])) < CAP_TOL and abs(nz) < 0.35:
+                return "X_CABIN_END"        # the cut's front or rear wall, normal along X
+    for ax, r, cz in ARCH_CUTS:
+        d = ((sx - ax) ** 2 + (z - cz) ** 2) ** 0.5
+        if abs(d - r) < CAP_TOL and abs(nz) < 0.9:
+            return "X_ARCH_WALL"            # on the cylinder itself: the wheel well, not the skin
+        # and the disc that closes the cylinder's inboard end. The arch cutter is a cylinder of
+        # finite depth, so it leaves a flat wall at the inner end of the wheel well as well as the
+        # curved one. It is inside the removed circle with its normal along Y, which no exterior
+        # face can be: skin cannot live inside the volume the cut took away.
+        if d < r - CAP_TOL and abs(ny) > 0.9:
+            return "X_ARCH_END"
     return None
 
 

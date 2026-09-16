@@ -4,25 +4,35 @@ binary, because the magnitude version of it is not measurable on a blockout mesh
 
 WHY THIS FILE REPLACES AN EARLIER ANSWER. boundary_sensitivity.py moved each approximate donor value
 by 25 mm and reported how far a panel's spec-X extent changed: 28.0 mm for the hood, 42.5 for the
-front fender. Those numbers are wrong, in the way this project has been wrong four times before --
-a number produced by the discretisation was read as a fact about the surface. The sweep below is the
-disproof, and it is run on every call so the claim cannot rot:
+front fender. Those numbers were wrong, in the way this project has been wrong four times before --
+a number produced by the discretisation was read as a fact about the surface. The sweep was the
+disproof, and it read:
 
     panel  value                 2        5       10       25       40      <- perturbation, mm
     P02    cowl_x             28.0     28.0     28.0     28.0     71.2
     P15    door_rear_x        60.1     60.1     60.1     60.1     60.1
 
-A 2 mm move cannot push an edge 60 mm. What moves is which mesh station is the panel's outermost,
-and the blockout's longitudinal stations near those lines sit 36 to 75 mm apart. The extent change
-is the station gap. It says WHETHER the value participates; it says nothing about HOW FAR.
+A 2 mm move cannot push an edge 60 mm. What moved was which mesh station happened to be the panel's
+outermost, because the map assigned whole faces by where their centre fell and the blockout's
+stations near those lines sit 36 to 75 mm apart.
 
-WHAT IS ACTUALLY TRUE, and it needs no mesh at all. Where a donor value bounds a panel, the seam IS
-that value's plane, so the seam travels exactly as far as the estimate is out -- 25 mm for a 25 mm
-error, against a 15 mm provisional trim allowance. What was worth measuring was never the distance.
-It was the binary the audit had been guessing: does this value bound this panel? manufacturing_audit
-answers that by overlapping spec-X spans, which asks "could it be near" and is treated as "does it
-move". The rockers overlap both shut-line zones and are moved by neither, because panel_of returns
-P07 below the rocker line in every X branch.
+That cause is now gone. panel_map.split_on_boundaries cuts the body on every plane panel_of switches
+on before anything is assigned, so no face straddles a boundary and the panels begin and end exactly
+on their boundary values. The sweep, rerun below on every call, now tracks the perturbation instead
+of sitting on stations -- the hood reads about 5, 12, 26 and 38 mm for moves of 5, 10, 25 and 40 --
+which is what a real boundary does. Two rows still read flat, and the reason is the same class of
+thing scaled down: the cut planes are the UNPERTURBED ones, so a boundary moved off its own cut no
+longer has a face edge to land on.
+
+So the magnitudes here are now indicative rather than meaningless, and the statement that does not
+need a mesh at all is still the one to quote. Where a donor value bounds a panel, the seam IS that
+value's plane, so it travels exactly as far as the estimate is out -- 15 to 30 mm by the band
+cage_986 records -- against a 15 mm provisional trim allowance.
+
+What was always worth measuring is the binary the audit had been guessing: does this value bound
+this panel? manufacturing_audit answers that by overlapping spec-X spans, which asks "could it be
+near" and then treats the answer as "does it move". The rockers overlap both shut-line zones and are
+moved by neither, because panel_of returns P07 below the rocker line in every X branch.
 
 Two further facts, from a code trace rather than a measurement, both checkable by grep:
 
@@ -89,7 +99,14 @@ def gather(ns):
                 if o.type == "MESH" and "VOLUME" in o.name]:
         bm = bmesh.new()
         bm.from_mesh(src.data)
+        # Cut on the boundary planes first, as the extractors do, so a face is not assigned by
+        # where its centre happens to fall. The planes are the UNPERTURBED ones: a perturbation
+        # then moves faces cleanly across a boundary they already align with, which is exactly the
+        # change this is trying to detect.
+        ns["split_on_boundaries"](bm)
         for f in bm.faces:
+            if f.calc_area() < 1e-9:
+                continue
             c = src.matrix_world @ f.calc_center_median()
             n = (src.matrix_world.to_3x3() @ f.normal).normalized()
             sx, ay, z = -c.x * 1000, abs(c.y * 1000), c.z * 1000
@@ -138,8 +155,11 @@ def quantisation_evidence(base_ns, base, pts, watch):
                 row.append(w)
             if max(row) > 0.4:
                 print(f"  {pid:<6}{dval:<14}" + "".join(f"{v:>8.1f}" for v in row))
-    print("\n  Flat rows are mesh stations, not millimetres of travel. The real travel where a donor")
-    print(f"  value bounds a panel is the estimate's own error: {BAND[0]:.0f} to {BAND[1]:.0f} mm,")
+    print("\n  Rows that track the perturbation are real boundary travel; rows that sit flat are")
+    print("  a boundary that has moved off its own cut plane, since the cuts are the unperturbed")
+    print("  ones. Either way the figure to quote needs no mesh: where a donor value bounds a")
+    print(f"  panel the seam IS that plane, so it travels the estimate's own error, {BAND[0]:.0f} to "
+          f"{BAND[1]:.0f} mm,")
     print(f"  against a {TRIM:.0f} mm trim allowance.")
 
 
@@ -159,8 +179,8 @@ def main():
 
     print("=" * 104)
     print("DONOR EXPOSURE — does an APPROX donor value bound this panel? Measured, not inferred from")
-    print("spec-X overlap. The answer is a binary; the magnitude is not measurable here and is not")
-    print("reported. See the sweep below.")
+    print("spec-X overlap. The answer reported is the binary; the sweep below shows the magnitude")
+    print("and how far it can be trusted.")
     print("=" * 104)
     print(f"\n{'panel':<7}{'name':<22}{'area m2':>9}  {'bounded by':<40}verdict")
 

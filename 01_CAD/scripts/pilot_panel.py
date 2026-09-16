@@ -41,6 +41,7 @@ _pm = {"__file__": os.path.join(REPO, "01_CAD/scripts/panel_map.py"), "__name__"
 with open(os.path.join(REPO, "01_CAD/scripts/panel_map.py"), encoding="utf-8") as f:
     exec(f.read().split("\ndef main(")[0], _pm)
 panel_of, not_panel, NAME_OF, B = _pm["panel_of"], _pm["not_panel"], _pm["NAME_OF"], _pm["B"]
+split_on_boundaries = _pm["split_on_boundaries"]
 
 _p21 = {"__file__": os.path.join(REPO, "01_CAD/scripts/pilot_P21.py"), "__name__": "_p21"}
 with open(os.path.join(REPO, "01_CAD/scripts/pilot_P21.py"), encoding="utf-8") as f:
@@ -131,12 +132,15 @@ def extract(pid):
     for src in [o for o in master.all_objects if o.type == "MESH" and "VOLUME" in o.name]:
         bm = bmesh.new()
         bm.from_mesh(src.data)
+        split_on_boundaries(bm)
         bm.faces.ensure_lookup_table()
         for f in bm.faces:
             c = src.matrix_world @ f.calc_center_median()
             n = (src.matrix_world.to_3x3() @ f.normal).normalized()
             sx, ay, z = -c.x * 1000, abs(c.y * 1000), c.z * 1000
             ny = -n.y if c.y > 0 else n.y
+            if f.calc_area() < 1e-9:
+                continue          # zero-area sliver left where a boundary plane grazed flat geometry
             if not_panel(sx, ay, z, n.z, ny) or panel_of(sx, ay, z) != pid:
                 continue
             if side is not None and c.y * side <= 0:

@@ -37,6 +37,7 @@ panel_of = _pm["panel_of"]
 not_panel = _pm["not_panel"]
 NAME_OF = _pm["NAME_OF"]
 PALETTE_ORDER = _pm["PALETTE_ORDER"]
+split_on_boundaries = _pm["split_on_boundaries"]
 
 _pp = {"__file__": os.path.join(REPO, "01_CAD/scripts/panel_pipeline.py"), "__name__": "_pp"}
 with open(os.path.join(REPO, "01_CAD/scripts/panel_pipeline.py"), encoding="utf-8") as f:
@@ -76,6 +77,7 @@ def extract_panels(coll_name="STATEV_PANELS"):
         for src in bodies:
             bm = bmesh.new()
             bm.from_mesh(src.data)
+            split_on_boundaries(bm)
             bm.faces.ensure_lookup_table()
             for f in bm.faces:
                 c = src.matrix_world @ f.calc_center_median()
@@ -86,6 +88,8 @@ def extract_panels(coll_name="STATEV_PANELS"):
                     continue
                 if panel_of(sx, ay, z) != pid:
                     continue
+                if f.calc_area() < 1e-9:
+                    continue      # zero-area sliver left where a boundary plane grazed flat geometry
                 if side is not None and c.y * side <= 0:
                     continue
                 base = len(verts)

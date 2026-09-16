@@ -115,6 +115,37 @@ def not_panel(sx, ay, z, nz, ny):
     return None
 
 
+# Every plane panel_of can switch on. A face whose centre decides its panel is a face that gets
+# assigned by where its middle happens to fall, and on a mesh whose tessellation is not itself
+# mirror-symmetric that produces panels that are not mirror-symmetric either: P28 and P41 came out
+# 0.142 and 0.099 m2, and P01's area-weighted centroid sat 65 mm off the centreline, on a body whose
+# VOLUME is symmetric to 0.2 litres. The shape was never asymmetric; the assignment was.
+#
+# So the body is cut on these planes before anything is assigned. Then no face straddles a boundary,
+# every face lies wholly inside one panel, and the answer stops depending on tessellation.
+def boundary_planes():
+    X = [B["nose_end"], B["cowl"], B["door_front"], B["door_rear"], B["intake_front"],
+         B["intake_rear"], B["cover_front"], B["rocker_end"], B["fascia_front"]]
+    Z = [B["rocker_top"], B["splitter_top"], 700.0, 900.0]
+    Y = [0.0, B["hood_half_width"], B["cover_half_width"], 715.0, CABIN["y"]]
+    out = [((-1.0, 0.0, 0.0), (-v / 1000.0, 0.0, 0.0)) for v in X]     # spec X -> repo x
+    out += [((0.0, 0.0, 1.0), (0.0, 0.0, v / 1000.0)) for v in Z]
+    out += [((0.0, 1.0, 0.0), (0.0, v / 1000.0, 0.0)) for v in Y]
+    out += [((0.0, 1.0, 0.0), (0.0, -v / 1000.0, 0.0)) for v in Y if v > 0]
+    return out
+
+
+def split_on_boundaries(bm):
+    """Cut the mesh on every plane panel_of switches on. Splits only; removes nothing."""
+    for no, co in boundary_planes():
+        geom = bm.verts[:] + bm.edges[:] + bm.faces[:]
+        if not geom:
+            break
+        bmesh.ops.bisect_plane(bm, geom=geom, plane_no=no, plane_co=co,
+                               clear_outer=False, clear_inner=False)
+    return bm
+
+
 def panel_of(sx, ay, z):
     """Ordered rules, first match wins. Returns a panel id or None."""
     # ---- FRONT

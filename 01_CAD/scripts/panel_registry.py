@@ -33,6 +33,15 @@ NOMINAL_THICKNESS_MM = 2.5    # 2.0-3.0 depending on panel size and stiffness
 
 # id: (object, side, design group, assembly step, install vector, manufacturing method, status key)
 #   install vector is the direction the part travels onto the car, in repo axes (+X forward).
+# INSTALL_VECTOR is the direction a part TRAVELS while it is being fitted, in spec axes. Corrected
+# 2026-09-16 for the eight parts that are lowered onto the car from above: they carried "+Z", the
+# same value as the front splitter, which is pushed UP from underneath. Both cannot be right under
+# one convention, and the removal screen in exploded_assembly.py is what found it -- read as
+# written, the rear deck, the buttresses and the engine cover all came off downward, through the
+# haunch and the side intake. The same inversion was present laterally and is corrected the same
+# way: a left-hand panel is pushed INBOARD onto the car, so it travels -Y while being fitted and
+# comes off +Y. Every L part carried "+Y" and every R part "-Y", which read as removal through the
+# car and out the far side.
 PARTS = [
     ("P01", "FRONT_FASCIA",        "-",  "FRONT", 3,  "+X", "printed master -> composite", "FRONT_CLAMSHELL"),
     # Split into a pair on 2026-09-16. It was registered as one centre part, and it is not one: the
@@ -41,15 +50,15 @@ PARTS = [
     # nothing about the split touches a donor value.
     ("P28", "FRONT_SPLITTER_L",    "L",  "FRONT", 4,  "+Z", "printed master -> composite", "FRONT_CLAMSHELL"),
     ("P41", "FRONT_SPLITTER_R",    "R",  "FRONT", 4,  "+Z", "printed master -> composite", "FRONT_CLAMSHELL"),
-    ("P02", "HOOD",                "-",  "FRONT", 5,  "+Z", "printed master -> composite", "HOOD"),
-    ("P03", "FRONT_FENDER_L",      "L",  "FRONT", 5,  "+Y", "printed master -> composite", "FRONT_FENDER"),
-    ("P04", "FRONT_FENDER_R",      "R",  "FRONT", 5,  "-Y", "printed master -> composite", "FRONT_FENDER"),
-    ("P05", "FENDER_CHANNEL_L",    "L",  "FRONT", 6,  "+Y", "direct print", "FRONT_FENDER"),
-    ("P06", "FENDER_CHANNEL_R",    "R",  "FRONT", 6,  "-Y", "direct print", "FRONT_FENDER"),
+    ("P02", "HOOD",                "-",  "FRONT", 5,  "-Z", "printed master -> composite", "HOOD"),
+    ("P03", "FRONT_FENDER_L",      "L",  "FRONT", 5,  "-Y", "printed master -> composite", "FRONT_FENDER"),
+    ("P04", "FRONT_FENDER_R",      "R",  "FRONT", 5,  "+Y", "printed master -> composite", "FRONT_FENDER"),
+    ("P05", "FENDER_CHANNEL_L",    "L",  "FRONT", 6,  "-Y", "direct print", "FRONT_FENDER"),
+    ("P06", "FENDER_CHANNEL_R",    "R",  "FRONT", 6,  "+Y", "direct print", "FRONT_FENDER"),
     ("P29", "HEADLIGHT_SURROUND_L","L",  "FRONT", 7,  "+X", "printed master -> composite", "HEADLIGHT"),
     ("P30", "HEADLIGHT_SURROUND_R","R",  "FRONT", 7,  "+X", "printed master -> composite", "HEADLIGHT"),
-    ("P07", "ROCKER_L",            "L",  "SIDE",  8,  "+Y", "printed master -> composite", "ROCKER"),
-    ("P08", "ROCKER_R",            "R",  "SIDE",  8,  "-Y", "printed master -> composite", "ROCKER"),
+    ("P07", "ROCKER_L",            "L",  "SIDE",  8,  "-Y", "printed master -> composite", "ROCKER"),
+    ("P08", "ROCKER_R",            "R",  "SIDE",  8,  "+Y", "printed master -> composite", "ROCKER"),
     # Split off the rocker on 2026-09-16. The rear wheel opening severs the sill rather than
     # notching it -- the arch centre is Z 337.5 with a 365 mm radius, so the cut passes below
     # ground -- leaving a 264 mm corner behind the wheel that cannot reach the sill it was
@@ -57,36 +66,36 @@ PARTS = [
     # boundaries are ours or published: the arch aperture ahead, the rear fascia station behind,
     # the rocker line above, the floor below. Folding it into P15 would drag a PROCEED piece into a
     # SCAN REQUIRED panel; folding it into P22 would put a body-side corner inside the diffuser.
-    ("P39", "ROCKER_END_L",        "L",  "SIDE",  8,  "+Y", "printed master -> composite", "ROCKER"),
-    ("P40", "ROCKER_END_R",        "R",  "SIDE",  8,  "-Y", "printed master -> composite", "ROCKER"),
-    ("P09", "DOOR_SKIN_L",         "L",  "SIDE",  9,  "+Y", "printed master -> composite", "DOOR_SKIN"),
-    ("P10", "DOOR_SKIN_R",         "R",  "SIDE",  9,  "-Y", "printed master -> composite", "DOOR_SKIN"),
-    ("P37", "MIRROR_CAP_L",        "L",  "SIDE",  10, "+Y", "direct print, ASA", "DOOR_SKIN"),
-    ("P38", "MIRROR_CAP_R",        "R",  "SIDE",  10, "-Y", "direct print, ASA", "DOOR_SKIN"),
-    ("P11", "SIDE_INTAKE_L",       "L",  "SIDE",  11, "+Y", "printed master -> composite", "SIDE_INTAKE"),
-    ("P12", "SIDE_INTAKE_R",       "R",  "SIDE",  11, "-Y", "printed master -> composite", "SIDE_INTAKE"),
-    ("P31", "INTAKE_DUCT_L",       "L",  "SIDE",  12, "+Y", "direct print", "SIDE_INTAKE"),
-    ("P32", "INTAKE_DUCT_R",       "R",  "SIDE",  12, "-Y", "direct print", "SIDE_INTAKE"),
-    ("P13", "INTAKE_BLADE_L",      "L",  "SIDE",  13, "+Y", "direct print or CNC", "SIDE_INTAKE"),
-    ("P14", "INTAKE_BLADE_R",      "R",  "SIDE",  13, "-Y", "direct print or CNC", "SIDE_INTAKE"),
-    ("P15", "REAR_HAUNCH_L",       "L",  "REAR",  14, "+Y", "printed master -> composite", "REAR_HAUNCH"),
-    ("P16", "REAR_HAUNCH_R",       "R",  "REAR",  14, "-Y", "printed master -> composite", "REAR_HAUNCH"),
-    ("P17", "BUTTRESS_L",          "L",  "REAR",  15, "+Z", "printed master -> composite", "BUTTRESS"),
-    ("P18", "BUTTRESS_R",          "R",  "REAR",  15, "+Z", "printed master -> composite", "BUTTRESS"),
+    ("P39", "ROCKER_END_L",        "L",  "SIDE",  8,  "-Y", "printed master -> composite", "ROCKER"),
+    ("P40", "ROCKER_END_R",        "R",  "SIDE",  8,  "+Y", "printed master -> composite", "ROCKER"),
+    ("P09", "DOOR_SKIN_L",         "L",  "SIDE",  9,  "-Y", "printed master -> composite", "DOOR_SKIN"),
+    ("P10", "DOOR_SKIN_R",         "R",  "SIDE",  9,  "+Y", "printed master -> composite", "DOOR_SKIN"),
+    ("P37", "MIRROR_CAP_L",        "L",  "SIDE",  10, "-Y", "direct print, ASA", "DOOR_SKIN"),
+    ("P38", "MIRROR_CAP_R",        "R",  "SIDE",  10, "+Y", "direct print, ASA", "DOOR_SKIN"),
+    ("P11", "SIDE_INTAKE_L",       "L",  "SIDE",  11, "-Y", "printed master -> composite", "SIDE_INTAKE"),
+    ("P12", "SIDE_INTAKE_R",       "R",  "SIDE",  11, "+Y", "printed master -> composite", "SIDE_INTAKE"),
+    ("P31", "INTAKE_DUCT_L",       "L",  "SIDE",  12, "-Y", "direct print", "SIDE_INTAKE"),
+    ("P32", "INTAKE_DUCT_R",       "R",  "SIDE",  12, "+Y", "direct print", "SIDE_INTAKE"),
+    ("P13", "INTAKE_BLADE_L",      "L",  "SIDE",  13, "-Y", "direct print or CNC", "SIDE_INTAKE"),
+    ("P14", "INTAKE_BLADE_R",      "R",  "SIDE",  13, "+Y", "direct print or CNC", "SIDE_INTAKE"),
+    ("P15", "REAR_HAUNCH_L",       "L",  "REAR",  14, "-Y", "printed master -> composite", "REAR_HAUNCH"),
+    ("P16", "REAR_HAUNCH_R",       "R",  "REAR",  14, "+Y", "printed master -> composite", "REAR_HAUNCH"),
+    ("P17", "BUTTRESS_L",          "L",  "REAR",  15, "-Z", "printed master -> composite", "BUTTRESS"),
+    ("P18", "BUTTRESS_R",          "R",  "REAR",  15, "-Z", "printed master -> composite", "BUTTRESS"),
     # Split into a pair on 2026-09-16. The engine cover occupies the centre of the deck, so the
     # deck was never one piece: it is two strips, one either side, that do not touch. The boundary
     # between them is our own cover half-width, not a donor value, so the pairing is safe to fix now
     # even though the deck's SHAPE stays SCAN REQUIRED behind the roof fold envelope.
-    ("P19", "REAR_DECK_L",         "L",  "REAR",  16, "+Z", "printed master -> composite", "REAR_DECK"),
-    ("P42", "REAR_DECK_R",         "R",  "REAR",  16, "+Z", "printed master -> composite", "REAR_DECK"),
-    ("P20", "ENGINE_COVER",        "-",  "REAR",  17, "+Z", "printed master -> composite", "ENGINE_COVER"),
-    ("P33", "ENGINE_COVER_LOUVRES","-",  "REAR",  18, "+Z", "direct print", "ENGINE_COVER"),
+    ("P19", "REAR_DECK_L",         "L",  "REAR",  16, "-Z", "printed master -> composite", "REAR_DECK"),
+    ("P42", "REAR_DECK_R",         "R",  "REAR",  16, "-Z", "printed master -> composite", "REAR_DECK"),
+    ("P20", "ENGINE_COVER",        "-",  "REAR",  17, "-Z", "printed master -> composite", "ENGINE_COVER"),
+    ("P33", "ENGINE_COVER_LOUVRES","-",  "REAR",  18, "-Z", "direct print", "ENGINE_COVER"),
     ("P21", "REAR_FASCIA",         "-",  "REAR",  19, "-X", "printed master -> composite", "REAR_FASCIA"),
     ("P34", "REAR_CENTRE_MASK",    "-",  "REAR",  20, "-X", "direct print", "REAR_FASCIA"),
     ("P36", "PLATE_RECESS",        "-",  "REAR",  21, "-X", "direct print", "REAR_FASCIA"),
     ("P22", "DIFFUSER",            "-",  "REAR",  22, "-X", "printed master -> composite", "DIFFUSER"),
     ("P35", "EXHAUST_SURROUND",    "-",  "REAR",  23, "-X", "direct print, heat-capable", "REAR_FASCIA"),
-    ("P23", "REAR_SPOILER",        "-",  "REAR",  24, "+Z", "direct print or composite", "REAR_SPOILER"),
+    ("P23", "REAR_SPOILER",        "-",  "REAR",  24, "-Z", "direct print or composite", "REAR_SPOILER"),
     ("P24", "HEADLIGHT_HOUSING_L", "L",  "LIGHTS", 25, "+X", "direct print, ASA", "HEADLIGHT"),
     ("P25", "HEADLIGHT_HOUSING_R", "R",  "LIGHTS", 25, "+X", "direct print, ASA", "HEADLIGHT"),
     ("P26", "TAIL_HOUSING_L",      "L",  "LIGHTS", 26, "-X", "direct print, ASA", "TAIL_LIGHT"),

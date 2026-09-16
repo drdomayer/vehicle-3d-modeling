@@ -57,9 +57,17 @@ B = dict(
 # not panels and counting them as panels inflates every area figure — the first run of this script
 # reported 22.6 m2 of "panel", which is roughly twice a car's exterior.
 NOT_PANEL = {
-    "X_FLOOR":  "underside; the body floor at Z 120, not a body panel",
-    "X_CABIN":  "inward wall left by the cabin cut; interior, not skin",
-    "X_ARCH":   "inward wall of a wheel arch; a liner at most, not a panel",
+    "X_FLOOR":       "underside; the body floor at Z 120, not a body panel",
+    "X_CABIN":       "inward wall left by the cabin cut; interior, not skin",
+    "X_ARCH":        "inward wall of a wheel arch; a liner at most, not a panel",
+    # The boolean caps, added 2026-09-16. They are listed here as well as rejected in not_panel()
+    # because the report's accounting is only honest if every rejected face appears in it. Before
+    # this, four reasons existed in the code and not in the table, so 267 faces left the count
+    # without a row explaining where they went.
+    "X_CABIN_FLOOR": "flat floor of the cabin cut at Z 640; it looks up into the cabin",
+    "X_CABIN_END":   "front or rear wall of the cabin cut; normal along X, not skin",
+    "X_ARCH_WALL":   "the arch cylinder itself; the wheel well, not the body",
+    "X_ARCH_END":    "the disc closing the arch cylinder inboard; inside the removed volume",
 }
 
 
@@ -213,8 +221,11 @@ def main():
     for k, why in NOT_PANEL.items():
         print(f"  {'':<6}{k:<24}{other.get(k,0):>8}{'':>8}{other_area.get(k,0.0):>10.3f}   {why}")
     print(f"  unassigned {unassigned}   (a non-zero number here means the map has holes)")
-    print("\n  Mirrored parts share one region: P03 stands for P03+P04, P07 for P07+P08,")
-    print("  P09 for P09+P10, P11 for P11+P12, P15 for P15+P16, P17 for P17+P18.")
+    print("\n  Mirrored parts share one region, because this map keys on |Y| and cannot tell the")
+    print("  sides apart: P03 stands for P03+P04, P07 for P07+P08, P39 for P39+P40, P09 for")
+    print("  P09+P10, P11 for P11+P12, P15 for P15+P16, P17 for P17+P18, P28 for P28+P41,")
+    print("  P19 for P19+P42. The extraction splits them on the sign of Y, which is a fact about")
+    print("  the car and not a choice: +Y is left by this repo's own convention.")
     print("  Parts that are inserts, housings or details inside another panel do not appear as")
     print("  regions and will not until Stage 03: channels, blades, ducts, louvres, surrounds,")
     print("  the mask, the plate recess, the mirror caps and every light housing.")

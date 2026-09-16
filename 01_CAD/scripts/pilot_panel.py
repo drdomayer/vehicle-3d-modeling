@@ -31,6 +31,12 @@ SIDE_OF = {"P03": +1, "P04": -1, "P07": +1, "P08": -1, "P09": +1, "P10": -1,
            "P28": +1, "P41": -1, "P39": +1, "P40": -1,
            "P19": +1, "P42": -1}
 
+# The right-hand half of each pair. Its interface list and its seams are its partner's, reflected;
+# writing them out again would create two places for one answer to drift apart. panel_map returns
+# the left id for both sides, so the right member is resolved through here before anything is read.
+MIRROR_OF = {"P04": "P03", "P08": "P07", "P10": "P09", "P12": "P11", "P16": "P15",
+             "P18": "P17", "P41": "P28", "P40": "P39", "P42": "P19"}
+
 _pm = {"__file__": os.path.join(REPO, "01_CAD/scripts/panel_map.py"), "__name__": "_pm"}
 with open(os.path.join(REPO, "01_CAD/scripts/panel_map.py"), encoding="utf-8") as f:
     exec(f.read().split("\ndef main(")[0], _pm)
@@ -119,6 +125,7 @@ SEAM_PAIRS = {
 
 def extract(pid):
     side = SIDE_OF.get(pid)
+    pid = MIRROR_OF.get(pid, pid)      # the map answers under the left id for both sides
     master = bpy.data.collections["STATEV_MASTER"]
     verts, faces = [], []
     for src in [o for o in master.all_objects if o.type == "MESH" and "VOLUME" in o.name]:
@@ -152,6 +159,19 @@ def extract(pid):
     bm.to_mesh(me)
     bm.free()
     me.update()
+    return ob
+
+
+def mirror_in_place(ob):
+    """Reflect the object across Y = 0 and flip the winding so normals still point outward."""
+    bm = bmesh.new()
+    bm.from_mesh(ob.data)
+    for v in bm.verts:
+        v.co.y = -v.co.y
+    bmesh.ops.reverse_faces(bm, faces=bm.faces)
+    bm.to_mesh(ob.data)
+    bm.free()
+    ob.data.update()
     return ob
 
 
@@ -234,10 +254,14 @@ def prove_separation(pid, iface):
     return ok
 
 
-def seam_between(a, b, axis, plane, tol=8.0):
+def seam_between(a, b, axis, plane, tol=8.0, side=None):
     """The shared edge of two panels: the vertices both carry on their common boundary plane.
     Derivable only where both panels are PROCEED; returns its extent, never a guessed flange."""
-    oa, ob_ = extract(a), extract(b)
+    # A pair member is extracted on the side being reported; a centre panel has no side.
+    oa = extract(a if side is None or SIDE_OF.get(a) is None else
+                 next((k for k, v in MIRROR_OF.items() if v == a and SIDE_OF[k] == side), a))
+    ob_ = extract(b if side is None or SIDE_OF.get(b) is None else
+                  next((k for k, v in MIRROR_OF.items() if v == b and SIDE_OF[k] == side), b))
     if oa is None or ob_ is None:
         return None
 
@@ -265,18 +289,51 @@ def seam_between(a, b, axis, plane, tol=8.0):
 
 def main():
     pid = PANEL
-    iface = INTERFACE_BY_PANEL.get(pid)
+    twin = MIRROR_OF.get(pid)
+    iface = INTERFACE_BY_PANEL.get(twin or pid)
     if iface is None:
         print(f"no interface list for {pid} — add one before running the chain on it")
         return
     print("=" * 104)
     print(f"PILOT CHAIN — {pid} {NAME_OF.get(pid,'')}.  Validating, not producing.")
     print("=" * 104)
+    if twin:
+        print(f"   right-hand half of the {twin}/{pid} pair. Its interface list and its seams are")
+        print(f"   {twin}'s, read through MIRROR_OF rather than written out a second time.")
     if not prove_separation(pid, iface):
         print("   stopping: the chain's core claim does not hold for this panel")
         return
 
-    ob = extract(pid)
+    if twin:
+        # The right-hand half is BUILT as the mirror of the left, not extracted on its own.
+        #
+        # The car is mirror-symmetric by construction -- every locked dimension is symmetric about
+        # Y = 0 and the master volumes are lofted from half sections -- so the two halves of a pair
+        # are the same part reflected, and building them separately can only introduce differences
+        # that should not exist. It does: extracted independently, eight of the nine pairs agree on
+        # area to within 0.4%, and P28/P41 disagrees by 30%. The splitter's boundary is a Z line at
+        # 300, the map assigns by face centre, and the nose-mouth boolean tessellated the two sides
+        # differently, so coarse faces straddling that line fall on one side here and the other
+        # side there. Two parts that differ by 30% are not a pair and will not fit as one.
+        #
+        # The independent extraction is still made and compared, so the symmetry is asserted out
+        # loud rather than assumed silently. If the design ever becomes deliberately asymmetric,
+        # this is where it will show up.
+        ob = mirror_in_place(extract(twin))
+        chk = extract(pid)
+        if chk is not None:
+            bm = bmesh.new(); bm.from_mesh(ob.data)
+            a_m = sum(f.calc_area() for f in bm.faces); bm.free()
+            bm = bmesh.new(); bm.from_mesh(chk.data)
+            a_d = sum(f.calc_area() for f in bm.faces); bm.free()
+            bpy.data.objects.remove(chk, do_unlink=True)
+            d = (a_d - a_m) / a_m * 100 if a_m else 0.0
+            note = "agrees" if abs(d) < 1.0 else "DISAGREES -- the mirror is what is exported"
+            print(f"\n   mirror of {twin}: {a_m:.3f} m2.  Extracted independently: {a_d:.3f} m2, "
+                  f"{d:+.1f}%.  {note}")
+    else:
+        ob = extract(pid)
+    ob.name = f"PILOT_{pid}_{NAME_OF.get(pid, 'PANEL')}"
     vs = [ob.matrix_world @ v.co for v in ob.data.vertices]
     sx = [-v.x * 1000 for v in vs]
     y = [v.y * 1000 for v in vs]
@@ -317,10 +374,12 @@ def main():
     print("\n3. SEAMS to neighbours")
     touched = False
     for (a, b), (axis, plane, why) in SEAM_PAIRS.items():
-        if pid not in (a, b):
+        if pid not in (a, b) and (twin or pid) not in (a, b):
             continue
         touched = True
-        s = seam_between(a, b, axis, plane)
+        # On the right-hand half the seam is looked up under the left ids and reported as the
+        # same line: the boundary plane is shared, the run of points is the mirror of the left's.
+        s = seam_between(a, b, axis, plane, side=SIDE_OF.get(pid))
         print(f"   {a} <-> {b}: {why}")
         if s:
             print(f"      shared boundary: {s['points']} points at "

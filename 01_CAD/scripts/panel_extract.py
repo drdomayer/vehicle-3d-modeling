@@ -57,8 +57,21 @@ def extract_panels(coll_name="STATEV_PANELS"):
 
     master = bpy.data.collections["STATEV_MASTER"]
     bodies = [o for o in master.all_objects if o.type == "MESH" and "VOLUME" in o.name]
+    # PER PART, not per region. The map answers under one id for both sides of the car, so a
+    # mirrored region is two parts wearing one name. Measured as a region, the rockers came out
+    # 0.888 m2 and 1841 mm wide -- the pair -- and that figure went into a table headed "per part"
+    # and on to a supplier. Each part is now cut out on its own side.
     made = {}
+    jobs = []
     for pid in PALETTE_ORDER:
+        if pid in MIRRORED:
+            jobs.append((pid, pid, +1))
+            twin = {v: k for k, v in TWIN_OF.items()}.get(pid)
+            if twin:
+                jobs.append((twin, pid, -1))
+        else:
+            jobs.append((pid, pid, None))
+    for part, pid, side in jobs:
         verts, faces = [], []
         for src in bodies:
             bm = bmesh.new()
@@ -73,6 +86,8 @@ def extract_panels(coll_name="STATEV_PANELS"):
                     continue
                 if panel_of(sx, ay, z) != pid:
                     continue
+                if side is not None and c.y * side <= 0:
+                    continue
                 base = len(verts)
                 for v in f.verts:
                     verts.append(tuple(src.matrix_world @ v.co))
@@ -80,21 +95,56 @@ def extract_panels(coll_name="STATEV_PANELS"):
             bm.free()
         if not faces:
             continue
-        me = bpy.data.meshes.new(f"PANEL_{pid}")
+        me = bpy.data.meshes.new(f"PANEL_{part}")
         me.from_pydata(verts, [], faces)
         me.update()
-        ob = bpy.data.objects.new(f"{pid}_{NAME_OF.get(pid, 'PANEL')}", me)
-        ob["panel_id"] = pid
+        ob = bpy.data.objects.new(f"{part}_{NAME_OF.get(part, 'PANEL')}", me)
+        ob["panel_id"] = part
         ob["stage"] = "01 blockout region — not a production panel"
         coll.objects.link(ob)
-        made[pid] = ob
+        made[part] = ob
+
+    # The right-hand half of a pair is BUILT as the mirror of the left, for the same reason the
+    # pilot chain does it: the car is symmetric by construction, so the two halves are one part
+    # reflected, and extracting them separately can only introduce differences that should not
+    # exist. Eight of the nine pairs agree on area to within 0.4%; P28/P41 disagrees by 30%, because
+    # the splitter's boundary is a Z line, the map assigns by face centre, and the nose-mouth
+    # boolean tessellated the two sides differently. The independent extraction is measured first
+    # and the difference is reported, so the symmetry is asserted rather than assumed.
+    for right, left in TWIN_OF.items():
+        if right not in made or left not in made:
+            continue
+        a_before = _area(made[right])
+        me = made[left].data.copy()
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        for v in bm.verts:
+            v.co.y = -v.co.y
+        bmesh.ops.reverse_faces(bm, faces=bm.faces)
+        bm.to_mesh(me)
+        bm.free()
+        made[right].data = me
+        made[right]["extracted_area_m2"] = round(a_before, 4)
+        made[right]["mirror_delta_pct"] = round(
+            (a_before - _area(made[right])) / max(_area(made[right]), 1e-9) * 100, 1)
     return made
+
+
+def _area(ob):
+    bm = bmesh.new()
+    bm.from_mesh(ob.data)
+    a = sum(f.calc_area() for f in bm.faces)
+    bm.free()
+    return a
 
 
 # panel_map keys on |Y|, so these regions answer for both sides at once and come out of extraction
 # as a mirrored pair. Their piece count has to be read per side or every one of them looks split.
-MIRRORED = {"P03", "P04", "P07", "P08", "P09", "P10", "P11", "P12", "P15", "P16",
-            "P17", "P18", "P28", "P41", "P39", "P40", "P19", "P42"}
+MIRRORED = {"P03", "P07", "P09", "P11", "P15", "P17", "P28", "P39", "P19"}
+
+# right-hand half -> the id the map answers under
+TWIN_OF = {"P04": "P03", "P08": "P07", "P10": "P09", "P12": "P11", "P16": "P15",
+           "P18": "P17", "P41": "P28", "P40": "P39", "P42": "P19"}
 
 
 def measure(ob):
@@ -103,10 +153,10 @@ def measure(ob):
     bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.0001)
     area = sum(f.calc_area() for f in bm.faces)
     bm.to_mesh(ob.data)
-    # How many disconnected pieces the region is in, per side. A region in two pieces is not one
-    # part, however tidy its area figure looks, and the area figure is what hid it: P07 and P28
-    # both measured plausibly and both print in two. Mirrored regions answer for both sides of the
-    # car, so their count is halved -- the mirror is not a second piece.
+    # How many disconnected pieces this part is in. A part in two pieces is not one part, however
+    # tidy its area figure looks, and the area figure is what hid it: P07 and P28 both measured
+    # plausibly and both printed in two. Each object here is already one part on one side, so no
+    # halving is needed and none is done.
     bm.verts.ensure_lookup_table()
     seen, n = set(), 0
     for v in bm.verts:
@@ -120,8 +170,7 @@ def measure(ob):
                 continue
             seen.add(u)
             stack.extend(e.other_vert(u) for e in u.link_edges)
-    mirrored = ob.get("panel_id") in MIRRORED
-    pieces = n // 2 if mirrored and n % 2 == 0 else n
+    pieces = n
     bm.free()
     vs = [ob.matrix_world @ v.co for v in ob.data.vertices]
     sx = [-v.x * 1000 for v in vs]
@@ -138,7 +187,7 @@ def measure(ob):
 
 def main():
     print("=" * 100)
-    print("PANEL EXTRACT — the mapped regions cut out and measured")
+    print("PANEL EXTRACT — every PART cut out on its own side and measured")
     print("v020 is a Stage 01 blockout; these are regions at blockout stage, not production panels.")
     print("=" * 100)
     made = extract_panels()
@@ -148,19 +197,22 @@ def main():
     for pid, ob in made.items():
         m = measure(ob)
         rows.append(dict(ID=pid, PART=NAME_OF.get(pid, "?"), **m))
+        d = ob.get("mirror_delta_pct")
+        flag = "" if m["PIECES"] == 1 else "   <-- not one part"
+        if d is not None and abs(d) >= 1.0:
+            flag += f"   mirrored from {TWIN_OF[pid]}; extracting it alone gave {d:+.0f}%"
         print(f"{pid:<6}{NAME_OF.get(pid,'?'):<22}{m['LENGTH']:>8.0f}{m['WIDTH']:>8.0f}"
               f"{m['HEIGHT']:>8.0f}{m['AREA_M2']:>10.3f}{m['CORE_VOLUME_CM3']:>11.0f}"
-              f"{m['EST_MASS_KG']:>9.2f}{m['PIECES']:>8}"
-              + ("" if m["PIECES"] == 1 else "   <-- not one part"))
+              f"{m['EST_MASS_KG']:>9.2f}{m['PIECES']:>8}" + flag)
     split = [r["ID"] for r in rows if r["PIECES"] != 1]
     if split:
-        print(f"\n  {len(split)} region(s) are NOT one connected part: {' '.join(split)}")
+        print(f"\n  {len(split)} part(s) are NOT one connected part: {' '.join(split)}")
         print("  The register carries each as one part. Whether to split the entry, absorb the")
         print("  loose piece into a neighbour, or bridge over the opening is a register decision.")
         print("  pilot_panel.py refuses to export an STL for any of them until it is taken.")
     tot_a = sum(r["AREA_M2"] for r in rows)
     tot_m = sum(r["EST_MASS_KG"] for r in rows)
-    print(f"\n  {len(rows)} panel regions   total skin {tot_a:.3f} m2   "
+    print(f"\n  {len(rows)} parts   total skin {tot_a:.3f} m2   "
           f"total core mass ~{tot_m:.1f} kg")
     print(f"  wall {WORKING['core_wall_mm']} mm is a DESIGN ASSUMPTION; density "
           f"{WORKING['density_g_cm3']} g/cm3 is an ENGINEERING ASSUMPTION. Neither is a quote.")

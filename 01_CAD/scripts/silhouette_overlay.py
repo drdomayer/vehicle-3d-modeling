@@ -14,6 +14,13 @@ between them is the wheelbase, 2415 mm from the workshop manual. That gives 2.87
 line comes from the same two centres plus OUR tyre radii, and the two estimates of it agree to 7 px,
 which is 20 mm -- that disagreement is the honest error bar on everything below.
 
+THE CAMERA MUST FACE THE SAME WAY AS THE PICTURE, and getting that wrong is silent. A Blender
+camera at -Y with rotation (90, 0, 0) looks along +Y with its right axis on repo +X, which is
+FORWARD -- so the render came out mirrored, nose on the right, and the first full comparison table
+read our nose against the reference's tail and called it a 247 mm error in the rear deck. The
+camera now sits at +Y looking -Y, image +x is spec X rearward, and the render agrees with the mesh
+to 3 mm at eight rear stations. That check runs in the report below.
+
 WHAT THIS CANNOT DO. It compares OUTLINES. Two cars with the same silhouette and completely
 different surfaces read identical here, and docs/16 is explicit that the language lives in the
 curvature rather than the outline. A difference this finds is real; an agreement it reports is not a
@@ -184,9 +191,10 @@ def main():
             m = np.mean([r[3] for r in rear])
             print(f"   REAR, spec X 2100 and back: the model sits {abs(m):.0f} mm "
                   f"{'BELOW' if m < 0 else 'above'} the reference, consistently")
-            print("   That is the deck decision of 2026-09-14 showing up as a number: the deck came")
-            print("   down 960 -> 880 and the buttress 1090 -> 985 because the render's heights sat")
-            print("   inside the roof fold volume. This measures what that compromise cost.")
+            print("   The deck decision of 2026-09-14 -- deck 960 -> 880, buttress 1090 -> 985,")
+            print("   taken because the render's heights sat inside the roof fold volume -- is what")
+            print("   this measures the cost of.")
+
         print("\n   A difference here is real. An agreement is NOT a pass: this compares OUTLINES,")
         print("   and docs/16 says the language lives in the curvature, not the outline.")
 

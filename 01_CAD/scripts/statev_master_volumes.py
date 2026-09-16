@@ -145,6 +145,27 @@ CABIN_FLANK_PULL = 0.92
 # the deck line at that station and its height is a gaussian on the rear axle, so it grows out of
 # the haunch, peaks over the wheel and releases into the deck with nothing left to step off.
 # Ending it at 2640 with a fixed z_lo is what produced the 201 mm crown step at specX 2800.
+# 6. The front fender crest. Added 2026-09-16 from the overlay against ref-05, which measured the
+# body 17 to 147 mm below the render across the whole front, worst at spec X -300 to 0.
+#
+# It is a FIELD and not a section point, and the failed attempt is worth keeping: raising the top of
+# S03 to S06 in statev_skeleton does not reach the surface, because section_profile blends two
+# sections on the union of their Z levels and keeps only levels BOTH define, so a crest at Z 874 in
+# S04 is discarded against S03, which stops at 774. Measured 68 mm short at its own station.
+#
+# `z` is read straight off the reference's own silhouette at the overlay's calibration -- 2.8753
+# mm/px from the wheelbase, independently confirmed by the render's windscreen base landing on 969
+# against the donor's published cowl at 970. `y` is a design call: the crest sits outboard so the
+# hood can stay sunk between the fenders, which is what "layered panels, floating fenders" means.
+# `out` and `drop` give the crest a steep approach instead of a single point, the same fix the deck
+# edge needed on 2026-09-15 -- one control point gets averaged away by resample.
+FRONT_CREST = dict(
+    z=[(-950, 530), (-850, 584), (-700, 650), (-500, 774), (-350, 849), (-250, 874),
+       (-150, 892), (0, 903), (150, 906), (300, 909), (430, 935)],
+    y=[(-950, 170), (-850, 330), (-700, 470), (-500, 560), (-250, 590), (0, 600),
+       (300, 585), (430, 560)],
+    out=26.0, drop=30.0)
+
 BUTTRESS = dict(x0=1740, x1=3200, y=620, w=300, height=152)   # starts at the hoop plane,
                                                               # outboard of the cabin cut
 
@@ -199,6 +220,17 @@ def resample(poly, n):
                 break
         else:
             out.append(poly[-1])
+
+    # Keep the corners. resample places n points by arc length, so a vertex that is a crest gets
+    # straddled by two samples and the crest itself is never in the output -- the front fender
+    # crests added on 2026-09-16 arrived 68 mm short at their own station because of this, and the
+    # deck edge needed two control points a day earlier for the same reason. Any input vertex that
+    # is a strict local maximum in z is snapped onto the nearest output sample, so a crest survives
+    # sampling instead of being averaged away.
+    for i in range(1, len(poly) - 1):
+        if poly[i][1] > poly[i - 1][1] and poly[i][1] > poly[i + 1][1]:
+            j = min(range(len(out)), key=lambda k: math.dist(out[k], poly[i]))
+            out[j] = poly[i]
     return out
 
 
@@ -451,7 +483,18 @@ def ring(spec_x):
     # tables were tried and all three produced the same nose to within 4 mm, because none of them
     # is what sets it. The lever is SECTIONS S00-S03 in statev_skeleton.py, and moving it changes
     # the nose silhouette that CHECKPOINT 01 looked at, so it is a design decision and not a fix.
-    crown = max(crown - drop, z_top + 10)
+    # The guard used to be `max(crown - drop, z_top + 10)` against the section's GLOBAL top, and
+    # that is what made the section the author of the nose. It is now measured against the section's
+    # top WHERE THE SECTION IS STILL BROAD: a crest carried by less than 80 % of the station's
+    # half-width is a fender crest, not the hood, and the centreline is entitled to sit below it.
+    # 55 % was tried first and was too loose -- the new crests sit at 65-67 % of the half-width, so
+    # they still counted as broad, the hood came up with them and the body measured highest on the
+    # centreline at every front station, which is the opposite of the fender it was meant to build.
+    # Without this the fender crests added to SECTIONS on 2026-09-16 would have dragged the hood up
+    # with them and closed the very gap between hood and fender they were added to open.
+    hw_max = max(h for _, h in prof) if prof else 1.0
+    z_broad = max((z for z, h in prof if h >= 0.80 * hw_max), default=prof[0][0])
+    crown = max(crown - drop, z_broad + 10)
     # Inside the cabin the crown is cut away entirely, so it costs nothing to hold it above the
     # door top — and it has to be held, or BELT_DIP drags the centreline below the shelf and the
     # section turns back DOWN after it. That was the whole of the 14 mm the door top was losing
@@ -542,6 +585,15 @@ def ring(spec_x):
                 half = [(0.0, z_floor)] + pts + [(CABIN_Y - 40, bz)]
             else:
                 half = [(0.0, z_floor)] + pts
+    # the front fender crest, the same mechanism as the buttress crest at the rear
+    fc = FRONT_CREST
+    fz = table_z(fc["z"], spec_x) if fc["z"][0][0] <= spec_x <= fc["z"][-1][0] else None
+    if fz is not None and fz > pts[-1][1] + 8:
+        fy = table_z(fc["y"], spec_x)
+        fdrop = min(fc["drop"], 0.6 * (fz - pts[-1][1]))
+        if fdrop > 6:
+            half.append((fy + fc["out"], fz - fdrop))
+        half.append((fy, fz))
     if b_top is not None and b_top > pts[-1][1] + 8:
         y_crest = b["y"] + b["w"] * BUTTRESS_TOP_FRAC / 2
         # The drop is capped at 60 % of the height actually available above the section top. A

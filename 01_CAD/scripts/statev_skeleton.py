@@ -43,6 +43,15 @@ PACKAGE = {
 
 # ---------------------------------------------------------------- master cross-sections
 # name: (spec_x, role, [(z, half_width_y), ...] bottom -> top)
+# FRONT FENDER CREST — attempted here first, on 2026-09-16, and MOVED OUT.
+#
+# Raising the top point of S03 to S06 to the render's front silhouette does not reach the surface.
+# section_profile blends two neighbouring sections by taking the UNION of their Z levels and keeping
+# only levels where BOTH have a half-width, so a crest at Z 874 in S04 is discarded the moment it is
+# blended against S03, which stops at 774. Measured: the built crest came out 68 mm short AT ITS OWN
+# STATION. The crest therefore lives in statev_master_volumes as a character FIELD, which is where
+# every other character feature in this project already lives -- the side line, the rocker, the
+# flank, the buttress -- and which is applied after the blend rather than through it.
 SECTIONS = {
     "S00": (-950, "front tip",        [(120, 120), (250, 280), (350, 350), (450, 300)]),
     "S01": (-850, "front mask",       [(120, 300), (250, 470), (350, 550), (450, 580), (550, 500)]),
@@ -238,8 +247,11 @@ DIFFUSER_FINS = ("DIFFUSER_FIN", "03_AERO", 7, 2870, 3420, None, 230, 550, 16, 2
 # facts: the nose tip sits just above the splitter, and the last point IS the donor's windshield
 # base, which is not a choice. Between them the line is a translation of the approved render.
 # The cabin aperture (specX 420..1760) has no body centreline; DECK_SPINE picks up behind the hoops.
-HOOD_SPINE = [(-950, 400), (-850, 470), (-700, 565), (-500, 660),
-              (-250, 725), (0, 770), (200, 820), (420, 970)]
+# Raised with the sections, but NOT to the same line. This is the hood CENTRELINE and the section
+# tops above are the fender crests either side of it; the render shows the hood sunk between them by
+# roughly 60-70 mm through the middle, converging at the cowl where there is only one line left.
+HOOD_SPINE = [(-950, 515), (-850, 565), (-700, 625), (-500, 712),
+              (-250, 800), (0, 838), (200, 845), (420, 970)]
 HOOD_SPINE_NOTE = ("last point = donor cowl (windshield base), locked. Nose tip height is the design "
                    "call; everything between is the ref-08 side silhouette.")
 
@@ -254,7 +266,19 @@ HOOD_SPINE_NOTE = ("last point = donor cowl (windshield base), locked. Nose tip 
 # the real closed-roof line. The two cannot both be satisfied on guessed numbers.
 # Extended to 3420. It used to stop at 3200, after which the fallback crown took over and LIFTED
 # the last station by 106 mm. The spine now governs all the way to the tail and only falls.
-DECK_SPINE = [(1760, 880), (2100, 868), (2415, 845), (2800, 760), (3200, 640), (3420, 545)]
+# HELD FLAT TO spec X 2900, 2026-09-16. The overlay measured the rear 92 mm below ref-05, and
+# working backwards through the buttress field -- subtracting the gaussian lift this deck already
+# carries -- the reference implies a deck of 878 to 882 mm at EVERY station from 2400 to 2900. That
+# is flat, and it is flat at 880, which is what this table already says at the hoop plane. The
+# reference's rear is a flat deck with a fin rising off it, which is the architecture already built;
+# ours simply fell away where the render holds it.
+#
+# The two knots at 1760 and 2100 are UNCHANGED on purpose. They are the ones the roof fold envelope
+# reaches -- the guessed envelope is spec X 1240 to 1760 -- and that zone stays exactly where the
+# 2026-09-14 decision put it. Everything altered here is behind the rear axle, where the soft top
+# does not go and the engine bay does, and a deck raised there gives the engine more room, not less.
+DECK_SPINE = [(1760, 880), (2100, 868), (2415, 878), (2900, 880), (3100, 820),
+              (3250, 715), (3420, 545)]
 DECK_STATUS = "BLOCKED: roof fold envelope unknown — scan the roof closed / half / open / clamshell up"
 
 # Airflow systems: name -> (inlet element, path, outlet element). Every opening on the car must

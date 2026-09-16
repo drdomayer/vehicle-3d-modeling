@@ -397,6 +397,12 @@ def lay_flat(ob):
     w = [ob.matrix_world @ v.co for v in ob.data.vertices]
     ob.location.z -= min(p.z for p in w)
     bpy.context.view_layer.update()
+    # Bake the placement into the mesh. Left in the object matrix it survives the export, but the
+    # rounding between the two does not: two diffuser offcuts came out sitting 2.9 mm above the
+    # plate in their own files, which a slicer would either drop or print on air.
+    ob.data.transform(ob.matrix_world)
+    ob.matrix_world = mathutils.Matrix.Identity(4)
+    ob.data.update()
     return ob
 
 

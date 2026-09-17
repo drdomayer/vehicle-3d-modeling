@@ -108,6 +108,23 @@ def extract_panels(coll_name="STATEV_PANELS"):
         coll.objects.link(ob)
         made[part] = ob
 
+    # Stage 03 elements are already separate objects carrying their registered part id -- the intake
+    # blades, the fender channel liners. They are parts of the car and belong in every count that
+    # follows, so they are taken as they are rather than mapped out of the skin.
+    s03 = bpy.data.collections.get("STATEV_STAGE03")
+    if s03:
+        for src in s03.objects:
+            pid = src.get("panel_id")
+            if not pid:
+                continue
+            cp = src.copy()
+            cp.data = src.data.copy()
+            cp.name = f"{pid}_{NAME_OF.get(pid, 'PANEL')}"
+            cp["panel_id"] = pid
+            cp["stage"] = src.get("stage", "03 element")
+            coll.objects.link(cp)
+            made[pid] = cp
+
     # The right-hand half of a pair is BUILT as the mirror of the left, for the same reason the
     # pilot chain does it: the car is symmetric by construction, so the two halves are one part
     # reflected, and extracting them separately can only introduce differences that should not

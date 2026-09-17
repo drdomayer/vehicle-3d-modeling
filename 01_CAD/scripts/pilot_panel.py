@@ -35,7 +35,8 @@ SIDE_OF = {"P03": +1, "P04": -1, "P07": +1, "P08": -1, "P09": +1, "P10": -1,
 # writing them out again would create two places for one answer to drift apart. panel_map returns
 # the left id for both sides, so the right member is resolved through here before anything is read.
 MIRROR_OF = {"P04": "P03", "P08": "P07", "P10": "P09", "P12": "P11", "P16": "P15",
-             "P18": "P17", "P41": "P28", "P40": "P39", "P42": "P19"}
+             "P18": "P17", "P41": "P28", "P40": "P39", "P42": "P19",
+             "P14": "P13", "P06": "P05"}
 
 _pm = {"__file__": os.path.join(REPO, "01_CAD/scripts/panel_map.py"), "__name__": "_pm"}
 with open(os.path.join(REPO, "01_CAD/scripts/panel_map.py"), encoding="utf-8") as f:
@@ -91,6 +92,18 @@ INTERFACE_BY_PANEL = {
         "ride_height_static":        None,  # SCAN: measured, not the published 95 mm nominal
         "corner_mount_points":       None,  # SCAN: nothing to bolt to is known today
     },
+    # Stage 03 elements, built 2026-09-17. Their SHAPE is ours on our own surface, which is why they
+    # could be built before the scan; everything they have to physically meet is still absent.
+    "P13": {
+        "intake_opening_shape":      None,  # SCAN: the real aperture the blade stands in
+        "duct_route_to_plenum":      None,  # SCAN: where the air actually has to go
+        "blade_mount_points":        None,  # SCAN
+    },
+    "P05": {
+        "wheelhouse_liner_clearance": None,  # SCAN: what the slot vents into
+        "fender_mount_points":        None,  # SCAN
+        "water_path_out_of_the_slot": None,  # SCAN: a vent that fills with water is a bucket
+    },
     "P07": {
         "sill_outer_surface":        None,  # SCAN: what the rocker sits on for its whole length
         "jacking_points":            None,  # SCAN: must stay usable, and nothing may foul them
@@ -125,6 +138,17 @@ SEAM_PAIRS = {
 
 
 def extract(pid):
+    # A Stage 03 element is already its own object carrying its part id; there is nothing to cut out
+    # of the skin for it, so it is copied rather than mapped.
+    s03 = bpy.data.collections.get("STATEV_STAGE03")
+    if s03:
+        for src in s03.objects:
+            if src.get("panel_id") == pid:
+                cp = src.copy()
+                cp.data = src.data.copy()
+                cp.name = f"PILOT_{pid}_{NAME_OF.get(pid, 'PANEL')}"
+                bpy.context.scene.collection.objects.link(cp)
+                return cp
     side = SIDE_OF.get(pid)
     pid = MIRROR_OF.get(pid, pid)      # the map answers under the left id for both sides
     master = bpy.data.collections["STATEV_MASTER"]

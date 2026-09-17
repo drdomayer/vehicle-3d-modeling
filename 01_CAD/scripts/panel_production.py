@@ -89,7 +89,11 @@ FLANGE_AT = {
     "P21": [("z", 330.0, "below", {"P22"})],     # step 19, before the diffuser at step 22
     "P39": [("x", 3000.0, "above", {"P22"})],    # step 8, before the diffuser at step 22
 }
-PANELS = ["P01", "P28", "P41", "P07", "P08", "P39", "P40", "P21", "P22"]
+PANELS = ["P01", "P28", "P41", "P07", "P08", "P39", "P40", "P21", "P22",
+          "P05", "P06", "P13", "P14"]
+# Stage 03 elements are built by stage03_elements.py as closed solids in their own right -- a blade
+# already HAS its thickness -- so they skip both the map and the wall and go straight to sectioning.
+STAGE03 = {"P05", "P06", "P13", "P14"}
 SCHEDULE = []
 # P40 reads P39's seam through MIRROR_OF, so it is not listed in FLANGE_AT a second time.
 
@@ -157,6 +161,16 @@ def gather(pid):
 
 
 def build(pid):
+    if pid in STAGE03:
+        s03 = bpy.data.collections.get("STATEV_STAGE03")
+        for src in (s03.objects if s03 else []):
+            if src.get("panel_id") == pid:
+                cp = src.copy()
+                cp.data = src.data.copy()
+                cp.name = f"PROD_{pid}_{NAME_OF.get(pid, 'PANEL')}"
+                bpy.context.scene.collection.objects.link(cp)
+                return cp, 0
+        return None
     verts, faces, flange = gather(pid)
     if not faces:
         return None
@@ -451,7 +465,8 @@ def main():
             print(f"{pid:<7}no faces")
             continue
         ob, nf = built
-        thicken(ob)
+        if pid not in STAGE03:
+            thicken(ob)
         bm = bmesh.new()
         bm.from_mesh(ob.data)
         vol = abs(bm.calc_volume(signed=True)) * 1e9
@@ -497,7 +512,7 @@ def main():
         for o in list(bpy.data.objects):
             if o.name.startswith("SEC_") or o.name.startswith("PROD_"):
                 bpy.data.objects.remove(o, do_unlink=True)
-    print(f"\n   9 parts   ~{total_m:.1f} kg of core   {total_s} printed sections on a "
+    print(f"\n   {len(rows)} parts   ~{total_m:.1f} kg of core   {total_s} printed sections on a "
           f"{D['bed_mm'][0]:.0f} mm bed")
     bad = [r for r in SCHEDULE if r["FITS_BED"] != "yes" or r["PIECES_IN_FILE"] > 1]
     small = [r for r in SCHEDULE if max(r["X_MM"], r["Y_MM"], r["Z_MM"]) < 60]

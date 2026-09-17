@@ -68,7 +68,16 @@ NOT_PANEL = {
     "X_CABIN_END":   "front or rear wall of the cabin cut; normal along X, not skin",
     "X_ARCH_WALL":   "the arch cylinder itself; the wheel well, not the body",
     "X_ARCH_END":    "the disc closing the arch cylinder inboard; inside the removed volume",
+    # Stage 03 openings, added 2026-09-17. A pocket has walls, and a wall that looks into a duct is
+    # not exterior skin any more than the cabin's wall is.
+    "X_INTAKE":      "wall of the side-intake mouth; it looks into the duct, not at the road",
+    "X_FENDER_SLOT": "wall of the fender vent slot; it looks into the wheel well",
 }
+
+# The Stage 03 pockets, as stage03_elements.py cuts them. Named here so the rejection can be read
+# against its source instead of against four bare numbers.
+POCKETS = [("X_INTAKE", 1940.0, 2180.0, 420.0, 1000.0, 440.0, 710.0),
+           ("X_FENDER_SLOT", -250.0, 180.0, 460.0, 675.0, 690.0, 1000.0)]
 
 
 # The cabin cutter and the arch cutters, as statev_master_volumes actually builds them. Named here
@@ -102,6 +111,9 @@ def not_panel(sx, ay, z, nz, ny):
         if z > CABIN["z"] - CAP_TOL:
             if min(abs(sx - CABIN["x0"]), abs(sx - CABIN["x1"])) < CAP_TOL and abs(nz) < 0.35:
                 return "X_CABIN_END"        # the cut's front or rear wall, normal along X
+    for nm, x0, x1, y0, y1, z0, z1 in POCKETS:
+        if x0 <= sx <= x1 and y0 <= ay <= y1 and z0 <= z <= z1 and (abs(ny) > 0.4 or abs(nz) > 0.7):
+            return nm
     for ax, r, cz in ARCH_CUTS:
         d = ((sx - ax) ** 2 + (z - cz) ** 2) ** 0.5
         if abs(d - r) < CAP_TOL and abs(nz) < 0.9:

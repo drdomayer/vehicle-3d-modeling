@@ -155,6 +155,64 @@ def frame(name, coll, x0, x1, y0, y1, z0, z1, wall):
     return outer
 
 
+def shell(name, coll, x0, x1, y0, y1, z0, z1, wall, open_face):
+    """A closed box with its inside taken out and one face opened -- a lamp housing. `open_face` is
+    the spec-X end left off, because that is the end the lamp looks out of."""
+    outer = box(name, coll, x0, x1, y0, y1, z0, z1)
+    ix0 = x0 - 8 if open_face == "front" else x0 + wall
+    ix1 = x1 - wall if open_face == "front" else x1 + 8
+    inner = box(name + "_void", coll, ix0, ix1, y0 + wall, y1 - wall, z0 + wall, z1 - wall)
+    m = outer.modifiers.new("void", "BOOLEAN")
+    m.operation, m.object, m.solver = "DIFFERENCE", inner, "EXACT"
+    bpy.context.view_layer.objects.active = outer
+    bpy.ops.object.modifier_apply(modifier=m.name)
+    bpy.data.objects.remove(inner, do_unlink=True)
+    return outer
+
+
+def duct(name, coll, stations, wall):
+    """A lofted rectangular duct through (spec_x, y_c, z_c, half_w, half_h) stations, hollow."""
+    def tube(shrink):
+        v, f = [], []
+        for sx, yc, zc, hw, hh in stations:
+            for dy, dz in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+                v.append((-mm(sx), mm(yc + dy * (hw - shrink)), mm(zc + dz * (hh - shrink))))
+        n = 4
+        for i in range(len(stations) - 1):
+            a, b = i * n, (i + 1) * n
+            for k in range(4):
+                k2 = (k + 1) % 4
+                f.append((a + k, a + k2, b + k2, b + k))
+        f.append((0, 1, 2, 3))
+        last = (len(stations) - 1) * n
+        f.append((last + 3, last + 2, last + 1, last + 0))
+        return v, f
+    vo, fo = tube(0.0)
+    me = bpy.data.meshes.new(name)
+    me.from_pydata(vo, [], fo)
+    me.update()
+    ob = bpy.data.objects.new(name, me)
+    coll.objects.link(ob)
+    vi, fi = tube(wall)
+    mi = bpy.data.meshes.new(name + "_void")
+    mi.from_pydata(vi, [], fi)
+    mi.update()
+    inner = bpy.data.objects.new(name + "_void", mi)
+    coll.objects.link(inner)
+    for o in (ob, inner):
+        bm = bmesh.new()
+        bm.from_mesh(o.data)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        bm.to_mesh(o.data)
+        bm.free()
+    m = ob.modifiers.new("void", "BOOLEAN")
+    m.operation, m.object, m.solver = "DIFFERENCE", inner, "EXACT"
+    bpy.context.view_layer.objects.active = ob
+    bpy.ops.object.modifier_apply(modifier=m.name)
+    bpy.data.objects.remove(inner, do_unlink=True)
+    return ob
+
+
 def cut(target, cutter):
     m = target.modifiers.new(cutter.name, "BOOLEAN")
     m.operation = "DIFFERENCE"
@@ -276,6 +334,41 @@ def main():
         ob["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
         made.append(ob)
     print("  headlamp: a slot across the nose with an 18 mm frame in it -> P29 / P30")
+
+
+    # ---- 6. the lamp housing behind the blade. PROJECTOR is a DECIDED envelope at spec X -600,
+    # Y +-560, Z 570, 150 x 110 x 110 for one Hella 90 mm bi-LED module, and the module itself may
+    # never be modified -- so the housing is built around it with a wall and 6 mm of air, open at
+    # the front where the P29 frame is.
+    for sgn in (1, -1):
+        h = shell(f"HEADLIGHT_HOUSING_{'L' if sgn > 0 else 'R'}", coll,
+                  -681, -519, min(sgn * 499, sgn * 621), max(sgn * 499, sgn * 621),
+                  509, 631, 5.0, "front")
+        h["panel_id"] = "P24" if sgn > 0 else "P25"
+        h["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
+        made.append(h)
+    print("  lamp housing: a 5 mm shell around the module envelope, open at the front -> P24 / P25")
+
+    # ---- 7. the intake duct, from the mouth to the plenum. It runs through the three envelopes the
+    # skeleton already carries -- INTAKE_INLET derived, INTAKE_DUCT and INTAKE_OUTLET PROVISIONAL --
+    # and PROVISIONAL is the honest word: where the plenum actually sits is the donor's answer, so
+    # the duct's SHAPE is ours and its ROUTE is not.
+    for sgn in (1, -1):
+        d = duct(f"INTAKE_DUCT_{'L' if sgn > 0 else 'R'}", coll,
+                 [(1990, sgn * 870, 520, 55, 90), (2070, sgn * 800, 520, 70, 90),
+                  (2150, sgn * 650, 520, 90, 90), (2230, sgn * 470, 560, 90, 95),
+                  (2300, sgn * 300, 600, 75, 100)], 4.0)
+        d["panel_id"] = "P31" if sgn > 0 else "P32"
+        d["stage"] = "03 element — shape ours, ROUTE provisional, mounting SCAN REQUIRED"
+        made.append(d)
+    print("  intake duct: mouth to plenum through the three existing envelopes -> P31 / P32")
+
+    # ---- NOT BUILT, and the reason is the point. P37 / P38 MIRROR_CAP clip onto the OEM mirror
+    # body, and there is no MIRROR box anywhere in statev_skeleton -- no envelope, no position, no
+    # size. Building one would mean inventing where the donor's mirror is, which is exactly the kind
+    # of number this project does not invent. It stays BLOCKED until the scan.
+    print("  NOT built: P37 / P38 MIRROR_CAP — the skeleton has no mirror envelope at all, so its")
+    print("    position is the donor's and inventing it is not an option")
 
     # cut them all out of the body
     for c in cuts:

@@ -36,7 +36,8 @@ SIDE_OF = {"P03": +1, "P04": -1, "P07": +1, "P08": -1, "P09": +1, "P10": -1,
 # the left id for both sides, so the right member is resolved through here before anything is read.
 MIRROR_OF = {"P04": "P03", "P08": "P07", "P10": "P09", "P12": "P11", "P16": "P15",
              "P18": "P17", "P41": "P28", "P40": "P39", "P42": "P19",
-             "P14": "P13", "P06": "P05", "P30": "P29"}
+             "P14": "P13", "P06": "P05", "P30": "P29",
+             "P25": "P24", "P32": "P31"}
 
 _pm = {"__file__": os.path.join(REPO, "01_CAD/scripts/panel_map.py"), "__name__": "_pm"}
 with open(os.path.join(REPO, "01_CAD/scripts/panel_map.py"), encoding="utf-8") as f:
@@ -94,6 +95,16 @@ INTERFACE_BY_PANEL = {
     },
     # Stage 03 elements, built 2026-09-17. Their SHAPE is ours on our own surface, which is why they
     # could be built before the scan; everything they have to physically meet is still absent.
+    "P24": {
+        "front_structure_to_bolt_to":  None,  # SCAN
+        "module_heat_path":            None,  # SCAN: a sealed housing round an LED needs air out
+        "loom_route_to_the_module":    None,  # SCAN
+    },
+    "P31": {
+        "plenum_position":             None,  # SCAN: where the duct actually has to arrive
+        "real_opening_shape":          None,  # SCAN
+        "duct_mount_points":           None,  # SCAN
+    },
     "P29": {
         "front_structure_to_bolt_to":  None,  # SCAN
         "beam_aim_on_the_real_car":    None,  # SCAN: legality is checked on the car, not here

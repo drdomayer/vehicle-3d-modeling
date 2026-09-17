@@ -53,9 +53,13 @@ PACKAGE = {
 # every other character feature in this project already lives -- the side line, the rocker, the
 # flank, the buttress -- and which is applied after the blend rather than through it.
 SECTIONS = {
-    "S00": (-950, "front tip",        [(120, 120), (250, 280), (350, 350), (450, 300)]),
-    "S01": (-850, "front mask",       [(120, 300), (250, 470), (350, 550), (450, 580), (550, 500)]),
-    "S02": (-700, "headlights",       [(120, 500), (250, 650), (400, 720), (550, 700), (650, 600)]),
+    # NOSE WIDENED IN PLAN, 2026-09-17. The first measurement of the plan -- ref-09's top view,
+    # normalised so size cannot hide shape -- puts our nose 142 mm of half-width narrower than the
+    # render at the tip, 121 at 4% of the length and 54 at 9%. The render's nose is blunt in plan;
+    # ours came to a point. Nothing in the side elevation could ever have shown this.
+    "S00": (-950, "front tip",        [(120, 260), (250, 430), (350, 500), (450, 440)]),
+    "S01": (-850, "front mask",       [(120, 430), (250, 600), (350, 675), (450, 700), (550, 600)]),
+    "S02": (-700, "headlights",       [(120, 560), (250, 710), (400, 775), (550, 755), (650, 640)]),
     "S03": (-500, "front fender in",  [(120, 650), (250, 780), (400, 820), (550, 810), (700, 700)]),
     "S04": (-250, "ahead of arch",    [(120, 720), (250, 830), (400, 870), (550, 850), (700, 720)]),
     "S05": (0,    "FRONT AXLE",       [(120, 730), (250, 850), (400, 900), (550, 860), (700, 720)]),
@@ -66,8 +70,18 @@ SECTIONS = {
     "S10": (2000, "rear haunch start",[(120, 730), (250, 850), (400, 900), (550, 925), (700, 920), (800, 850), (900, 700)]),
     "S11": (2415, "REAR AXLE",        [(120, 750), (250, 870), (400, 915), (550, 925), (700, 900), (800, 820), (900, 700)]),
     "S12": (2800, "behind rear wheel",[(120, 720), (250, 850), (400, 900), (550, 900), (700, 820), (800, 700), (900, 550)]),
+    # TAIL NARROWED IN PLAN, 2026-09-17, and this is the biggest single difference the plan found:
+    # 375 mm. The render collapses from 0.797 of its max half-width at 96% of the length to 0.131 at
+    # 100% -- its rearmost 175 mm is a NARROW CENTRE ELEMENT over the diffuser, not full-width
+    # bodywork. Ours held 0.536 to the very end and finished in a slab. S13 already matches the
+    # render at 96% (750 against its 737), so only the tip moves.
     "S13": (3200, "rear fascia",      [(120, 650), (250, 780), (400, 820), (550, 780), (650, 650), (750, 500)]),
-    "S14": (3420, "rear tip",         [(120, 350), (250, 500), (400, 550), (500, 450), (600, 300)]),
+    # A station added at 3320 because the first attempt over-narrowed 96% of the length by 84 mm:
+    # with only S13 at 3200 and the tip at 3420, the taper started too early. The render holds 0.797
+    # of its max half-width at 96% and collapses to 0.131 by 100%, so nearly all of it happens in
+    # the last 175 mm. This puts the knee where the render puts it.
+    "S13b": (3320, "tail knee",       [(120, 520), (250, 610), (400, 640), (500, 560), (600, 400)]),
+    "S14": (3420, "rear tip",         [(120, 110), (250, 140), (400, 150), (500, 125), (600, 80)]),
 }
 
 RAIL_LEVELS = [120, 250, 400, 550, 700, 800, 900]

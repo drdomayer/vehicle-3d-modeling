@@ -72,9 +72,21 @@ def flood_mask(p, tol=8):
     return ~seen
 
 
-def profile(mask, n):
+# The render's top view has DOOR MIRRORS and our car has none -- P37/P38 are BLOCKED because the
+# skeleton carries no mirror envelope at all. They show up as a spike five stations wide at 37 to
+# 41% of the length, rising from 137 px to 159 and dropping straight back to 135, which is a
+# discrete object roughly 220 mm long standing 140 mm proud. The first run of this comparison
+# normalised everything by that spike, so every station on our side was divided by a number 18%
+# too large and the whole car read as "too full in the middle". Excluded by station, not by a
+# threshold, because a threshold would also eat a genuinely wide haunch.
+MIRROR_BAND = (0.36, 0.42)
+
+
+def profile(mask, n, skip_band=None):
     """Half-width at n stations, as a fraction of the car's own max half-width, nose to tail.
-    The centreline is taken as the mask's own mid-row so a crooked crop cannot skew it."""
+    The centreline is taken as the mask's own mid-row so a crooked crop cannot skew it.
+    `skip_band` is excluded when finding the maximum -- not from the output, so the mirrors can
+    still be seen in the table and recognised for what they are."""
     cols = np.nonzero(mask.sum(axis=0) >= 6)[0]
     if not len(cols):
         return None, None
@@ -87,14 +99,19 @@ def profile(mask, n):
         col = np.nonzero(mask[:, x])[0]
         hw.append(max(abs(col.max() - cy), abs(cy - col.min())) if len(col) else 0.0)
     hw = np.array(hw, float)
-    return hw / hw.max(), (x1 - x0)
+    body = hw.copy()
+    if skip_band:
+        for i in range(n):
+            if skip_band[0] <= i / (n - 1) <= skip_band[1]:
+                body[i] = 0.0
+    return hw / body.max(), (x1 - x0)
 
 
 def main():
     ref = np.asarray(Image.open(REF).convert("RGB"))
     y0, y1, x0, x1 = TOP_PANEL
     ref_top = ref[y0:y1, x0:x1]
-    ref_hw, ref_len = profile(flood_mask(ref_top), N)
+    ref_hw, ref_len = profile(flood_mask(ref_top), N, MIRROR_BAND)
 
     mod = np.asarray(Image.open(MODEL).convert("RGB"))
     mod_mask = mod.mean(axis=2) > 128
@@ -114,6 +131,10 @@ def main():
     for i in range(N):
         t = i / (N - 1)
         d = mod_hw[i] - ref_hw[i]
+        if MIRROR_BAND[0] <= t <= MIRROR_BAND[1]:
+            print(f"{t*100:>13.0f}%{ref_hw[i]:>9.3f}{mod_hw[i]:>9.3f}{'':>12}   "
+                  f"MIRRORS in the render, nothing in ours — not compared")
+            continue
         diffs.append(abs(d))
         print(f"{t*100:>13.0f}%{ref_hw[i]:>9.3f}{mod_hw[i]:>9.3f}{d:>+12.3f}"
               f"{d*OUR_WIDTH/2:>+22.0f}")

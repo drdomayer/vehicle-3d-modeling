@@ -8,6 +8,7 @@ The point is stated in CLAUDE.md and judged by eye: does it look like the render
 Two numbers stand for that, and both already exist.
 
     SILHOUETTE   silhouette_overlay.py, the profile against ref-05 at the wheelbase calibration.
+    PLAN         plan_overlay.py, the plan shape against ref-09's top view, normalised.
     SURFACE      highlight_test.py, the ratio of principal curvatures -- docs/16's own criterion,
                  0 being the long controlled highlight and 1 the balloon.
 
@@ -34,7 +35,7 @@ import sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 BASE = os.path.join(REPO, "01_CAD/scripts/data/goal_baseline.json")
-TOL = {"front_mm": 3.0, "rear_mm": 5.0, "mean_mm": 5.0, "curvature": 0.02}
+TOL = {"front_mm": 3.0, "rear_mm": 5.0, "mean_mm": 5.0, "curvature": 0.02, "plan_pct": 0.5}
 
 
 def run(script):
@@ -57,6 +58,11 @@ def parse_silhouette(txt):
     return out
 
 
+def parse_plan(txt):
+    m = re.search(r"mean difference ([\d.]+)% of max half-width", txt)
+    return {"plan_pct": float(m.group(1))} if m else {}
+
+
 def parse_curvature(txt):
     m = re.search(r"median principal-curvature ratio ([\d.]+)", txt)
     return {"curvature": float(m.group(1))} if m else {}
@@ -65,6 +71,9 @@ def parse_curvature(txt):
 def main():
     got = {}
     got.update(parse_silhouette(run("silhouette_overlay.py")))
+    # The plan is the third measurement and the newest. Until 2026-09-17 nothing in this repo had
+    # ever looked at it, and it turned out to carry the difference the side elevation could not see.
+    got.update(parse_plan(run("plan_overlay.py")))
     # The curvature half needs the mesh, which lives in Blender, so highlight_test.py writes its
     # result out and this reads it. The age is checked: a value older than the scripts that build
     # the car is a value from a different car, and reporting it as current would be the same class
@@ -96,7 +105,7 @@ def main():
             old = json.load(f)
     print(f"\n  {'metric':<14}{'now':>9}{'baseline':>11}{'change':>9}   verdict")
     bad = 0
-    for k in ("front_mm", "rear_mm", "mean_mm", "curvature"):
+    for k in ("front_mm", "rear_mm", "mean_mm", "plan_pct", "curvature"):
         if k not in got:
             continue
         n = got[k]

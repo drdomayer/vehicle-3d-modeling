@@ -292,6 +292,13 @@ FRONT_FLANK_Z_LO, FRONT_FLANK_Z_HI = 480.0, 800.0
 FRONT_FLANK_PULL = 0.82
 FRONT_FLANK_EASE_TOP = 60.0
 
+# 7. PLAN WAIST. The first measurement of the plan puts us 57 to 73 mm of half-width too wide from
+# 43 to 57% of the length -- spec X 930 to 1540, the middle of the door. The render has a waist
+# there and we run straight. It is a plan correction only: it takes width out and leaves every Z
+# alone, which is why the side silhouette is unchanged by it.
+WAIST_X, WAIST_XW = 1235.0, 330.0
+WAIST_DEPTH = 66.0
+
 # 1b. Belt dip. Between the wheels the 986 reads visually compressed; my sections were flat there,
 # which is the "flat platform" in the side view. This lowers the top of the body through the door.
 # Dip moved back and made shallower. Starting it at 430 put it right under the cowl and turned the
@@ -390,6 +397,9 @@ def character(spec_x, z):
         add += FLANK_SHOULDER * ends * math.exp(-((z - (FLANK_Z_HI + 40)) / 85.0) ** 2)
     # waist between the nose and the front fender, so the fender reads as a separate volume
     add -= 16.0 * math.exp(-((spec_x - (-560)) / 190.0) ** 2) * math.exp(-((z - 430) / 190.0) ** 2)
+    # plan waist through the door, measured off ref-09's top view. No Z term: it is the plan that
+    # is wrong, not the section, and adding one would move a silhouette that already matches.
+    add -= WAIST_DEPTH * math.exp(-((spec_x - WAIST_X) / WAIST_XW) ** 2)
     # nose blade: thin the section above the mouth so the upper line is sharp
     if NOSE_BLADE_X0 <= spec_x <= NOSE_BLADE_X1 and z > NOSE_BLADE_Z:
         run = min(smoothstep(NOSE_BLADE_X1, NOSE_BLADE_X1 - 140, spec_x), 1.0)

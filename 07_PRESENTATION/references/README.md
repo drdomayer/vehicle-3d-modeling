@@ -6,7 +6,8 @@
 | ref-02-z4-e86-front-engine-gt-REJECTED.jpeg | Front-engine GT on BMW Z4 E86 with Koenigsegg-inspired rear. Owner: "too Z4, no individuality" | REJECTED |
 | ref-03-986-roadster-v1.png | First 986-based STATEV 001, soft surfacing | superseded ("boring") |
 | ref-04-986-roadster-v2-soft-top-closed.png | v1 with closed soft top and raised deck | superseded; useful for the deck/roof integration idea |
-| ref-05-986-futuristic-v3-CHOSEN.png | Radical futuristic direction (Czinger/Zenvo/Gemera language) on 986 hardpoints | **CURRENT TARGET** |
+| ref-05-986-futuristic-v3-CHOSEN.png | Radical futuristic direction (Czinger/Zenvo/Gemera language) on 986 hardpoints | superseded as the measuring target by ref-09 |
+| ref-09-statev-001-four-view-CURRENT-TARGET.png | Four-view set of the same car — side, top, front, rear, plus three detail close-ups. Asked for in docs/18 | **CURRENT TARGET.** Side and top are measurable; front and rear are NOT — they show the cockpit interior, so the camera is above the car and their heights are foreshortened |
 
 Rules: numbers in AI infographics are invented — ignore them. Renders show
 wheels/clearance that are not road legal; the cage script has the real values.

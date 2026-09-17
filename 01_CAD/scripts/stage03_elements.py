@@ -123,6 +123,38 @@ def blade(name, coll, stations, thick):
     return ob
 
 
+def box(name, coll, x0, x1, y0, y1, z0, z1):
+    """An axis-aligned box in spec coordinates. Used both as a pocket cutter and, given two of them,
+    as the frame of a surround."""
+    v = [(-mm(x), mm(y), mm(z)) for x in (x0, x1) for y in (y0, y1) for z in (z0, z1)]
+    f = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]
+    me = bpy.data.meshes.new(name)
+    me.from_pydata(v, [], f)
+    me.update()
+    ob = bpy.data.objects.new(name, me)
+    coll.objects.link(ob)
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(me)
+    bm.free()
+    return ob
+
+
+def frame(name, coll, x0, x1, y0, y1, z0, z1, wall):
+    """A rectangular surround: the outer box with the inner one taken out of it, so what is left is
+    a thin frame standing in the pocket. This is the 'thin light blade' read -- the lamp sits behind
+    a frame, not in a hole."""
+    outer = box(name, coll, x0, x1, y0, y1, z0, z1)
+    inner = box(name + "_void", coll, x0 - 6, x1 + 6, y0 + wall, y1 - wall, z0 + wall, z1 - wall)
+    m = outer.modifiers.new("void", "BOOLEAN")
+    m.operation, m.object, m.solver = "DIFFERENCE", inner, "EXACT"
+    bpy.context.view_layer.objects.active = outer
+    bpy.ops.object.modifier_apply(modifier=m.name)
+    bpy.data.objects.remove(inner, do_unlink=True)
+    return outer
+
+
 def cut(target, cutter):
     m = target.modifiers.new(cutter.name, "BOOLEAN")
     m.operation = "DIFFERENCE"
@@ -189,6 +221,61 @@ def main():
         lin["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
         made.append(lin)
     print("  fender channel liner: a 14 mm wall inside the slot -> registered P05 / P06")
+
+
+    # ---- 4. the rear. In ref-05 the tail is not a wall: a recessed centre mask sits between the
+    # light bar's two ends, the exhausts come through their own surrounds, and the plate drops into
+    # a recess below. Each of those is a pocket with a part standing in it, and each is a register
+    # entry that has been BLOCKED for want of geometry.
+    #
+    # NOTHING HERE GOES NEAR THE ROOF. P17, P18, P19, P42, P20, P23 and P33 are ROOF_BLOCKED and
+    # stay untouched; the fold envelope is guessed at spec X 1240 to 1760 and everything below is
+    # behind 3300.
+    rear_pockets = [("CUT_CENTRE_MASK", 3330, 3425, -300, 300, 395, 595),
+                    ("CUT_PLATE", 3345, 3425, -255, 255, 250, 372),
+                    ("CUT_EXHAUST_L", 3300, 3425, 8, 122, 375, 489),
+                    ("CUT_EXHAUST_R", 3300, 3425, -122, -8, 375, 489)]
+    for nm, a, b_, c, d, e, f_ in rear_pockets:
+        cuts.append(box(nm, coll, a, b_, c, d, e, f_))
+    print(f"  rear: {len(rear_pockets)} pockets — centre mask, plate recess, two exhaust openings")
+
+    for pid, nm, a, b_, c, d, e, f_, w in (
+            ("P34", "REAR_CENTRE_MASK", 3352, 3372, -296, 296, 399, 591, 26.0),
+            ("P36", "PLATE_RECESS", 3366, 3382, -251, 251, 254, 368, 20.0)):
+        ob = frame(nm, coll, a, b_, c, d, e, f_, w)
+        ob["panel_id"] = pid
+        ob["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
+        made.append(ob)
+
+    # The exhaust surround is ONE part in the register, so it is built as one: a bar across both
+    # tips with the two openings taken out of it. Two separate rings would be one part in two
+    # pieces, which the connectivity gate in pilot_panel would refuse -- correctly.
+    es = box("EXHAUST_SURROUND", coll, 3322, 3346, -140, 140, 371, 493)
+    for sgn in (1, -1):
+        v = box("_es_void", coll, 3316, 3352, sgn * 12, sgn * 118, 383, 481)
+        m = es.modifiers.new("void", "BOOLEAN")
+        m.operation, m.object, m.solver = "DIFFERENCE", v, "EXACT"
+        bpy.context.view_layer.objects.active = es
+        bpy.ops.object.modifier_apply(modifier=m.name)
+        bpy.data.objects.remove(v, do_unlink=True)
+    es["panel_id"] = "P35"
+    es["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
+    made.append(es)
+    print("  rear parts: centre mask P34, plate recess P36, exhaust surround P35 (one bar, two holes)")
+
+    # ---- 5. the headlamp as a blade, not a cavity. A slot across the nose with a thin frame in it,
+    # so what shows is a line of light behind a frame -- which is what "thin light blades" means and
+    # the only road-legal way to get it, since the E-marked module itself may never be modified.
+    for sgn in (1, -1):
+        cuts.append(box(f"CUT_LAMP_{'L' if sgn > 0 else 'R'}", coll,
+                        -700, -540, sgn * 400, sgn * 690, 505, 625))
+    for sgn in (1, -1):
+        ob = frame(f"HEADLIGHT_SURROUND_{'L' if sgn > 0 else 'R'}", coll,
+                   -676, -648, min(sgn * 406, sgn * 684), max(sgn * 406, sgn * 684), 509, 621, 18.0)
+        ob["panel_id"] = "P29" if sgn > 0 else "P30"
+        ob["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
+        made.append(ob)
+    print("  headlamp: a slot across the nose with an 18 mm frame in it -> P29 / P30")
 
     # cut them all out of the body
     for c in cuts:

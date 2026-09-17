@@ -90,10 +90,10 @@ FLANGE_AT = {
     "P39": [("x", 3000.0, "above", {"P22"})],    # step 8, before the diffuser at step 22
 }
 PANELS = ["P01", "P28", "P41", "P07", "P08", "P39", "P40", "P21", "P22",
-          "P05", "P06", "P13", "P14"]
+          "P05", "P06", "P13", "P14", "P29", "P30", "P34", "P35", "P36"]
 # Stage 03 elements are built by stage03_elements.py as closed solids in their own right -- a blade
 # already HAS its thickness -- so they skip both the map and the wall and go straight to sectioning.
-STAGE03 = {"P05", "P06", "P13", "P14"}
+STAGE03 = {"P05", "P06", "P13", "P14", "P29", "P30", "P34", "P35", "P36"}
 SCHEDULE = []
 # P40 reads P39's seam through MIRROR_OF, so it is not listed in FLANGE_AT a second time.
 

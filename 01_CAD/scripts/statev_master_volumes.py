@@ -277,6 +277,21 @@ FLANK_PULL = 0.95                          # how strongly it is pulled to the st
 FLANK_EASE_TOP = 34.0                      # short: a crisp shoulder edge, not a roll
 FLANK_SHOULDER = 16.0                      # extra mass in the shoulder just above the flank
 
+# 2c. FRONT flank. The rear got this treatment on 2026-09-14 and the front never did, and the
+# curvature measurement says so: by Z band, the front fender reads 0.47 / 0.49 / 0.40 / 0.54 / 0.23
+# where the rear haunch reads 0.36 / 0.30 / 0.22 / 0.47 / 0.37 and the door channel gets down to
+# 0.12. Worst is Z 660-800 at 0.54 -- the shoulder between the flank and the new crest, curving the
+# same amount in every direction, which is the definition of the balloon docs/16 warns about.
+# Same mechanism as the rear: hold the section near its station maximum through a Z band so the side
+# runs flat along X and the curvature collects at the crest above and the tuck below.
+FRONT_FLANK_X0, FRONT_FLANK_X1 = -700.0, 500.0
+FRONT_FLANK_Z_LO, FRONT_FLANK_Z_HI = 480.0, 800.0
+# Z_LO was tried at 380 as well and made the band below WORSE, 0.46 -> 0.56: the lower ramp then
+# lands inside Z 330-500 and a ramp is itself curvature in two directions. Left at 480, where the
+# ramp falls in a band that is already being held.
+FRONT_FLANK_PULL = 0.82
+FRONT_FLANK_EASE_TOP = 60.0
+
 # 1b. Belt dip. Between the wheels the 986 reads visually compressed; my sections were flat there,
 # which is the "flat platform" in the side view. This lowers the top of the body through the door.
 # Dip moved back and made shallower. Starting it at 430 put it right under the cowl and turned the
@@ -341,6 +356,21 @@ def flank(spec_x, z, hw, hw_max):
               1.0 - smoothstep(FLANK_Z_HI - FLANK_EASE_TOP, FLANK_Z_HI, z))
     k = FLANK_PULL * ends * inb
     return hw + (hw_max - hw) * k
+
+
+def front_flank(spec_x, z, hw, hw_max):
+    """The same pull as flank(), on the front. Kept as its own function rather than a second band
+    inside flank() because FLANK_SHOULDER and the door-channel note both key off the rear band's
+    own constants, and folding them together would change the rear while trying to fix the front."""
+    if not (FRONT_FLANK_X0 <= spec_x <= FRONT_FLANK_X1):
+        return hw
+    if not (FRONT_FLANK_Z_LO <= z <= FRONT_FLANK_Z_HI):
+        return hw
+    ends = min(smoothstep(FRONT_FLANK_X0, FRONT_FLANK_X0 + 260, spec_x),
+               1.0 - smoothstep(FRONT_FLANK_X1 - 260, FRONT_FLANK_X1, spec_x))
+    inb = min(smoothstep(FRONT_FLANK_Z_LO, FRONT_FLANK_Z_LO + 70, z),
+              1.0 - smoothstep(FRONT_FLANK_Z_HI - FRONT_FLANK_EASE_TOP, FRONT_FLANK_Z_HI, z))
+    return hw + (hw_max - hw) * (FRONT_FLANK_PULL * ends * inb)
 
 
 def character(spec_x, z):
@@ -566,6 +596,7 @@ def ring(spec_x):
     pts = []
     for z, y in shaped:
         y = flank(spec_x, z, y, hw_max)
+        y = front_flank(spec_x, z, y, hw_max)
         y = cabin_flank(spec_x, z, y, hw_max) * narrow
         # The voids come LAST, after every field that pulls the surface outward. Applied earlier
         # they were pulled straight back out again by flank(), which is a second reason the door

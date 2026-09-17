@@ -63,6 +63,21 @@ def surface_y(spec_x, z, tol=28.0):
     return best
 
 
+def surface_z(spec_x, y, tol=26.0):
+    """The body's own top at this station and lateral position. An element that has to sit INSIDE
+    the surface needs to know where the surface is, not a number typed from memory."""
+    best = None
+    for o in body_objects():
+        M = o.matrix_world
+        for v in o.data.vertices:
+            w = M @ v.co
+            if abs(-w.x * 1000 - spec_x) < tol and abs(abs(w.y * 1000) - abs(y)) < tol:
+                z = w.z * 1000
+                if best is None or z > best:
+                    best = z
+    return best
+
+
 def prism(name, coll, stations, y_out, y_in):
     """A pocket cutter: a lofted prism running along spec X, from outboard of the surface inward.
     `stations` is [(spec_x, z_lo, z_hi)] and the walls are vertical, which is what gives the lip."""
@@ -264,17 +279,27 @@ def main():
 
     # ---- 3. the fender channel as a real slot through the fender top into the wheel well. This one
     # IS a through-cut: it vents the arch, which is what AIRFLOW in statev_skeleton says it does.
+    # MOVED INBOARD 2026-09-17, after the overlay caught it. At Y 470 to 660 the slot straddled the
+    # fender CREST, which sits at Y 590, so it ate 18 mm off the crown line -- the very line the
+    # crest field was added in v021 to get right. A fender vent belongs inboard of the crown, on the
+    # inner shoulder, venting down into the arch. Y 385 to 545 puts it there.
     fs = [(-235, 700, 980), (-110, 700, 985), (40, 700, 985), (165, 700, 975)]
     for sgn in (1, -1):
         c = prism(f"CUT_FENDER_SLOT_{'L' if sgn > 0 else 'R'}", coll,
-                  [(s[0], s[1], s[2]) for s in fs], sgn * 660, sgn * 470)
+                  [(s[0], s[1], s[2]) for s in fs], sgn * 545, sgn * 385)
         cuts.append(c)
-    print(f"  fender slot: spec X {fs[0][0]}..{fs[-1][0]}, Y 470..660, cut down from Z 985 to 700")
+    print(f"  fender slot: spec X {fs[0][0]}..{fs[-1][0]}, Y 385..545, cut down from Z 985 to 700")
     # the channel's own liner, a shallow U standing inside the slot: registered P05 / P06
+    # The liner's top FOLLOWS THE SURFACE and sits 12 mm under it. Written as a fixed 974 it stood
+    # 75 to 109 mm proud of a body whose crown there is 865 to 899 -- a fin out of the bonnet, which
+    # the silhouette overlay read as the car's own top line and scored as the front regressing from
+    # 3 mm to 21. A liner that pokes out of the panel it lines is not a liner.
     for sgn in (1, -1):
-        lin = blade(f"FENDER_CHANNEL_{'L' if sgn > 0 else 'R'}", coll,
-                    [(fs[0][0] + 20, sgn * 476, 712, 968), (-110, sgn * 476, 716, 974),
-                     (40, sgn * 476, 716, 974), (fs[-1][0] - 20, sgn * 476, 712, 962)], 14.0)
+        st = []
+        for sx in (fs[0][0] + 20, -110, 40, fs[-1][0] - 20):
+            top = surface_z(sx, 465)
+            st.append((sx, sgn * 465, 712, (top - 12.0) if top else 860.0))
+        lin = blade(f"FENDER_CHANNEL_{'L' if sgn > 0 else 'R'}", coll, st, 14.0)
         lin["panel_id"] = "P05" if sgn > 0 else "P06"
         lin["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
         made.append(lin)

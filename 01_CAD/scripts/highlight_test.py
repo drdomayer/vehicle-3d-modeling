@@ -229,6 +229,18 @@ def main():
     verdict = ("PASS — the surface holds a direction" if med < 0.25 else
                "BALLOONED" if med > 0.55 else "MIXED — parts of the car hold a highlight, parts do not")
     print(f"\n  {verdict}")
+    # Written out so check_goal.py can read it. It cannot run this itself -- the curvature needs the
+    # mesh, and the mesh lives in Blender -- and a check that silently skips half of itself is worse
+    # than no check.
+    import json as _json
+    import time as _time
+    _p = os.path.join(REPO, "01_CAD/scripts/data/last_curvature.json")
+    os.makedirs(os.path.dirname(_p), exist_ok=True)
+    with open(_p, "w", encoding="utf-8") as _f:
+        _json.dump({"curvature": round(med, 4), "cylindrical_pct": round(cyl, 1),
+                    "when": _time.time(),
+                    "blend": bpy.data.filepath}, _f, indent=2)
+    print(f"\n  wrote {_p}")
     print("  It says the surface holds a DIRECTION, not that the direction is the right one, and it")
     print("  cannot see whether the light BREAKS at the three voids. That stays a separate question.")
     return P

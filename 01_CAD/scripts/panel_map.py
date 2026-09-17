@@ -77,7 +77,7 @@ NOT_PANEL = {
 # The Stage 03 pockets, as stage03_elements.py cuts them. Named here so the rejection can be read
 # against its source instead of against four bare numbers.
 POCKETS = [("X_INTAKE", 1940.0, 2180.0, 420.0, 1000.0, 440.0, 710.0),
-           ("X_FENDER_SLOT", -250.0, 180.0, 460.0, 675.0, 690.0, 1000.0)]
+           ("X_FENDER_SLOT", -250.0, 180.0, 375.0, 560.0, 690.0, 1000.0)]
 
 
 # The cabin cutter and the arch cutters, as statev_master_volumes actually builds them. Named here

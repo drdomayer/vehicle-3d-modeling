@@ -18,6 +18,7 @@ the same conflict.
 """
 
 import json
+import math
 import os
 
 import bmesh
@@ -94,24 +95,45 @@ def main():
             f"body half-width at the arch crown height against the tyre's outer face: "
             f"{got - tyre_out:+.1f} mm")
 
-    # ---- 3. the arch aperture against the surface it is cut into.
-    # Measured just OUTSIDE the arch's own X range, where the cut does not reach, because inside it
-    # the body has already had the material removed and its remaining width is not the width the
-    # opening was cut into. The first version measured at the axle and reported the front opening as
-    # 130 mm wider than the surface, which is the hole talking, not the panel.
+    # ---- 3. the arch aperture. REWRITTEN 2026-09-18, because the previous version reported the
+    # DESIRABLE condition as a problem and did it for two sessions.
+    #
+    # It compared the designed aperture (track/2 + open_w/2) against the body half-width measured
+    # just outside the arch's X range, and flagged CHECK whenever the aperture was wider -- 26.2 mm
+    # on the front, 24.8 on the rear. But a wheel-arch cutter MUST reach outboard of the skin, or a
+    # web of material is left spanning the opening. So `open_w` beyond the skin is cutter margin,
+    # not an error, and the outer boundary of what you actually SEE is the body's own silhouette,
+    # never open_w. The old test could only be satisfied by narrowing the cutter until it stopped
+    # cutting through, which is the real defect it would have caused.
+    #
+    # The condition with a consequence is whether the arch is open. Measured on the BUILT mesh:
+    # inside the arch cylinder, is there any skin left outboard of the aperture's inner edge? At the
+    # front axle the body carries nothing at all below Z 600 and at the rear nothing below Z 680, so
+    # both are through-cut. The margin is reported as the number it is.
     for key, (ax, radius, open_w, tod, twid) in ARCHES.items():
         track = DIMS["track_front"][0] if key == "FRONT" else DIMS["track_rear"][0]
         aperture = track / 2.0 + open_w / 2.0
-        surface = 0.0
+        y_in = track / 2.0 - open_w / 2.0
+        zc = tod / 2.0
+        web = []
+        for x, y, z in P:
+            if math.hypot(x - ax, z - zc) < radius - 6.0 and abs(y) > y_in + 10.0:
+                web.append((x, y, z))
+        outside = 0.0
         for off in (-radius - 60, radius + 60):
             b = band(P, ax + off, 30.0)
             if b:
-                surface = max(surface, max(abs(y) for y, _ in b))
-        add("OK" if surface >= aperture - 1 else "CHECK",
-            f"{key} arch opening vs surface", f"{aperture:.1f}", f"{surface:.1f}",
-            "opening ours, track published",
-            f"the opening reaches Y {aperture:.1f} and the body is {surface:.1f} wide there: "
-            f"{aperture - surface:+.1f} mm of opening with no surface to cut")
+                outside = max(outside, max(abs(y) for y, _ in b))
+        margin = aperture - outside
+        add("OK" if not web else "CHECK",
+            f"{key} arch is cut through", "0 web" if not web else f"{len(web)} verts",
+            "0 web", "opening ours, track published",
+            (f"no skin left inside the opening; the cutter reaches Y {aperture:.1f} against a body "
+             f"{outside:.1f} wide beside the arch, so {margin:+.1f} mm of cutter margin — which is "
+             f"what a through-cut needs. The visible opening edge is the body's own silhouette, "
+             f"never open_w.") if not web else
+            (f"{len(web)} vertices of skin remain inside the arch cylinder outboard of Y "
+             f"{y_in + 10:.0f}: a web spanning the wheel opening. The cutter is too narrow."))
 
     # ---- 4. air to the OEM skin where the OEM skin stays: the rear quarters are overlays
     # plan_half_width is ALREADY in millimetres, in repo X with forward positive -- the note in the

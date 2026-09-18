@@ -246,7 +246,13 @@ def plan_cuts(ob):
     w = [ob.matrix_world @ v.co for v in ob.data.vertices]
     ext = [(min(p[i] for p in w) * 1000, max(p[i] for p in w) * 1000) for i in range(3)]
     size = [hi - lo for lo, hi in ext]
-    cell = [b - 2 * D["bed_margin_mm"] - D["tab_mm"] for b in D["bed_mm"]]
+    # The cell also has to reserve the WALL. Everything that happens to a section after the grid is
+    # planned makes it bigger: it runs one tab past its cut, and then thicken() puts a wall on it,
+    # which pushes the bbox out by up to one wall on each side. Without that term P21's section 16
+    # came out 333.9 mm against 330 usable and the schedule said FITS_BED=NO — the script asserting
+    # an invariant it had not reserved room for. Same family as the two diffuser offcuts that
+    # exported 2.9 mm above the plate.
+    cell = [b - 2 * D["bed_margin_mm"] - D["tab_mm"] - 2 * D["wall_mm"] for b in D["bed_mm"]]
     plan = {}
     for i in range(3):
         n = max(1, math.ceil(size[i] / cell[i]))
@@ -422,6 +428,33 @@ def lay_flat(ob):
     return ob
 
 
+def loose_pieces(ob):
+    """Split a section into one object per connected piece.
+
+    WHY. A section is a cell of a 3D grid laid over a thin curved shell, so a cell can legitimately
+    contain two separate patches of that shell -- the fascia folds back under its own undercut edge
+    and the cell catches both branches. Until 2026-09-18 those were written to ONE .stl and listed as
+    a named exception; P21 went from 6 such files to 34 when the undercut edge was sharpened. A file
+    holding two disconnected solids is not a part, and naming it does not make it one. They are two
+    parts, they print separately and they bond separately, so they get a file each.
+    """
+    if one_piece(ob) <= 1:
+        return [ob]
+    bpy.ops.object.select_all(action="DESELECT")
+    ob.select_set(True)
+    bpy.context.view_layer.objects.active = ob
+    before = set(bpy.data.objects)
+    bpy.ops.mesh.separate(type="LOOSE") if False else None
+    bpy.ops.object.mode_set(mode="EDIT")
+    bpy.ops.mesh.select_all(action="SELECT")
+    bpy.ops.mesh.separate(type="LOOSE")
+    bpy.ops.object.mode_set(mode="OBJECT")
+    out = [ob] + [o for o in bpy.data.objects if o not in before]
+    # biggest first, so a section's own numbering runs from its main piece outward
+    out.sort(key=lambda o: -len(o.data.vertices))
+    return out
+
+
 def one_piece(ob):
     bm = bmesh.new()
     bm.from_mesh(ob.data)
@@ -479,26 +512,28 @@ def main():
         made = []
         for j, sec in enumerate(secs, 1):
             thicken(sec)
-            lay_flat(sec)
-            w = [sec.matrix_world @ v.co for v in sec.data.vertices]
-            ss = [(max(p[i] for p in w) - min(p[i] for p in w)) * 1000 for i in range(3)]
-            fits = all(ss[i] <= D["bed_mm"][i] - 2 * D["bed_margin_mm"] for i in range(3))
-            path = os.path.join(OUT, f"{pid}_{NAME_OF.get(pid,'PANEL')}_s{j:02d}.stl")
-            bpy.ops.object.select_all(action="DESELECT")
-            sec.select_set(True)
-            bpy.context.view_layer.objects.active = sec
-            try:
-                bpy.ops.wm.stl_export(filepath=path, export_selected_objects=True,
-                                      global_scale=1000.0)
-            except AttributeError:
-                bpy.ops.export_mesh.stl(filepath=path, use_selection=True, global_scale=1000.0)
-            made.append((j, ss, fits, path, one_piece(sec)))
+            for pc, part in enumerate(loose_pieces(sec)):
+                lay_flat(part)
+                w = [part.matrix_world @ v.co for v in part.data.vertices]
+                ss = [(max(p[i] for p in w) - min(p[i] for p in w)) * 1000 for i in range(3)]
+                fits = all(ss[i] <= D["bed_mm"][i] - 2 * D["bed_margin_mm"] for i in range(3))
+                sfx = f"s{j:02d}" if pc == 0 else f"s{j:02d}{chr(ord('a') + pc)}"
+                path = os.path.join(OUT, f"{pid}_{NAME_OF.get(pid,'PANEL')}_{sfx}.stl")
+                bpy.ops.object.select_all(action="DESELECT")
+                part.select_set(True)
+                bpy.context.view_layer.objects.active = part
+                try:
+                    bpy.ops.wm.stl_export(filepath=path, export_selected_objects=True,
+                                          global_scale=1000.0)
+                except AttributeError:
+                    bpy.ops.export_mesh.stl(filepath=path, use_selection=True, global_scale=1000.0)
+                made.append((sfx, ss, fits, path, one_piece(part)))
         total_m += mass
         total_s += len(made)
         over = [m for m in made if not m[2]]
         split_files = [m for m in made if m[4] > 1]
-        for j, ss, fits, path, np_ in made:
-            SCHEDULE.append(dict(PANEL=pid, NAME=NAME_OF.get(pid, ""), SECTION=j,
+        for sfx, ss, fits, path, np_ in made:
+            SCHEDULE.append(dict(PANEL=pid, NAME=NAME_OF.get(pid, ""), SECTION=sfx,
                                  X_MM=round(ss[0], 1), Y_MM=round(ss[1], 1), Z_MM=round(ss[2], 1),
                                  FITS_BED="yes" if fits else "NO",
                                  PIECES_IN_FILE=np_,

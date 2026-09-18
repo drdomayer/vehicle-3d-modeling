@@ -90,7 +90,11 @@ VOID_FIELDS = {
 # resolve a transition that narrow, so this parameter is inert at the current resolution. A G0
 # crease here needs explicit control points, the way the buttress crest needed them — which is
 # Stage 03 work on a surface that does not exist yet, not a number change.
-REAR_UNDERCUT_FIELD = dict(depth=108.0, x0=2260.0, xa=2560.0, xb=2950.0, x1=3400.0, trans=72.0,
+# trans 72 -> 24 on 2026-09-18. The note above is still true of v029: at 60 arc-length samples
+# the resample could not resolve this transition and 18 gave geometry identical to 72, so the
+# parameter was inert. feature_anchors() now pins a sample on edge and on edge-trans at every
+# station, which is the "explicit control points" the note asked for, so it is live again.
+REAR_UNDERCUT_FIELD = dict(depth=108.0, x0=2260.0, xa=2560.0, xb=2950.0, x1=3400.0, trans=24.0,
                            edge=[(2260, 322), (2960, 336), (3400, 300)])
 
 NOSE_MOUTH = [(-965, 0, 200, 330), (-930, 155, 185, 345), (-850, 215, 180, 350),
@@ -231,6 +235,131 @@ def resample(poly, n):
         if poly[i][1] > poly[i - 1][1] and poly[i][1] > poly[i + 1][1]:
             j = min(range(len(out)), key=lambda k: math.dist(out[k], poly[i]))
             out[j] = poly[i]
+    return out
+
+
+# ---------------------------------------------------------------- feature anchors (v030)
+# WHY. Measured at specX 1200 on v029, the section carries 794 degrees of total turning and the
+# 60-point resample delivers 524 of it -- a third of the character is thrown away by the sampling,
+# and the largest single corner falls from 86.8 to 46.4 degrees. Worse, of the turning that does
+# survive only two places are corners (the floor at Z 120 and the rocker edge at Z 315); the door
+# channel, its upper edge and the shoulder above it are rolls of 4 to 13 degrees per step spread
+# over 70 to 90 mm. docs/16 lists DOOR_UPPER -> DOOR_CHANNEL and REAR_FASCIA -> DIFFUSER as G0,
+# meaning a crease. A 12-degree roll is not a crease.
+#
+# The note left in VOID_FIELDS on 2026-09-15 had the diagnosis right -- "a G0 crease here needs
+# explicit control points ... at 60 points per half-section the resample cannot resolve a
+# transition that narrow" -- and deferred it to a surface that did not exist yet. It exists now.
+#
+# So every station pins a sample exactly on each named longitudinal line. The count is FIXED (ten)
+# and every level comes from table_z of a table that is continuous in X, so an anchor never appears
+# or disappears between neighbouring stations. That is the constraint the buttress inner edge broke
+# on 2026-09-15: a guard that switches on and off between stations destroys the point
+# correspondence build() relies on when it smooths along X.
+LIP_TRANS = 18.0     # mm of height over which the channel's upper edge closes. At specX 1200 the
+                     # super-gaussian still carries 63 mm of depth 12 mm below the lip, so closing
+                     # it over 18 gives a 74-degree face: a crease that a 3 mm laminate can still
+                     # follow. 12 was tried and reads as an undercut rather than an edge.
+
+
+def feature_anchors(spec_x):
+    """Z levels that MUST carry a sample. Fixed count, every one from a table continuous in X."""
+    ch = VOID_FIELDS["SIDE_CHANNEL"]
+    c = table_z(ch["centre"], spec_x)
+    lip = side_lip(spec_x)
+    u = REAR_UNDERCUT_FIELD
+    ez = table_z(u["edge"], spec_x)
+    return [c - ch["w"],            # channel lower shoulder
+            c,                      # channel floor
+            lip - LIP_TRANS,        # steep approach to the lip
+            lip,                    # THE LIP -- docs/16 G0
+            ROCKER_EDGE_Z - 10.0,   # rocker approach
+            ROCKER_EDGE_Z,          # rocker edge
+            ez - u["trans"],        # undercut approach
+            ez,                     # undercut edge -- docs/16 G0
+            table_z(SHOULDER_TRAJECTORY, spec_x),   # the one main side line
+            FLANK_Z_HI]             # top of the near-vertical rear flank
+
+
+def resample_anchored(poly, n, anch):
+    """resample(), but with samples pinned on the feature lines.
+
+    The anchors are placed exactly and the remaining budget is spread over the intervals between
+    them by arc length. Anchors outside the section's own Z range are clamped onto it rather than
+    dropped, because dropping one would change the point count from station to station."""
+    zs = [p[1] for p in poly]
+    lo, hi = min(zs) + 2.0, max(zs) - 2.0
+    if hi <= lo:
+        return resample(poly, n)
+    d = [0.0]
+    for i in range(1, len(poly)):
+        d.append(d[-1] + math.dist(poly[i - 1], poly[i]))
+    total = d[-1]
+    if total <= 0.0:
+        return resample(poly, n)
+
+    def at_s(t):
+        for j in range(len(d) - 1):
+            if d[j] <= t <= d[j + 1]:
+                f = 0.0 if d[j + 1] == d[j] else (t - d[j]) / (d[j + 1] - d[j])
+                return (poly[j][0] + f * (poly[j + 1][0] - poly[j][0]),
+                        poly[j][1] + f * (poly[j + 1][1] - poly[j][1]))
+        return poly[-1]
+
+    def s_of_z(z):
+        """arc position of the FIRST crossing of this height, walking up from the floor"""
+        for j in range(len(poly) - 1):
+            z0, z1 = poly[j][1], poly[j + 1][1]
+            if (z0 - z) * (z1 - z) <= 0.0 and z0 != z1:
+                f = (z - z0) / (z1 - z0)
+                return d[j] + f * (d[j + 1] - d[j])
+        return None
+
+    ss = []
+    for z in anch:
+        s = s_of_z(min(hi, max(lo, z)))
+        if s is not None:
+            ss.append(s)
+    ss.sort()
+    # keep them apart, so two anchors never collapse onto one sample and change the count
+    for i in range(1, len(ss)):
+        if ss[i] - ss[i - 1] < 1.0:
+            ss[i] = ss[i - 1] + 1.0
+    ss = [s for s in ss if 1.0 < s < total - 1.0]
+    k = len(ss)
+    free = n - k - 2
+    if free < k + 1:
+        return resample(poly, n)
+    bounds = [0.0] + ss + [total]
+    seg = [bounds[i + 1] - bounds[i] for i in range(len(bounds) - 1)]
+    L = sum(seg)
+    # largest-remainder allocation: deterministic, and stable between neighbouring stations
+    raw = [free * x / L for x in seg]
+    take = [int(r) for r in raw]
+    for i in sorted(range(len(raw)), key=lambda j: raw[j] - take[j], reverse=True)[:free - sum(take)]:
+        take[i] += 1
+    out = [poly[0]]
+    for i in range(len(seg)):
+        for j in range(1, take[i] + 1):
+            out.append(at_s(bounds[i] + seg[i] * j / (take[i] + 1)))
+        if i < k:
+            out.append(at_s(bounds[i + 1]))
+    out.append(poly[-1])
+    while len(out) > n:
+        # drop the sample that is closest to its neighbour and is NOT an anchor
+        best, bi = None, None
+        for i in range(1, len(out) - 1):
+            if any(abs(out[i][1] - min(hi, max(lo, z))) < 0.5 for z in anch):
+                continue
+            g = math.dist(out[i - 1], out[i]) + math.dist(out[i], out[i + 1])
+            if best is None or g < best:
+                best, bi = g, i
+        if bi is None:
+            break
+        out.pop(bi)
+    while len(out) < n:
+        gi = max(range(1, len(out)), key=lambda i: math.dist(out[i - 1], out[i]))
+        out.insert(gi, ((out[gi - 1][0] + out[gi][0]) / 2, (out[gi - 1][1] + out[gi][1]) / 2))
     return out
 
 
@@ -450,6 +579,12 @@ def envelope(V, spec_x):
                1.0 - smoothstep(V["xb"], V["x1"], spec_x))
 
 
+def side_lip(spec_x):
+    """The single upper edge of the side line: channel behind the front wheel through to the mouth."""
+    ch = VOID_FIELDS["SIDE_CHANNEL"]
+    return table_z(ch["centre"], spec_x) + ch["w"]
+
+
 def void_field(spec_x, z):
     """Millimetres to take OFF the half-width here. The deepest of the overlapping channels wins
     rather than their sum, so where the door channel runs into the intake the two read as one
@@ -461,7 +596,21 @@ def void_field(spec_x, z):
             continue
         zc = table_z(V["centre"], spec_x)
         dep = V["depth"] if isinstance(V["depth"], float) else table_z(V["depth"], spec_x)
-        worst = max(worst, dep * e * math.exp(-abs((z - zc) / V["w"]) ** V["n"]))
+        v = dep * e * math.exp(-abs((z - zc) / V["w"]) ** V["n"])
+        # The upper edge is CLOSED, not faded out. The super-gaussian skirt carried the channel
+        # 70 to 90 mm above its own centre, so the body above it was a roll instead of a shoulder
+        # and there was no line for light to break on -- docs/16 asks G0 here. Clipping the field
+        # at centre + w over LIP_TRANS takes nothing off the width above the lip and leaves a real
+        # face below it. Nothing is ADDED anywhere, so the locked 1850 cannot be touched by it.
+        # ONE lip line for the whole side, not one per field. Measured at specX 2107 the two lips
+        # sat 14 mm apart -- the channel's at 622, the intake's at 608 -- and the edge angle fell
+        # to 0 right where the side line runs into the mouth. VOID_FIELDS already states this
+        # principle for the DEPTH ("ONE line ... not two channels that meet"); the edge is the same
+        # line and gets the same treatment. docs/16 has DOOR_CHANNEL -> SIDE_INTAKE_MOUTH as G1, so
+        # the line carries through the handover instead of dying and restarting.
+        lip = side_lip(spec_x)
+        v *= 1.0 - smoothstep(lip - LIP_TRANS, lip, z)
+        worst = max(worst, v)
     U = REAR_UNDERCUT_FIELD
     e = envelope(U, spec_x)
     if e > 0.0:
@@ -650,7 +799,7 @@ def ring(spec_x):
             half.append((y_crest + DECK_EDGE_OUT, b_top - drop))   # steep approach into the crest
         half.append((y_crest, b_top))                              # the blade crest
     half.append((0.0, max(crown, (b_top - 40) if b_top else crown)))
-    half = resample(half, N_HALF)
+    half = resample_anchored(half, N_HALF, feature_anchors(spec_x))
     return list(half) + [(-y, z) for y, z in reversed(half[1:-1])]
 
 

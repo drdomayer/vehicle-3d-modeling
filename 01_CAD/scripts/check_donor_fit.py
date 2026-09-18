@@ -128,6 +128,14 @@ def main():
         # Z 400 to 630 only: above that the cabin cut's own wall stands at |Y| 700 and reading it
         # as our skin made the quarter look 163 mm INSIDE the donor at spec X 1768, which is the
         # aperture talking again.
+        # ... and the SIDE INTAKE MOUTH has to be excluded the same way. Stage 03 cuts a real mouth
+        # at spec X 1955..2165, Z 448..700, inward to Y 430, so inside that range the widest surface
+        # in this Z band is the POCKET FLOOR. Unexcluded it reported our skin at 579 against the
+        # donor's 883 at spec X 2116 and called it a 304 mm shortfall; on 2026-09-16, before the
+        # mouth existed, the same measurement read 883 against 882. Fifth time in this project that
+        # a measurement found a hole and reported it as the panel: the opening is not the quarter.
+        if 1930 <= sx <= 2190:
+            continue
         b = band(P, sx, 30.0, 400, 630)
         if not b:
             continue

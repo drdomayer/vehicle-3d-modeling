@@ -35,7 +35,8 @@ import sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 BASE = os.path.join(REPO, "01_CAD/scripts/data/goal_baseline.json")
-TOL = {"front_mm": 3.0, "rear_mm": 5.0, "mean_mm": 5.0, "curvature": 0.02, "plan_pct": 0.5}
+TOL = {"front_mm": 3.0, "rear_mm": 5.0, "mean_mm": 5.0, "curvature": 0.02, "plan_pct": 0.5,
+       "edge_defects": 0.0}   # a NEW line out of its docs/16 band is a regression, always
 
 
 def run(script):
@@ -63,6 +64,27 @@ def parse_plan(txt):
     return {"plan_pct": float(m.group(1))} if m else {}
 
 
+def newest_build():
+    """mtime of the newest script that builds the car."""
+    return max(os.path.getmtime(os.path.join(REPO, "01_CAD/scripts", n))
+               for n in ("statev_master_volumes.py", "stage03_elements.py", "statev_skeleton.py"))
+
+
+def fresh(path, label):
+    """A result measured before the last change to the build is a result about a different car.
+
+    The silhouette and the plan are re-measured by this script every time, so they cannot go stale.
+    The curvature and the edge report are written from inside Blender and read back, so they can,
+    and a stale file that is reported as current is exactly the failure this whole check exists to
+    stop -- v024 to v026 shipped because the bookkeeping passed while the front silhouette had
+    regressed from 3 mm to 21."""
+    if os.path.getmtime(path) >= newest_build():
+        return True
+    print(f"  STALE: {label} was measured before the last change to the build scripts.")
+    print(f"  Re-run it inside Blender; it is not reported here.")
+    return False
+
+
 def parse_curvature(txt):
     m = re.search(r"median principal-curvature ratio ([\d.]+)", txt)
     return {"curvature": float(m.group(1))} if m else {}
@@ -70,6 +92,18 @@ def parse_curvature(txt):
 
 def main():
     got = {}
+    # The two orthographic silhouettes are INPUTS to the next two measurements and they are written
+    # from inside Blender, so they can be stale in exactly the same way. Until 2026-09-18 they were
+    # not produced by any script at all -- ad-hoc code in whichever session needed them -- so a
+    # months-old PNG would have been measured against the reference and reported as current.
+    for p, lbl in ((os.path.join(REPO, "04_ENGINEERING/statev_v01/overlay/model_side.png"),
+                    "the side silhouette (ortho_views.py)"),
+                   (os.path.join(REPO, "04_ENGINEERING/statev_v01/plan/model_plan.png"),
+                    "the plan silhouette (ortho_views.py)")):
+        if not os.path.exists(p):
+            print(f"  MISSING: {lbl} — run ortho_views.py inside Blender")
+        else:
+            fresh(p, lbl)
     got.update(parse_silhouette(run("silhouette_overlay.py")))
     # The plan is the third measurement and the newest. Until 2026-09-17 nothing in this repo had
     # ever looked at it, and it turned out to carry the difference the side elevation could not see.
@@ -78,14 +112,17 @@ def main():
     # result out and this reads it. The age is checked: a value older than the scripts that build
     # the car is a value from a different car, and reporting it as current would be the same class
     # of mistake this whole check exists to stop.
+    ep = os.path.join(REPO, "04_ENGINEERING/reports/edge_test.txt")
+    if os.path.exists(ep):
+        et = open(ep).read()
+        m = re.search(r"DEFECT (\d+)", et)
+        if m and fresh(ep, "the edge test"):
+            got["edge_defects"] = float(m.group(1))
     cp = os.path.join(REPO, "01_CAD/scripts/data/last_curvature.json")
     if os.path.exists(cp):
         with open(cp, encoding="utf-8") as f:
             c = json.load(f)
-        newest = max(os.path.getmtime(os.path.join(REPO, "01_CAD/scripts", n))
-                     for n in ("statev_master_volumes.py", "stage03_elements.py",
-                               "statev_skeleton.py"))
-        if c.get("when", 0) < newest:
+        if c.get("when", 0) < newest_build():
             print("  STALE: the curvature was measured before the last change to the build scripts.")
             print("  Run highlight_test.py in Blender again; it is not reported here.")
         else:
@@ -105,7 +142,7 @@ def main():
             old = json.load(f)
     print(f"\n  {'metric':<14}{'now':>9}{'baseline':>11}{'change':>9}   verdict")
     bad = 0
-    for k in ("front_mm", "rear_mm", "mean_mm", "plan_pct", "curvature"):
+    for k in ("front_mm", "rear_mm", "mean_mm", "plan_pct", "curvature", "edge_defects"):
         if k not in got:
             continue
         n = got[k]

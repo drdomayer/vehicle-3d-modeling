@@ -93,7 +93,11 @@ FLANGE_AT = {
 }
 PANELS = ["P01", "P28", "P41", "P07", "P08", "P39", "P40", "P21", "P22",
           "P05", "P06", "P13", "P14", "P29", "P30", "P34", "P35", "P36",
-          "P24", "P25", "P31", "P32"]
+          "P24", "P25", "P31", "P32",
+          # 2026-09-21: the tail blade's housings. They were BLOCKED for having no geometry, not
+          # for waiting on the car -- docs/14 locks the lamp as a thin wide blade with sharp L
+          # ends and the envelopes were in the skeleton all along, enclosed and unopened.
+          "P26", "P27"]
 # SHAPE ONLY, added 2026-09-21. Six panels whose OUTER FORM is ours and fully defined, and which
 # were producing nothing at all because the audit marks them SCAN REQUIRED or CONDITIONAL. The
 # audit is right about what it measures and wrong as a production gate, because the three reasons
@@ -129,7 +133,7 @@ SHAPE_ONLY = {
 # Stage 03 elements are built by stage03_elements.py as closed solids in their own right -- a blade
 # already HAS its thickness -- so they skip both the map and the wall and go straight to sectioning.
 STAGE03 = {"P05", "P06", "P13", "P14", "P29", "P30", "P34", "P35", "P36",
-           "P24", "P25", "P31", "P32"}
+           "P24", "P25", "P31", "P32", "P26", "P27"}
 SCHEDULE = []
 PLACEMENT = {}   # printed file -> the 4x4 that puts it back on the car
 SHAPE_SCHEDULE = []

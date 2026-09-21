@@ -374,6 +374,85 @@ def main():
         made.append(h)
     print("  lamp housing: a 5 mm shell around the module envelope, open at the front -> P24 / P25")
 
+    # ---- 6b. THE TAIL BLADE. docs/14 locks it as "тънко широко хоризонтално острие през
+    # задницата, с остри L-образни външни краища", and explicitly not a triangular supercar lamp --
+    # and until 2026-09-21 the single most identifiable element of the rear did not exist in the
+    # geometry at all. The envelopes were there and enclosed (check_lighting passes them), but
+    # nothing was cut for them: check_packaging reads TAIL_BAR at 115.5 mm INSIDE the surface and
+    # TAIL_END at 20.6, which is correct for a cavity and useless without an aperture.
+    #
+    # Every number below comes from the skeleton's LOCKED envelopes, not from a guess:
+    #   TAIL_BAR  spec X 3200, Y 0,     Z 612, 45 x 1440 x 38   -> X 3177.5..3222.5, Y +-720
+    #   TAIL_END  spec X 3120, Y +-700, Z 612, 120 x 40 x 38    -> X 3060..3180, Y 680..720
+    # The slot is those two, opened out to the surface; the housing is a 5 mm shell around them
+    # with 6 mm of air, the same construction the headlamp housing uses, because the E-marked
+    # module may never be modified.
+    TB = dict(x0=3177.5, x1=3222.5, y=720.0, z0=593.0, z1=631.0)
+    TE = dict(x0=3060.0, x1=3180.0, y0=680.0, y1=720.0, z0=593.0, z1=631.0)
+    for sgn in (1, -1):
+        L = sgn > 0
+        # the bar half: cut from the lamp face outward past the skin
+        cuts.append(box(f"CUT_TAIL_BAR_{'L' if L else 'R'}", coll,
+                        TB["x0"], TB["x1"] + 60,
+                        min(0.0, sgn * TB["y"]), max(0.0, sgn * TB["y"]),
+                        TB["z0"], TB["z1"]))
+        # the L end, wrapping the corner
+        cuts.append(box(f"CUT_TAIL_END_{'L' if L else 'R'}", coll,
+                        TE["x0"], TE["x1"],
+                        min(sgn * TE["y0"], sgn * (TE["y1"] + 60)),
+                        max(sgn * TE["y0"], sgn * (TE["y1"] + 60)),
+                        TE["z0"], TE["z1"]))
+    print(f"  tail blade: a slot {TB['z1']-TB['z0']:.0f} mm tall across the rear at spec X "
+          f"{TB['x0']:.0f}, with L ends wrapping forward to {TE['x0']:.0f}")
+
+    for sgn in (1, -1):
+        L = sgn > 0
+        nm = f"TAIL_HOUSING_{'L' if L else 'R'}"
+        # bar half, 6 mm of air round the module and a 5 mm wall outside that, open to the REAR
+        # An L needs two boxes, and the ORDER of the booleans matters. The first version made two
+        # shell()s and unioned them -- but shell() returns an OPEN solid, one face deliberately
+        # missing, and an EXACT union of two open meshes does not reliably join: P26 and P27 came
+        # out as two disconnected pieces and panel_extract said so. Union the CLOSED outers, union
+        # the CLOSED inners, subtract once. Every boolean then runs on a closed solid.
+        w, air = 5.0, 6.0
+        o1 = box(nm + "_o1", coll, TB["x0"] - w - air, TB["x1"] + w + air,
+                 min(0.0, sgn * (TB["y"] + w + air)), max(0.0, sgn * (TB["y"] + w + air)),
+                 TB["z0"] - w - air, TB["z1"] + w + air)
+        o2 = box(nm + "_o2", coll, TE["x0"] - w - air, TE["x1"] + w + air,
+                 min(sgn * (TE["y0"] - w - air), sgn * (TE["y1"] + w + air)),
+                 max(sgn * (TE["y0"] - w - air), sgn * (TE["y1"] + w + air)),
+                 TE["z0"] - w - air, TE["z1"] + w + air)
+        i1 = box(nm + "_i1", coll, TB["x0"] - air, TB["x1"] + w + air + 8,
+                 min(0.0, sgn * (TB["y"] + air)), max(0.0, sgn * (TB["y"] + air)),
+                 TB["z0"] - air, TB["z1"] + air)
+        i2 = box(nm + "_i2", coll, TE["x0"] - air, TE["x1"] + air,
+                 min(sgn * (TE["y0"] - air), sgn * (TE["y1"] + w + air + 8)),
+                 max(sgn * (TE["y0"] - air), sgn * (TE["y1"] + w + air + 8)),
+                 TE["z0"] - air, TE["z1"] + air)
+        for tgt, src, op in ((o1, o2, "UNION"), (i1, i2, "UNION"), (o1, i1, "DIFFERENCE")):
+            m = tgt.modifiers.new("b", "BOOLEAN")
+            m.operation, m.object, m.solver = op, src, "EXACT"
+            bpy.context.view_layer.objects.active = tgt
+            bpy.ops.object.modifier_apply(modifier=m.name)
+        for dead in (o2, i1, i2):
+            bpy.data.objects.remove(dead, do_unlink=True)
+        h1 = o1
+        h1.name = nm
+        h1["panel_id"] = "P26" if L else "P27"
+        h1["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
+        made.append(h1)
+    print("  tail housing: a 5 mm shell around TAIL_BAR and TAIL_END, open to the rear -> P26 / P27")
+
+    # ---- P23 REAR_SPOILER: NOT BUILT, and the measurement says why rather than a preference.
+    # check_packaging puts its envelope 125.7 mm BELOW the surface and 108.8 mm inboard at spec X
+    # 3120 -- it is entirely buried in the body. A blade built there would sit inside the bodywork.
+    # That agrees with what the project already decided and recorded: "spoiler-ът стана ducktail",
+    # meaning the form moved into the body's own tail profile, where TAIL_DROP carries it. P23 is a
+    # leftover in the register rather than a part waiting to be modelled, and the register is where
+    # it gets resolved.
+    print("  NOT built: P23 REAR_SPOILER — its envelope is 125.7 mm inside the body. The ducktail")
+    print("    is in the tail profile already; P23 is a register question, not a modelling one.")
+
     # ---- 7. the intake duct, from the mouth to the plenum. It runs through the three envelopes the
     # skeleton already carries -- INTAKE_INLET derived, INTAKE_DUCT and INTAKE_OUTLET PROVISIONAL --
     # and PROVISIONAL is the honest word: where the plenum actually sits is the donor's answer, so

@@ -96,10 +96,29 @@ VOID_FIELDS = {
 # resolve a transition that narrow, so this parameter is inert at the current resolution. A G0
 # crease here needs explicit control points, the way the buttress crest needed them — which is
 # Stage 03 work on a surface that does not exist yet, not a number change.
-# trans 72 -> 24 on 2026-09-18. The note above is still true of v029: at 60 arc-length samples
-# the resample could not resolve this transition and 18 gave geometry identical to 72, so the
-# parameter was inert. feature_anchors() now pins a sample on edge and on edge-trans at every
-# station, which is the "explicit control points" the note asked for, so it is live again.
+# trans 72 -> 24 on 2026-09-18, and the reason given at the time was WRONG. It was justified by
+# "the built edge turns 2.6 to 3.4 degrees", which is the September note above -- measured on v017
+# geometry, before xb moved to 2950 and before much else. Quoting it against a v030 measurement was
+# not an A/B at all.
+#
+# The real 2x2, run on one base on 2026-09-21 with only these two things varying:
+#
+#                        undercut edge    rocker line
+#   trans 72, plain          47.1              12.2
+#   trans 72, anchored       36.3              50.7
+#   trans 24, plain          40.7              12.2
+#   trans 24, anchored       44.4              47.7
+#
+# So the edge was never 3 degrees: at trans 72 with the old resample it already turned 47. What is
+# true is narrower and still worth the change -- WITH the anchors in place, 24 gives 44.4 against
+# 36.3 at 72. Seven samples, so it is a weak number; it is kept because it is the better of the two
+# in the configuration that is actually built, not because the parameter was ever inert.
+#
+# The same 2x2 says what the anchors are FOR, and it is not this edge and not the lip: the lip clip
+# alone gives 68 degrees with the plain resample, and the anchors add about 2. The rocker is the
+# case -- 12.2 plain against 47.7 anchored. Its field is a 34 mm tuck over a 10 mm transition, and
+# a 38 mm arc-length sample cannot show a 10 mm transition, so the plain resample smeared a crease
+# the design always had. The anchors REVEALED it; they did not create it.
 REAR_UNDERCUT_FIELD = dict(depth=108.0, x0=2260.0, xa=2560.0, xb=2950.0, x1=3400.0, trans=24.0,
                            edge=[(2260, 322), (2960, 336), (3400, 300)])
 

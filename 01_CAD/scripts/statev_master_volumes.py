@@ -303,7 +303,19 @@ def feature_anchors(spec_x):
             ez - u["trans"],        # undercut approach
             ez,                     # undercut edge -- docs/16 G0
             table_z(SHOULDER_TRAJECTORY, spec_x),   # the one main side line
-            FLANK_Z_HI]             # top of the near-vertical rear flank
+            FLANK_Z_HI,             # top of the near-vertical rear flank
+            # The front fender crest, added 2026-09-21. It was missed when this list was written
+            # because it is APPENDED after pts rather than being part of the profile, and the cost
+            # showed up as the largest representation loss on the car: the design turns 55.5 degrees
+            # there and the mesh was rendering 44.2. It is a two-point feature 26 mm wide by 30 tall
+            # and the mesh samples every 38, so it could not land on both points.
+            # Anchored: 52.0 against a design 55.5, loss 11.3 -> 3.5, volume unchanged.
+            # v030 also dropped, silently, the crest protection resample() carries -- the local-
+            # maximum snap added on 2026-09-16 after crests arrived 68 mm short. Measured here it
+            # was costing 2.1 mm on average and 4.4 at worst, small but real, and the anchor is the
+            # better cure because it fixes the ANGLE too.
+            table_z(FRONT_CREST["z"], spec_x) - FRONT_CREST["drop"],   # crest approach
+            table_z(FRONT_CREST["z"], spec_x)]                          # the front fender crest
 
 
 def resample_anchored(poly, n, anch):

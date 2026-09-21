@@ -60,6 +60,14 @@ BAND = {"G0": (40.0, 110.0),    # a structural break. Below 40 it is a blend, no
 # machinery does not argue, it names what is outside and who decided it. A line NOT in this list that
 # goes out of band is a defect and says so.
 EXCEPTIONS = {
+    "FRONT_FENDER_TOP -> FRONT_FENDER_SIDE (crest)":
+        "the DESIGN turns 55.5 degrees here and always has; the mesh was rendering 44.2 until the "
+        "crest was anchored on 2026-09-21, and 38.6 before that. So this is not a line that got "
+        "sharper, it is a line that became visible. docs/16 classes it G1 and this file's G1 band "
+        "tops out at 40 -- a number this file invented, not one docs/16 gives. "
+        "OWNER'S CALL, and it is the SAME call as the rocker below: two of docs/16's G1 lines are "
+        "designed at about 50 degrees, so either the band is too tight for a car with this "
+        "language, or both lines are harder than the spec intends.",
     "DOOR_UPPER -> ROCKER (sill line)":
         "sharpened on purpose, 55 -> 18 -> 10 mm of transition on 2026-09-15/16, because the sill "
         "read as a soft hollow with no line at all. docs/16 classes it G1 and it measures ~47, so it "
@@ -259,6 +267,55 @@ def at(buckets, sx, z):
     return max(a for a, _ in cand)
 
 
+def design_angle(M, sx, z):
+    """The turn the DESIGN puts on this line, read before the section is resampled.
+
+    WHY THIS COLUMN EXISTS. Everything else in this file is a dihedral on the built mesh, and on
+    2026-09-21 a 2x2 showed what that is worth on its own: the rocker line reads 12.2 degrees with
+    an arc-length resample and 47.7 with feature anchors, for the SAME design. Its field is a 34 mm
+    tuck over a 10 mm transition, and a sample every 38 mm cannot show a 10 mm transition. The mesh
+    number was not wrong, it was answering a different question -- what the surface SHOWS, not what
+    it HAS -- and I read it as the second for two days.
+
+    Both matter, and they matter for different reasons. The design angle is the intent. The mesh
+    angle is what gets printed, because the core is the mesh: a crease the mesh cannot render is a
+    crease the laminated panel will not have. The gap between them is representation loss, and it is
+    a number worth seeing rather than discovering later on a part.
+
+    Measured on the profile as it stands BEFORE resample(), which runs at PROFILE_STEP -- 6 mm
+    against the mesh's 38 -- so it sees transitions the mesh cannot.
+    """
+    captured = {}
+    orig = M["resample_anchored"]
+
+    def spy(poly, n, anch):
+        captured["poly"] = list(poly)
+        return orig(poly, n, anch)
+
+    M["resample_anchored"] = spy
+    try:
+        M["ring"](sx)
+    finally:
+        M["resample_anchored"] = orig
+    poly = captured.get("poly")
+    if not poly:
+        return None
+    best = 0.0
+    for i in range(1, len(poly) - 1):
+        if abs(poly[i][1] - z) > 16.0:
+            continue
+        p0, p1, p2 = poly[i - 1], poly[i], poly[i + 1]
+        v1 = (p1[0] - p0[0], p1[1] - p0[1])
+        v2 = (p2[0] - p1[0], p2[1] - p1[1])
+        n1 = math.hypot(*v1)
+        n2 = math.hypot(*v2)
+        if n1 < 1e-9 or n2 < 1e-9:
+            continue
+        c = max(-1.0, min(1.0, (v1[0] * v2[0] + v1[1] * v2[1]) / (n1 * n2)))
+        best = max(best, math.degrees(math.acos(c)))
+    return best
+
+
 def main():
     M = load()
     bm = body_bm()
@@ -272,16 +329,19 @@ def main():
     txt.append("  (the main surfaces stay soft -- chasing G2 everywhere is what makes CAD soap,")
     txt.append("  and a crease where the map says G2 is the same defect inverted).")
     txt.append("")
-    txt.append(f"  {'line':44s} {'cls':4s} {'n':>3s} {'median':>7s} {'min':>6s} {'max':>6s}  verdict")
+    txt.append(f"  {'line':44s} {'cls':4s} {'n':>3s} {'mesh':>7s} {'design':>8s} {'lost':>7s}  verdict")
     worst = []
     for name, cls, zfn, (x0, x1) in lines(M):
-        vals = []
+        vals, dvals = [], []
         n = max(6, int((x1 - x0) / 120.0))
         for i in range(n + 1):
             sx = x0 + (x1 - x0) * i / n
             a = at(idx, sx, zfn(sx))
             if a is not None:
                 vals.append(a)
+            d = design_angle(M, sx, zfn(sx))
+            if d is not None:
+                dvals.append(d)
         if not vals:
             txt.append(f"  {name:44s} {cls:4s}   -       -      -      -  NO EDGE FOUND")
             worst.append((name, cls, None))
@@ -291,8 +351,8 @@ def main():
         if len(vals) < 4:
             # A median of two or three samples is not a measurement. The first version of this file
             # reported one and it was wrong; saying so is the only correct output here.
-            txt.append(f"  {name:44s} {cls:4s} {len(vals):3d} {med:7.1f} {vals[0]:6.1f} "
-                       f"{vals[-1]:6.1f}  TOO FEW SAMPLES — no verdict")
+            txt.append(f"  {name:44s} {cls:4s} {len(vals):3d} {med:7.1f} {'--':>8s} {'--':>7s}"
+                       f"  TOO FEW SAMPLES — no verdict")
             worst.append((name, cls, None))
             continue
         lo, hi = BAND[cls]
@@ -304,9 +364,11 @@ def main():
             v = "TOO SOFT — the light does not break here"
         else:
             v = "TOO SHARP — a crease where the map wants a surface"
-        txt.append(f"  {name:44s} {cls:4s} {len(vals):3d} {med:7.1f} {vals[0]:6.1f} {vals[-1]:6.1f}"
-                   f"  {v}")
-        rows.append((name, cls, med, v))
+        dvals.sort()
+        dmed = dvals[len(dvals) // 2] if dvals else 0.0
+        loss = dmed - med
+        txt.append(f"  {name:44s} {cls:4s} {len(vals):3d} {med:7.1f} {dmed:8.1f} {loss:7.1f}  {v}")
+        rows.append((name, cls, med, v, dmed))
         if v != "ok":
             worst.append((name, cls, med))
     txt.append("")
@@ -359,6 +421,12 @@ def main():
     txt.append("  light there; several are satisfied by a panel gap or a real opening instead.")
     for u in UNMEASURED:
         txt.append(f"    {u}")
+    txt.append("")
+    txt.append("  'lost' is design minus mesh: how much of the designed turn the built mesh fails to")
+    txt.append("  show. A NEGATIVE value is not a bonus -- it is faceting. A gentle line sampled every")
+    txt.append("  38 mm becomes a few flat panels, and the dihedral between two of them can exceed the")
+    txt.append("  smooth turn it is approximating. The main side line reads 15.9 on the mesh against")
+    txt.append("  6.5 in the design for exactly that reason.")
     txt.append("")
     txt.append("  It measures only the lines it is told about, and it says nothing about whether a")
     txt.append("  line is in the right PLACE — only how hard it breaks.")

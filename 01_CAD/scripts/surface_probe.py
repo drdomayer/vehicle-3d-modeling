@@ -24,6 +24,14 @@ WHAT IT CANNOT DO. It says how smooth the surface is, not whether it is the RIGH
 silhouette, the plan and the edge test answer that -- and a perfectly smooth car scores best of all,
 so a falling number is not on its own an improvement. It is a control, to be read beside the others.
 
+AND IT IS NOT INVARIANT TO EVERYTHING, which its first real use made clear. Sliding samples along a
+straight run does not move it; ADDING a sample at a corner does, because the ring is a polyline and
+a corner that was being cut across is now being followed. On 2026-09-21 anchoring the front fender
+crest pushed |d2y/dx2| from 17.37 to 19.15 while the volume and the design angle did not move at
+all. That is the crease appearing in the surface, not the surface getting worse -- the same
+direction the docstring above warns about, read the other way round. A rise wants a reason written
+beside it exactly as a fall does.
+
     import bpy; exec(open(".../surface_probe.py").read())
 """
 

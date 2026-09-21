@@ -687,6 +687,12 @@ branches and never let them diverge for more than one session.
   volume before splitting. 3–4 mm walls, tongue-and-groove alignment keys.
 - `04_ENGINEERING/` — clearance checks, tyre envelope, roof fold path, lamp
   positions.
+- **Преди да цитираш число от доклад — и преди комит — пусни двете проверки.**
+  `python3 01_CAD/scripts/check_goal.py` казва дали силуетът, планът, кривината и ръбовете са
+  мръднали спрямо записаната база. `python3 01_CAD/scripts/check_reports.py` казва дали строежът
+  отговаря на скриптовете и дали всеки доклад отговаря на строежа. На 21 септември един доклад
+  беше на четири версии назад и твърдеше 27 части вместо 42 — беше пускан, но не записван.
+  Доклад с версия в името е исторически и не се проверява.
 - `07_PRESENTATION/references/` — image references. Filenames say what is
   CHOSEN vs REJECTED. Never treat a REJECTED render as a target.
 - Units: **millimetres in docs, metres in Blender** (Blender scene unit scale =

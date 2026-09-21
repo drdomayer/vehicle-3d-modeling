@@ -680,8 +680,13 @@ branches and never let them diverge for more than one session.
 - `01_CAD/scripts/` — Blender Python. The cage must always be regenerable from
   script; never hand-edit cage objects. `block_986.py` (run after `cage_986.py`)
   rebuilds the approximate 986 volume underlay; edit its assumption constants, not the mesh.
-- `02_DESIGN/exterior/` — `.blend` files, one per panel family
-  (`front_clamshell.blend`, `rear_deck.blend`, …). Commit at every finished stage.
+- `02_DESIGN/exterior/` — `.blend` files, **one per version of the whole car**
+  (`STATEV_001_v031.blend`), plus `EXPERIMENT_*_UNAPPROVED.blend` for A/B runs.
+  Commit at every finished stage. *(This line said "one per panel family —
+  front_clamshell.blend, rear_deck.blend" until 2026-09-21 and neither file has ever
+  existed. The plan changed at v001 and the note did not: the body is ONE parametric
+  build and panels are extracted from it by `panel_extract.py`, so a panel is a region
+  of the model, not its own file. `check_docs.py` found it.)*
 - `03_PRINT/` — STL/3MF split for the printer + a PDF exploded view per panel:
   part number, print orientation, material, infill. Ask the printer for build
   volume before splitting. 3–4 mm walls, tongue-and-groove alignment keys.
@@ -693,6 +698,9 @@ branches and never let them diverge for more than one session.
   отговаря на скриптовете и дали всеки доклад отговаря на строежа. На 21 септември един доклад
   беше на четири версии назад и твърдеше 27 части вместо 42 — беше пускан, но не записван.
   Доклад с версия в името е исторически и не се проверява.
+  `python3 01_CAD/scripts/check_docs.py` проверява дали всеки път, посочен в `CLAUDE.md` и
+  `docs/*.md`, съществува. Той намери, че този файл е описвал структура на `02_DESIGN/exterior/`,
+  която никога не е съществувала. Проверява СЪЩЕСТВУВАНЕ, не истинност на изречението.
 - `07_PRESENTATION/references/` — image references. Filenames say what is
   CHOSEN vs REJECTED. Never treat a REJECTED render as a target.
 - Units: **millimetres in docs, metres in Blender** (Blender scene unit scale =

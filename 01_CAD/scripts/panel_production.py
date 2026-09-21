@@ -19,12 +19,14 @@ reason it was chosen and the question number that replaces it.
 import bmesh
 import bpy
 import csv
+import json as _json
 import math
 import mathutils
 import os
 
 REPO = "/Users/miroslavstatev/vehicle-3d-modeling"
 OUT = os.path.join(REPO, "03_PRINT", "production")
+SHAPE_OUT = os.path.join(REPO, "03_PRINT", "shape_only")
 
 # ----------------------------------------------------------------- THE DECISIONS
 # One block. Everything downstream reads it and nothing downstream has its own copy of a number.
@@ -92,11 +94,47 @@ FLANGE_AT = {
 PANELS = ["P01", "P28", "P41", "P07", "P08", "P39", "P40", "P21", "P22",
           "P05", "P06", "P13", "P14", "P29", "P30", "P34", "P35", "P36",
           "P24", "P25", "P31", "P32"]
+# SHAPE ONLY, added 2026-09-21. Six panels whose OUTER FORM is ours and fully defined, and which
+# were producing nothing at all because the audit marks them SCAN REQUIRED or CONDITIONAL. The
+# audit is right about what it measures and wrong as a production gate, because the three reasons
+# are not the same thing:
+#
+#   P09/P10 DOOR_SKIN and P15/P16 REAR_HAUNCH -- "overlay; its INNER form is the donor's skin".
+#       The outer shape is ours. Only the face that sits on the OEM panel needs the car.
+#   P03/P04 FRONT_FENDER -- "boundary moves with door_front_x". The shape is ours; what moves is
+#       where it is trimmed, by the 15 to 30 mm that blueprint value carries.
+#   P17..P20, P42 -- "roof fold envelope, which exists nowhere as data". That is a different kind
+#       of unknown: the SHAPE itself is unknown, and building it would be inventing. NOT here.
+#
+# CLAUDE.md records the decision this implements: "цялата наша форма и панелна архитектура се
+# строят сега, а сканът остава като последен fitting/validation етап. Монтажният интерфейс се
+# строи ПОСЛЕДЕН и отделно от формата на панела." Withholding these was the pipeline not doing
+# what the project had already decided.
+#
+# They go to their own directory with their own schedule, and they are NOT in the supplier package
+# or the "quote this now" list. A shape master for fitting and a part ready to bond are different
+# things and mixing them in one folder is how someone bonds the wrong one.
+SHAPE_ONLY = {
+    "P03": "outer form ours; the inner face is the donor's fender line and the trim at the door "
+           "shut line moves with door_front_x, +-15 to 30 mm. Needs a trim allowance at that edge, "
+           "which is NOT in the file.",
+    "P04": "mirror of P03, same note",
+    "P09": "outer form ours; the inner face is currently just the outer offset by the wall and is "
+           "NOT the OEM door skin. Fit and bond surface come from the scan.",
+    "P10": "mirror of P09, same note",
+    "P15": "outer form ours; overlay on the welded quarter, inner face provisional as P09.",
+    "P16": "mirror of P15, same note",
+}
+
 # Stage 03 elements are built by stage03_elements.py as closed solids in their own right -- a blade
 # already HAS its thickness -- so they skip both the map and the wall and go straight to sectioning.
 STAGE03 = {"P05", "P06", "P13", "P14", "P29", "P30", "P34", "P35", "P36",
            "P24", "P25", "P31", "P32"}
 SCHEDULE = []
+PLACEMENT = {}   # printed file -> the 4x4 that puts it back on the car
+SHAPE_SCHEDULE = []
+SHAPE_PLACEMENT = {}
+TIER_EXTRA = []   # filled in main() from SHAPE_ONLY
 # P40 reads P39's seam through MIRROR_OF, so it is not listed in FLANGE_AT a second time.
 
 _pm = {"__file__": os.path.join(REPO, "01_CAD/scripts/panel_map.py"), "__name__": "_pm"}
@@ -224,7 +262,39 @@ def mirror_in_place(ob):
     return ob
 
 
+def face_outward(ob):
+    """Make the shell's normals consistent and point them OUT of the car, before any solidify.
+
+    Solidify with offset -1 builds the wall on the side AWAY from the normal, so a face that points
+    inward builds its wall outward -- into the air the panel is supposed to end at. Measured on
+    2026-09-21: 5 to 15 percent of the faces of every extracted panel pointed the wrong way (P01
+    84.9% outward, P21 90.1, P15 93.2, P03 94.7), and the consequence showed up in the reassembled
+    car as a half-width of 928.5 mm against the LOCKED 925 at the front fender. Three and a half
+    millimetres of core, plus laminate and filler on top of it, outside a dimension that is not
+    allowed to move.
+
+    The region is an open shell, so consistency alone does not say which way is out; the mean dot
+    with the outward radial direction does, and the whole shell is flipped on it if needed."""
+    bm = bmesh.new()
+    bm.from_mesh(ob.data)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    acc = 0.0
+    for f in bm.faces:
+        c = f.calc_center_median()
+        r = mathutils.Vector((0.0, c.y, c.z - 0.570))
+        if r.length < 1e-6:
+            continue
+        acc += f.normal.normalized().dot(r.normalized()) * f.calc_area()
+    if acc < 0.0:
+        bmesh.ops.reverse_faces(bm, faces=bm.faces)
+    bm.to_mesh(ob.data)
+    bm.free()
+    ob.data.update()
+    return ob
+
+
 def thicken(ob):
+    face_outward(ob)
     m = ob.modifiers.new("core", "SOLIDIFY")
     m.thickness, m.offset, m.use_even_offset = D["wall_mm"] / 1000.0, -1.0, False
     bpy.context.view_layer.objects.active = ob
@@ -422,10 +492,19 @@ def lay_flat(ob):
     # Bake the placement into the mesh. Left in the object matrix it survives the export, but the
     # rounding between the two does not: two diffuser offcuts came out sitting 2.9 mm above the
     # plate in their own files, which a slicer would either drop or print on air.
-    ob.data.transform(ob.matrix_world)
+    #
+    # RETURN THE MATRIX, added 2026-09-21. Baking it and throwing it away meant the 248 printed
+    # files carried no record of where they belong on the car: lay_flat rotates the section onto
+    # its flattest face and drops it to Z 0, and after the bake nothing remembers the rotation.
+    # Someone bonding these together has to work it out from the shape, and the question the owner
+    # actually asks -- does the assembly come out 1:1 with the render -- cannot even be posed,
+    # because the parts cannot be put back. The inverse of this matrix returns a printed part to
+    # its place in the body.
+    m = ob.matrix_world.copy()
+    ob.data.transform(m)
     ob.matrix_world = mathutils.Matrix.Identity(4)
     ob.data.update()
-    return ob
+    return m
 
 
 def loose_pieces(ob):
@@ -450,6 +529,17 @@ def loose_pieces(ob):
     bpy.ops.mesh.separate(type="LOOSE")
     bpy.ops.object.mode_set(mode="OBJECT")
     out = [ob] + [o for o in bpy.data.objects if o not in before]
+    # Drop the empties. separate(LOOSE) can leave an object with no geometry, and those were being
+    # exported as 0-triangle STLs: six of them on 2026-09-21, which assembly_check found only
+    # because it tried to read them back. A file with no triangles is not a part, and a print farm
+    # given one has no way to tell whether something was lost.
+    dead = [o for o in out if len(o.data.polygons) == 0]
+    for o in dead:
+        if o is not ob:
+            bpy.data.objects.remove(o, do_unlink=True)
+    out = [o for o in out if o not in dead]
+    if not out:
+        return []
     # biggest first, so a section's own numbering runs from its main piece outward
     out.sort(key=lambda o: -len(o.data.vertices))
     return out
@@ -491,7 +581,11 @@ def main():
     total_m, total_s = 0.0, 0
     rows = []
     SCHEDULE.clear()
-    for pid in PANELS:
+    SHAPE_SCHEDULE.clear()
+    SHAPE_PLACEMENT.clear()
+    TIER_EXTRA[:] = [p for p in SHAPE_ONLY if p not in PANELS]
+    os.makedirs(SHAPE_OUT, exist_ok=True)
+    for pid in list(PANELS) + list(TIER_EXTRA):
         for o in list(bpy.data.objects):
             if o.name.startswith("PROD_"):
                 bpy.data.objects.remove(o, do_unlink=True)
@@ -513,12 +607,13 @@ def main():
         for j, sec in enumerate(secs, 1):
             thicken(sec)
             for pc, part in enumerate(loose_pieces(sec)):
-                lay_flat(part)
+                place = lay_flat(part)
                 w = [part.matrix_world @ v.co for v in part.data.vertices]
                 ss = [(max(p[i] for p in w) - min(p[i] for p in w)) * 1000 for i in range(3)]
                 fits = all(ss[i] <= D["bed_mm"][i] - 2 * D["bed_margin_mm"] for i in range(3))
                 sfx = f"s{j:02d}" if pc == 0 else f"s{j:02d}{chr(ord('a') + pc)}"
-                path = os.path.join(OUT, f"{pid}_{NAME_OF.get(pid,'PANEL')}_{sfx}.stl")
+                d_ = SHAPE_OUT if pid in TIER_EXTRA else OUT
+                path = os.path.join(d_, f"{pid}_{NAME_OF.get(pid,'PANEL')}_{sfx}.stl")
                 bpy.ops.object.select_all(action="DESELECT")
                 part.select_set(True)
                 bpy.context.view_layer.objects.active = part
@@ -527,17 +622,32 @@ def main():
                                           global_scale=1000.0)
                 except AttributeError:
                     bpy.ops.export_mesh.stl(filepath=path, use_selection=True, global_scale=1000.0)
-                made.append((sfx, ss, fits, path, one_piece(part)))
+                made.append((sfx, ss, fits, path, one_piece(part), place))
         total_m += mass
         total_s += len(made)
         over = [m for m in made if not m[2]]
         split_files = [m for m in made if m[4] > 1]
-        for sfx, ss, fits, path, np_ in made:
-            SCHEDULE.append(dict(PANEL=pid, NAME=NAME_OF.get(pid, ""), SECTION=sfx,
+        for sfx, ss, fits, path, np_, place in made:
+            inv = place.inverted()
+            o = inv @ mathutils.Vector((0.0, 0.0, 0.0))
+            e = inv.to_euler()
+            (SHAPE_SCHEDULE if pid in TIER_EXTRA else SCHEDULE).append(
+                dict(PANEL=pid, NAME=NAME_OF.get(pid, ""), SECTION=sfx,
                                  X_MM=round(ss[0], 1), Y_MM=round(ss[1], 1), Z_MM=round(ss[2], 1),
                                  FITS_BED="yes" if fits else "NO",
                                  PIECES_IN_FILE=np_,
-                                 FILE=os.path.relpath(path, REPO)))
+                                 # where the printed file goes back on the car: rotate by these
+                                 # degrees about X, Y, Z, then move the file's origin to this point.
+                                 PLACE_RX=round(math.degrees(e.x), 2),
+                                 PLACE_RY=round(math.degrees(e.y), 2),
+                                 PLACE_RZ=round(math.degrees(e.z), 2),
+                                 PLACE_X_MM=round(o.x * 1000.0, 1),
+                                 PLACE_Y_MM=round(o.y * 1000.0, 1),
+                                 PLACE_Z_MM=round(o.z * 1000.0, 1),
+                     WHAT_IS_MISSING=SHAPE_ONLY.get(pid, ""),
+                     FILE=os.path.relpath(path, REPO)))
+            (SHAPE_PLACEMENT if pid in TIER_EXTRA else PLACEMENT)[
+                os.path.basename(path)] = [list(r) for r in inv]
         note = ""
         if over:
             note += f"   {len(over)} over the bed"
@@ -549,8 +659,17 @@ def main():
         for o in list(bpy.data.objects):
             if o.name.startswith("SEC_") or o.name.startswith("PROD_"):
                 bpy.data.objects.remove(o, do_unlink=True)
-    print(f"\n   {len(rows)} parts   ~{total_m:.1f} kg of core   {total_s} printed sections on a "
+    n_prod = len({r["PANEL"] for r in SCHEDULE})
+    n_shape = len({r["PANEL"] for r in SHAPE_SCHEDULE})
+    print(f"\n   READY TO BOND   {n_prod} parts, {len(SCHEDULE)} sections on a "
           f"{D['bed_mm'][0]:.0f} mm bed")
+    print(f"   SHAPE ONLY      {n_shape} parts, {len(SHAPE_SCHEDULE)} sections "
+          f"(fitting masters, interface still to come from the car)")
+    print(f"   ~{total_m:.1f} kg of core across both, at the provisional wall")
+    sbad = [r for r in SHAPE_SCHEDULE if r["FITS_BED"] != "yes" or r["PIECES_IN_FILE"] > 1]
+    if SHAPE_SCHEDULE:
+        print(f"   {len(SHAPE_SCHEDULE) - len(sbad)} of {len(SHAPE_SCHEDULE)} shape-only sections "
+              f"are one piece on the plate")
     bad = [r for r in SCHEDULE if r["FITS_BED"] != "yes" or r["PIECES_IN_FILE"] > 1]
     small = [r for r in SCHEDULE if max(r["X_MM"], r["Y_MM"], r["Z_MM"]) < 60]
     print(f"   {len(SCHEDULE) - len(bad)} of {len(SCHEDULE)} sections are one piece on the plate")
@@ -566,6 +685,30 @@ def main():
         w.writeheader()
         w.writerows(SCHEDULE)
     print(f"\nwrote {sched}")
+    # The placement file. The CSV carries the same numbers in degrees and millimetres for a human;
+    # this is the exact matrix, for assembly_check.py and for anyone re-assembling in CAD.
+    pl = os.path.join(OUT, "placement.json")
+    with open(pl, "w", encoding="utf-8") as f:
+        _json.dump({"note": ("4x4 in METRES, repo axes. Apply to the STL's own coordinates, which "
+                             "are in millimetres, after scaling by 0.001, to put the printed part "
+                             "back where it belongs on the car."),
+                    "parts": PLACEMENT}, f, indent=1)
+    print(f"wrote {pl}  ({len(PLACEMENT)} parts)")
+    if SHAPE_SCHEDULE:
+        sh = os.path.join(REPO, "04_ENGINEERING", "reports", "shape_only_schedule.csv")
+        with open(sh, "w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=list(SHAPE_SCHEDULE[0]))
+            w.writeheader()
+            w.writerows(SHAPE_SCHEDULE)
+        with open(os.path.join(SHAPE_OUT, "placement.json"), "w", encoding="utf-8") as f:
+            _json.dump({"note": "as production/placement.json, for the SHAPE ONLY tier",
+                        "parts": SHAPE_PLACEMENT}, f, indent=1)
+        print(f"\nSHAPE ONLY — outer form ours, interface still to come from the car")
+        print(f"   {len({r['PANEL'] for r in SHAPE_SCHEDULE})} panels, "
+              f"{len(SHAPE_SCHEDULE)} sections -> 03_PRINT/shape_only/")
+        print( "   these are shape masters for fitting, NOT parts ready to bond, and they are not")
+        print( "   in the supplier package. Each row carries what is still missing.")
+        print(f"wrote {sh}")
     return rows
 
 

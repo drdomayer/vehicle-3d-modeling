@@ -624,22 +624,49 @@ def main():
             print(f"{pid:<7}no faces")
             continue
         ob, nf = built
+        # CUT THE SURFACE, WALL ONCE. Until 2026-09-21 the panel was walled first and then every
+        # section was walled AGAIN, because a section of a solid comes out open at the cut planes
+        # and the second solidify closed it. It did close it, and it cost two things. The outer
+        # face moved: the reassembled car measured a half-width of 928.5 mm against the LOCKED 925.
+        # And the wall was DOUBLE: measured on one section of P01, 924,837 cm3 against 460,478,
+        # and of P07, 464,439 against 240,065. Every mass and volume this script has reported was
+        # about twice what it should be.
+        #
+        # Capping the cut faces instead was tried and is worse than either -- holes_fill on the
+        # 3 mm-wide boundary loops of a shell produced 352 non-manifold edges and a nonsense
+        # volume, against 16 for the double wall. That attempt is withdrawn.
+        #
+        # The order that needs neither: cut the SURFACE, then give each section its one wall. A
+        # solidify on an open shell with outward normals closes it by construction, goes inward,
+        # and leaves the outer face exactly where the design put it.
         if pid not in STAGE03:
-            thicken(ob)
-        else:
-            # already a closed solid from stage03_elements; it only needs its normals sane before
-            # the cut, never a wall
             face_outward(ob)
+        else:
+            # stage03_elements already builds these as closed solids, so a section of one is open
+            # at the cut and still needs closing. They keep the second solidify for now, which
+            # means these 13 small parts carry an extra wall; the proper cure is a bisect that
+            # fills, and it is not this commit.
+            face_outward(ob)
+        # The panel is now a SURFACE at this point, so its own enclosed volume means nothing. The
+        # core's volume and the bbox that has to fit the plate both come from a throwaway walled
+        # copy; the object that gets cut stays a surface so each section takes its one wall later.
+        probe = ob.copy()
+        probe.data = ob.data.copy()
+        bpy.context.scene.collection.objects.link(probe)
+        if pid not in STAGE03:
+            thicken(probe)
         bm = bmesh.new()
-        bm.from_mesh(ob.data)
+        bm.from_mesh(probe.data)
         vol = abs(bm.calc_volume(signed=True)) * 1e9
         bm.free()
         mass = vol / 1000.0 * D["density_g_cm3"] / 1000.0
-        plan, size, ext = plan_cuts(ob)
+        plan, size, ext = plan_cuts(probe)
+        bpy.data.objects.remove(probe, do_unlink=True)
         secs = cut_into_sections(ob, plan, pid)
         made = []
         for j, sec in enumerate(secs, 1):
-            cap_cuts(sec)
+            face_outward(sec)
+            thicken(sec)
             for pc, part in enumerate(loose_pieces(sec)):
                 place = lay_flat(part)
                 w = [part.matrix_world @ v.co for v in part.data.vertices]

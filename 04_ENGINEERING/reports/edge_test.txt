@@ -19,9 +19,39 @@ EDGE TEST — docs/16's CONTINUITY classes, as dihedral angles on the built mesh
 
   DOOR_UPPER -> ROCKER (sill line) — sharpened on purpose, 55 -> 18 -> 10 mm of transition on 2026-09-15/16, because the sill read as a soft hollow with no line at all. docs/16 classes it G1 and it measures ~47, so it is 7 degrees past a band this file invented -- docs/16 gives the CLASS, not the number. The honest reading is that a sill line on this kind of car is at the hard end of G1. OWNER'S CALL, not settled: either the band is too tight here or the tuck transition goes back to ~18 mm.
 
-  NOT MEASURED — in CONTINUITY but with no line the build defines a height for:
+  ------------------------------------------------------------------------------------------------
+  COVERAGE — every transition in CONTINUITY, and what evidence exists for it
+  ------------------------------------------------------------------------------------------------
+
+  transition                             cls             crease  break made by                               
+  BUTTRESS -> REAR_DECK                  G1     no line defined  nothing                                     
+  DOOR_CHANNEL -> SIDE_INTAKE_MOUTH      G1     no line defined  opening INTAKE_BLADE_L                      
+  DOOR_UPPER -> DOOR_CHANNEL             G0         66.9 deg ok  nothing                                     
+  DOOR_UPPER -> REAR_HAUNCH_TOP          G2     no line defined  seam DOOR_SHUT_REAR (0.00 mm off skin)      
+  DOOR_UPPER -> ROCKER                   G1          47.4 deg !  seam ROCKER_to_UPPER_BODY (0.00 mm off skin)
+  ENGINE_COVER -> REAR_FASCIA            G1     no line defined  seam REAR_FASCIA_to_DECK (0.00 mm off skin) 
+  FRONT_FENDER_SIDE -> DOOR_UPPER        G0     no line defined  seam FRONT_FENDER_to_DOOR (0.00 mm off skin)
+  FRONT_FENDER_TOP -> FRONT_FENDER_SIDE  G1         38.6 deg ok  nothing                                     
+  HOOD -> FRONT_FENDER_TOP               G2     no line defined  seam HOOD_to_FRONT_BODY (0.00 mm off skin)  
+  HOOD -> HEADLIGHT_SURROUND             G1     no line defined  opening HEADLIGHT_SURROUND_L                
+  NOSE -> FRONT_LOWER_INTAKE             G0     no line defined  opening NOSE_MOUTH                          
+  NOSE -> HOOD                           G1     no line defined  nothing                                     
+  REAR_DECK -> ENGINE_COVER              G1     no line defined  seam ENGINE_COVER_to_DECK (0.00 mm off skin)
+  REAR_FASCIA -> DIFFUSER                G0         48.8 deg ok  seam DIFFUSER_to_FASCIA (0.00 mm off skin)  
+  REAR_HAUNCH_SIDE -> DIFFUSER           G1     no line defined  seam DIFFUSER_to_FASCIA (0.00 mm off skin)  
+  REAR_HAUNCH_TOP -> BUTTRESS            G0     no line defined  nothing                                     
+  REAR_HAUNCH_TOP -> REAR_HAUNCH_SIDE    G1         10.3 deg ok  nothing                                     
+
+  14 of 17 transitions have evidence: a measured crease, a registered panel seam, or a real opening.
+  A seam is not a substitute for a class. The class is about the SURFACE; the seam is
+  about PANELS. On a real car a G0 break is often a 4 mm gap between two tangent
+  panels rather than a crease, so a seam is evidence that the light breaks — but it
+  never makes a G1 'satisfied', because a gap is a break and not a transition.
+
+  NO CREASE LINE — the build defines no height table for these, so the angle is
+  not measurable. The coverage table above says whether anything else breaks the
+  light there; several are satisfied by a panel gap or a real opening instead.
     NOSE -> HOOD
-    HOOD -> FRONT_FENDER_TOP (G2, across the top)
     HOOD -> HEADLIGHT_SURROUND
     NOSE -> FRONT_LOWER_INTAKE
     DOOR_CHANNEL -> SIDE_INTAKE_MOUTH

@@ -71,9 +71,15 @@ EXCEPTIONS = {
 
 
 def load():
+    """master_volumes' namespace, plus the skeleton's own tables it re-exports.
+
+    CONTINUITY, SURFACE and PANEL_SEAMS live in statev_skeleton and master_volumes reaches them
+    through its `_sk` dict, so they are lifted here rather than read from a second copy."""
     src = open(SRC).read().split("\ndef build():")[0]
     M = {"__name__": "mv"}
     exec(compile(src, SRC, "exec"), M)
+    for k in ("CONTINUITY", "SURFACE", "PANEL_SEAMS"):
+        M.setdefault(k, M["_sk"][k])
     return M
 
 
@@ -110,12 +116,73 @@ def lines(M):
     ]
 
 
-UNMEASURED = ["NOSE -> HOOD", "HOOD -> FRONT_FENDER_TOP (G2, across the top)",
-              "HOOD -> HEADLIGHT_SURROUND", "NOSE -> FRONT_LOWER_INTAKE",
+# Which CONTINUITY transition each registered panel seam belongs to. A seam and a continuity class
+# are DIFFERENT facts and the report keeps them apart: the class is about the surface, the seam is
+# about panels. On a real car a G0 break is often a 4 mm gap between two tangent panels rather than
+# a crease, so a seam is evidence that the light breaks there even when the surface does not turn —
+# but it does not make a G1 "satisfied", because a gap is a break, not a transition.
+SEAM_OF = {
+    ("HOOD", "FRONT_FENDER_TOP"): "HOOD_to_FRONT_BODY",
+    ("FRONT_FENDER_SIDE", "DOOR_UPPER"): "FRONT_FENDER_to_DOOR",
+    ("DOOR_UPPER", "ROCKER"): "ROCKER_to_UPPER_BODY",
+    ("DOOR_UPPER", "REAR_HAUNCH_TOP"): "DOOR_SHUT_REAR",
+    ("REAR_DECK", "ENGINE_COVER"): "ENGINE_COVER_to_DECK",
+    ("ENGINE_COVER", "REAR_FASCIA"): "REAR_FASCIA_to_DECK",
+    ("REAR_FASCIA", "DIFFUSER"): "DIFFUSER_to_FASCIA",
+    ("REAR_HAUNCH_SIDE", "DIFFUSER"): "DIFFUSER_to_FASCIA",
+}
+
+# Which transition each measured line answers, so the coverage table can say so.
+LINE_OF = {
+    "DOOR_UPPER -> DOOR_CHANNEL (the side lip)": ("DOOR_UPPER", "DOOR_CHANNEL"),
+    "REAR_FASCIA -> DIFFUSER (undercut edge)": ("REAR_FASCIA", "DIFFUSER"),
+    "DOOR_UPPER -> ROCKER (sill line)": ("DOOR_UPPER", "ROCKER"),
+    "REAR_HAUNCH_TOP -> REAR_HAUNCH_SIDE": ("REAR_HAUNCH_TOP", "REAR_HAUNCH_SIDE"),
+    "FRONT_FENDER_TOP -> FRONT_FENDER_SIDE (crest)": ("FRONT_FENDER_TOP", "FRONT_FENDER_SIDE"),
+}
+
+# Transitions whose break is a HOLE. An opening is a physical break in the surface and the light
+# stops at it, so it is evidence of the same standing as a panel gap -- and saying "no line defined"
+# about the mouth of an intake would be reporting a missing feature that is not missing. Each entry
+# names the object or table in the build that makes the hole, so the claim can be checked.
+OPENING_OF = {
+    ("NOSE", "FRONT_LOWER_INTAKE"): ("NOSE_MOUTH", "boolean in statev_master_volumes"),
+    ("HOOD", "HEADLIGHT_SURROUND"): ("HEADLIGHT_SURROUND_L", "slot cut by stage03_elements"),
+    ("DOOR_CHANNEL", "SIDE_INTAKE_MOUTH"): ("INTAKE_BLADE_L", "mouth cut by stage03_elements"),
+}
+
+UNMEASURED = ["NOSE -> HOOD", "HOOD -> HEADLIGHT_SURROUND", "NOSE -> FRONT_LOWER_INTAKE",
               "DOOR_CHANNEL -> SIDE_INTAKE_MOUTH", "REAR_HAUNCH_TOP -> BUTTRESS",
               "BUTTRESS -> REAR_DECK", "REAR_DECK -> ENGINE_COVER",
               "ENGINE_COVER -> REAR_FASCIA", "REAR_HAUNCH_SIDE -> DIFFUSER",
               "FRONT_FENDER_SIDE -> DOOR_UPPER", "DOOR_UPPER -> REAR_HAUNCH_TOP"]
+
+
+def seam_offsets():
+    """How far each registered panel seam sits off the built skin, in mm.
+
+    Until 2026-09-21 these were nine hand-typed polylines from 2026-09-14 and nothing had ever
+    compared them with the car: they were off it by 25 to 152 mm on average, 210 at worst. They are
+    now generated from their plane and snapped onto the built surface, so this should read 0 — and
+    the point of measuring it anyway is that if it ever stops reading 0, the generator broke.
+    """
+    from mathutils.bvhtree import BVHTree
+    bm = body_bm()
+    tree = BVHTree.FromBMesh(bm)
+    out = {}
+    for ob in bpy.data.objects:
+        if not ob.name.startswith("SEAM_") or ob.type != "CURVE":
+            continue
+        nm = ob.name[5:].rsplit("_", 1)[0]
+        for spl in ob.data.splines:
+            for p in spl.points:
+                co = ob.matrix_world @ mathutils.Vector(p.co[:3])
+                h = tree.find_nearest(co)
+                if h[0] is not None:
+                    d = (h[0] - co).length * 1000.0
+                    out[nm] = max(out.get(nm, 0.0), d)
+    bm.free()
+    return out
 
 
 def body_bm():
@@ -253,8 +320,43 @@ def main():
         for r in rows:
             if r[3].startswith("out of band"):
                 txt.append(f"  {r[0]} — {EXCEPTIONS[r[0]]}")
+    # ---- coverage of the whole map, so no transition leaves the report without a row
     txt.append("")
-    txt.append("  NOT MEASURED — in CONTINUITY but with no line the build defines a height for:")
+    txt.append("  " + "-" * 96)
+    txt.append("  COVERAGE — every transition in CONTINUITY, and what evidence exists for it")
+    txt.append("  " + "-" * 96)
+    txt.append("")
+    seam_off = seam_offsets()
+    by_line = {LINE_OF[r[0]]: r for r in rows if r[0] in LINE_OF}
+    txt.append(f"  {'transition':38s} {'cls':4s} {'crease':>17s}  {'break made by':44s}")
+    cov = 0
+    for (a, b), cls in sorted(M["CONTINUITY"].items()):
+        r = by_line.get((a, b))
+        crease = f"{r[2]:.1f} deg {('ok' if r[3] == 'ok' else '!')}" if r else "no line defined"
+        sm = SEAM_OF.get((a, b))
+        op = OPENING_OF.get((a, b))
+        if sm is None and op is None:
+            ev = "nothing"
+        elif sm is not None:
+            ev = (f"seam {sm} ({seam_off[sm]:.2f} mm off skin)" if sm in seam_off
+                  else f"seam {sm} (NOT IN SCENE)")
+        else:
+            ev = (f"opening {op[0]}" if bpy.data.objects.get(op[0]) or op[1].startswith("boolean")
+                  else f"opening {op[0]} (NOT IN SCENE)")
+        if r or sm or op:
+            cov += 1
+        txt.append(f"  {a + ' -> ' + b:38s} {cls:4s} {crease:>17s}  {ev:44s}")
+    txt.append("")
+    txt.append(f"  {cov} of {len(M['CONTINUITY'])} transitions have evidence: a measured crease, a "
+               f"registered panel seam, or a real opening.")
+    txt.append("  A seam is not a substitute for a class. The class is about the SURFACE; the seam is")
+    txt.append("  about PANELS. On a real car a G0 break is often a 4 mm gap between two tangent")
+    txt.append("  panels rather than a crease, so a seam is evidence that the light breaks — but it")
+    txt.append("  never makes a G1 'satisfied', because a gap is a break and not a transition.")
+    txt.append("")
+    txt.append("  NO CREASE LINE — the build defines no height table for these, so the angle is")
+    txt.append("  not measurable. The coverage table above says whether anything else breaks the")
+    txt.append("  light there; several are satisfied by a panel gap or a real opening instead.")
     for u in UNMEASURED:
         txt.append(f"    {u}")
     txt.append("")

@@ -22,6 +22,7 @@ Donor hardpoints are read, never written. Nothing here moves a wheel, the screen
 """
 
 import bpy
+import mathutils
 import bmesh
 import math
 import os
@@ -33,6 +34,7 @@ _sk = {}
 with open(os.path.join(_here, "statev_skeleton.py"), "r", encoding="utf-8") as f:
     exec(f.read().split("\ndef build():")[0], _sk)
 SECTIONS, PFX = _sk["SECTIONS"], _sk["PFX"]
+PANEL_SEAMS = _sk["PANEL_SEAMS"]
 HOOD_SPINE, DECK_SPINE, ARCHES = _sk["HOOD_SPINE"], _sk["DECK_SPINE"], _sk["ARCHES"]
 widening, sx, mm, half_width_at = _sk["widening"], _sk["sx"], _sk["mm"], _sk["half_width_at"]
 D = _sk["donor_dims"]()
@@ -955,6 +957,161 @@ def boolean(target, cutters):
         bpy.data.objects.remove(c, do_unlink=True)
 
 
+
+# ---------------------------------------------------------------- panel seams, ON the surface
+def contour_half(spec_x):
+    """The +Y half of the section, ordered by Z. The uncut skin -- which is what a panel seam lies
+    on: the opening is cut OUT of the panel afterwards, so the seam belongs on the panel."""
+    return sorted([(y, z) for y, z in ring(spec_x) if y >= 0.0], key=lambda p: p[1])
+
+
+def seam_y_at(spec_x, z):
+    c = contour_half(spec_x)
+    for i in range(len(c) - 1):
+        (y0, z0), (y1, z1) = c[i], c[i + 1]
+        if (z0 - z) * (z1 - z) <= 0.0 and z1 != z0:
+            f = (z - z0) / (z1 - z0)
+            return y0 + f * (y1 - y0)
+    return None
+
+
+def seam_z_at(spec_x, y, branch):
+    """Height where the section carries this half-width, on the chosen branch.
+
+    A seam that sweeps in plan -- the hood's rear cut, the engine cover, the fascia -- states which
+    Y it passes through and the height is the surface's business, not a typed number."""
+    c = contour_half(spec_x)
+    if not c:
+        return None
+    top = max(range(len(c)), key=lambda i: c[i][0])     # the widest point splits the two branches
+    seg = c[top:] if branch == "upper" else list(reversed(c[:top + 1]))
+    for i in range(len(seg) - 1):
+        (y0, z0), (y1, z1) = seg[i], seg[i + 1]
+        if (y0 - y) * (y1 - y) <= 0.0 and y1 != y0:
+            f = (y - y0) / (y1 - y0)
+            return z0 + f * (z1 - z0)
+    return seg[-1][1] if seg else None
+
+
+def seam_points(spec):
+    """(spec_x, y, z) on the skin, from the seam's intent alone."""
+    k = spec["kind"]
+    if k == "station":
+        z0, z1 = spec["z"]
+        c = [(spec["x"], y, z) for y, z in contour_half(spec["x"]) if z0 <= z <= z1]
+        return c
+    if k == "rail":
+        x0, x1 = spec["x"]
+        out = []
+        for i in range(13):
+            x = x0 + (x1 - x0) * i / 12.0
+            y = seam_y_at(x, spec["z"])
+            if y is not None:
+                out.append((x, y, spec["z"]))
+        return out
+    if k == "profile":
+        # The listed y values are the EXTENT of the seam, not the whole curve. Three points make a
+        # panel cut that is two straight segments; sampling between them reads the surface rather
+        # than inventing anything, and the hood cut is a curve on a real car.
+        ys, out = spec["ys"], []
+        fine = []
+        for i in range(len(ys) - 1):
+            for k2 in range(4):
+                fine.append(ys[i] + (ys[i + 1] - ys[i]) * k2 / 4.0)
+        fine.append(ys[-1])
+        for y in fine:
+            z = seam_z_at(spec["x"], y, spec["branch"])
+            if z is not None:
+                out.append((spec["x"], y, z))
+        return out
+    raise ValueError(f"unknown seam kind {k!r}")
+
+
+def _body_tree(subs):
+    import bmesh as _bm
+    from mathutils.bvhtree import BVHTree
+    bm = _bm.new()
+    for c in ZONES:
+        for o in subs[c].objects:
+            me = o.to_mesh()
+            try:
+                bm.from_mesh(me)
+            finally:
+                o.to_mesh_clear()
+    if not bm.faces:
+        bm.free()
+        return None, None
+    return BVHTree.FromBMesh(bm), bm
+
+
+def snap_to_body(tree, spec, x, y, z, sgn=1):
+    """Move the point onto the BUILT surface along the axis that preserves the seam's intent.
+
+    Generating from ring() alone leaves the seam 10 mm off on average and 56 at worst, and the
+    reason is the one this file already warns about beside built_hw(): a number taken from the
+    INPUT of a loft is not a fact about its OUTPUT. The rings are smoothed along X over +-2 stations
+    before they are lofted and then five void families are cut out of the result, so ring() is the
+    seam's intent, not its position. A station or rail seam keeps its X and Z and finds the flank by
+    a ray coming in from outboard; a profile seam keeps its X and Y and finds the skin from above or
+    below. Rays come from OUTSIDE inward so they land on the outer skin and not on the cabin wall.
+    """
+    # Each side is snapped to ITS OWN half. Mirroring the +Y curve leaves the -Y one up to 2.5 mm
+    # off, because the body is symmetric by construction but its TESSELLATION is not -- the same
+    # asymmetry that made P28/P41 differ by 30% on 2026-09-16.
+    V = mathutils.Vector
+    if spec["kind"] in ("station", "rail"):
+        hit = tree.ray_cast(V((mm(sx(x)), sgn * 2.0, mm(z))), V((0.0, -sgn * 1.0, 0.0)), 4.0)
+        return (x, sgn * hit[0].y * 1000.0, z) if hit[0] is not None else None
+    up = spec.get("branch", "upper") == "upper"
+    o = V((mm(sx(x)), mm(sgn * y), 2.5 if up else -1.5))
+    hit = tree.ray_cast(o, V((0.0, 0.0, -1.0 if up else 1.0)), 4.5)
+    return (x, y, hit[0].z * 1000.0) if hit[0] is not None else None
+
+
+def build_seams(coll, subs):
+    """Draw every seam as its plane intersected with the BUILT skin."""
+    for o in list(coll.objects):
+        bpy.data.objects.remove(o, do_unlink=True)
+    tree, bm = _body_tree(subs)
+    if tree is None:
+        print("  panel seams: no body to lie on")
+        return 0
+    n, missed = 0, 0
+    for nm, (reason, spec) in PANEL_SEAMS.items():
+        raw = seam_points(spec)
+        for suffix, sgn in (("_L", 1), ("_R", -1)):
+            pts = []
+            for x, y, z in raw:
+                p = snap_to_body(tree, spec, x, y, z, sgn)
+                if p is None:
+                    missed += 1
+                else:
+                    pts.append((p[0], sgn * abs(p[1]) if spec["kind"] != "profile" else sgn * p[1],
+                                p[2]))
+            if len(pts) < 2:
+                print(f"  SEAM {nm}{suffix}: refused — {len(pts)} point(s) landed on the skin")
+                continue
+            cu = bpy.data.curves.new(f"SEAM_{nm}{suffix}", "CURVE")
+            cu.dimensions = "3D"
+            sp = cu.splines.new("POLY")
+            sp.points.add(len(pts) - 1)
+            for i, (x, y, z) in enumerate(pts):
+                sp.points[i].co = (mm(sx(x)), mm(y), mm(z), 1.0)
+            ob = bpy.data.objects.new(f"SEAM_{nm}{suffix}", cu)
+            coll.objects.link(ob)
+            ob["status"] = "DECIDED"
+            ob["reason"] = reason
+            ob["kind"] = spec["kind"]
+            ob["locked_by_donor"] = "donor shut line" in reason or "locked" in reason
+            ob["note"] = ("panel boundary, GENERATED from the section. A seam exists only for a "
+                          "reason - donor line, access, removal, manufacture or mounting. "
+                          "Decorative seams are forbidden.")
+            n += 1
+    bm.free()
+    print(f"  panel seams: {n} curves generated ON the skin from {len(PANEL_SEAMS)} intents"
+          + (f", {missed} intent point(s) missed the body and were dropped" if missed else ""))
+    return n
+
 def build():
     scene = bpy.context.scene
     root = bpy.data.collections.get(ROOT)
@@ -1090,6 +1247,16 @@ def build():
     bpy.data.objects.remove(skin, do_unlink=True)
     for o in list(subs["_WORK"].objects):
         bpy.data.objects.remove(o, do_unlink=True)
+
+    seam_coll = None
+    for c in bpy.data.collections:
+        if c.name == "08_PANEL_SEAMS":
+            seam_coll = c
+            break
+    if seam_coll is not None:
+        build_seams(seam_coll, subs)
+    else:
+        print("  08_PANEL_SEAMS not in the scene — run statev_skeleton.py first; seams not drawn")
 
     print(f"{ROOT}: " + " | ".join(f"{n} {f}f" for n, f in made))
     print("cut: cabin, 4 wheel arches, nose mouth. Built into the loft: front channel, "

@@ -316,26 +316,70 @@ AIRFLOW = {
 }
 
 # Panel seams. Every one needs an engineering reason; decorative lines are forbidden.
-# name: (reason, [(spec_x, y, z), ...] polyline)
+#
+# CHANGED 2026-09-21. These were nine hand-typed polylines, written on 2026-09-14 from the
+# reference, and nothing had ever checked them against the car. Measured against the built skin they
+# are off it by 25 to 152 mm on average and 210 mm at worst — every single one. The surface has moved
+# through v017 to v030 since they were written and they did not follow.
+#
+# What was actually wrong is narrower than "the seams are wrong". Their PLANES are right and are the
+# panel boundaries: panel_map.B derives every boundary from one of these seams by name and the
+# numbers agree — 440, 1635, 2000, 3000, 330. Nothing reads the seam COORDINATES; panel_map carries
+# its own. So the planes were load-bearing and the 3D curves were stale decoration that does not lie
+# on the car, which is misleading to anyone — owner or supplier — who opens the model and looks at
+# where the panels part.
+#
+# So a seam is now its INTENT and nothing else, and the curve is generated from the section in
+# statev_master_volumes.build(). It cannot go stale again, because there is no second copy of the
+# surface to disagree with.
+#
+#   station(x, z0, z1)  the seam is the plane spec X = x, taken between two heights. A door shut
+#                       line: it runs up the flank, and where the flank IS comes from the surface.
+#   rail(z, x0, x1)     the seam is the plane Z = z, taken between two stations. A rocker line.
+#   profile(x, ys, br)  a seam that sweeps in plan at one station: the y values are the intent and
+#                       the height is read off the section, on the upper or lower branch.
+#
+# The curves are drawn by statev_master_volumes, not here, because only it has ring(). The skeleton
+# cannot import it — master_volumes imports the skeleton — and generating them from a second,
+# simplified copy of the section is exactly the duplication that put them 210 mm off in the first
+# place.
+def station(x, z0, z1):
+    return dict(kind="station", x=float(x), z=(float(z0), float(z1)))
+
+
+def rail(z, x0, x1):
+    return dict(kind="rail", z=float(z), x=(float(x0), float(x1)))
+
+
+def profile(x, ys, branch="upper"):
+    return dict(kind="profile", x=float(x), ys=[float(v) for v in ys], branch=branch)
+
+
 PANEL_SEAMS = {
+    # The hood's rear cut sweeps forward as it goes outboard. The y values are the intent; the
+    # heights used to be typed and were 45 mm off the skin on average.
     "HOOD_to_FRONT_BODY":   ("frunk access and service; the hood is a separate physical panel",
-                             [(420, 0, 970), (300, 420, 880), (120, 620, 800), (-100, 700, 745)]),
+                             profile(420, [0, 420, 620], "upper")),
     "FRONT_FENDER_to_DOOR": ("donor front shut line — locked",
-                             [(440, 700, 300), (440, 845, 560), (440, 800, 800)]),
+                             station(440, 300, 800)),
     "DOOR_SHUT_FRONT":      ("donor shut line — locked, the skin must land on it",
-                             [(440, 855, 250), (440, 870, 550), (440, 800, 800)]),
+                             station(440, 250, 800)),
     "DOOR_SHUT_REAR":       ("donor shut line — locked",
-                             [(1635, 855, 250), (1635, 890, 550), (1635, 810, 800)]),
+                             station(1635, 250, 800)),
     "ROCKER_to_UPPER_BODY": ("rocker is a separate removable panel; kerb damage is replaceable",
-                             [(440, 840, 330), (1038, 850, 330), (1635, 850, 330)]),
+                             rail(330, 440, 1635)),
     "REAR_HAUNCH_to_DOOR":  ("panel removal; the haunch is an overlay on welded quarter",
-                             [(1635, 890, 250), (1635, 915, 560), (1635, 830, 820)]),
+                             station(1635, 250, 820)),
     "ENGINE_COVER_to_DECK": ("engine access — must open",
-                             [(2000, 0, 950), (2000, 400, 930), (2000, 560, 900)]),
+                             profile(2000, [0, 400, 560], "upper")),
     "REAR_FASCIA_to_DECK":  ("exhaust and diffuser access; separate from the cover",
-                             [(3000, 0, 800), (3000, 450, 790), (3000, 700, 740)]),
+                             profile(3000, [0, 450, 700], "upper")),
+    # The diffuser's top edge. It was three points on a straight line at Z 330 running through the
+    # INSIDE of the solid — 210 mm off the skin, the worst of the nine — because a line across the
+    # car at one height and one station does not touch the surface at all; it passes through it.
+    # It is the underside edge, so it is read on the lower branch.
     "DIFFUSER_to_FASCIA":   ("diffuser is replaceable and is the first thing to ground out",
-                             [(3050, 0, 330), (3050, 450, 330), (3050, 700, 330)]),
+                             profile(3050, [0, 450, 700], "lower")),
 }
 
 # Surface behaviour per zone (docs/16). Not geometry — the rules the surfacing must obey.
@@ -633,17 +677,14 @@ def build():
                 ob["z_mm"] = z
                 ob["sections"] = len(pts)
 
-    # ---- panel seams (08) — every one carries its engineering reason as a property
-    for nm, (reason, pts) in PANEL_SEAMS.items():
-        for suffix, sgn in ((("_L", 1), ("_R", -1)) if any(y for _, y, _ in pts) else (("", 1),)):
-            ob = poly_curve(f"SEAM_{nm}{suffix}", subs["08_PANEL_SEAMS"],
-                            [(mm(sx(x)), mm(sgn * y), mm(z)) for x, y, z in pts],
-                            (0.95, 0.45, 0.10, 1.0))
-            ob["status"] = "DECIDED"
-            ob["reason"] = reason
-            ob["locked_by_donor"] = "donor shut line" in reason or "locked" in reason
-            ob["note"] = ("panel boundary. A seam exists only for a reason - donor line, access, "
-                          "removal, manufacture or mounting. Decorative seams are forbidden.")
+    # ---- panel seams (08). The collection is created here and FILLED BY statev_master_volumes,
+    # because a seam is the intersection of its plane with the skin and only that script has the
+    # section. Drawing them here from a second, simplified copy of the surface is what put the old
+    # hand-typed polylines 25 to 210 mm off the car.
+    subs["08_PANEL_SEAMS"]["filled_by"] = "statev_master_volumes.build()"
+    subs["08_PANEL_SEAMS"]["note"] = ("empty until the skin exists. A seam exists only for a "
+                                      "reason - donor line, access, removal, manufacture or "
+                                      "mounting. Decorative seams are forbidden.")
 
     # ---- front centreline (hood line)
     ob = poly_curve("HOOD_SPINE", subs["02_BODY"],

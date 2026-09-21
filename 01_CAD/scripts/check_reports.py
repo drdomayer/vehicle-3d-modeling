@@ -61,6 +61,31 @@ HISTORICAL = re.compile(r"(^|_)v0\d\d")
 
 # Files in these directories that are not reports about the current car. Listed with the reason
 # rather than silently skipped, so the list can be argued with.
+# Who writes what. Saying "re-run the scripts that write these" and not saying WHICH is how the
+# three orphans survived a week: nobody could tell that no script wrote them. A file here with no
+# entry is reported as an ORPHAN, which is a harder thing to ignore than "stale".
+# (B) = needs Blender, (P) = plain python3.
+WRITER = {
+    "manufacturing_audit.csv": "(B) manufacturing_audit.py",
+    "panel_measured.csv": "(B) panel_extract.py",
+    "print_schedule.csv": "(B) panel_production.py",
+    "supplier_package.csv": "(B) supplier_package.py",
+    "exploded_assembly.csv": "(B) exploded_assembly.py",
+    "donor_exposure.csv": "(B) donor_exposure.py",
+    "edge_test.txt": "(B) edge_test.py",
+    "scan_dependency.txt": "(P) scan_dependency_report.py",
+    "panel_register.txt": "(P) panel_registry.py",
+    "panel_bom.csv": "(P) panel_registry.py --csv",
+    "donor_conflicts.txt": "(P) check_statev_vs_donor.py",
+    "panel_architecture.csv": "(P) panel_architecture.py --csv",
+    "panel_definition.csv": "(P) panel_definition.py --csv",
+    "model_side.png": "(B) ortho_views.py",
+    "model_plan.png": "(B) ortho_views.py",
+    "overlay_ref05_side.png": "(P) silhouette_overlay.py",
+    "plan_profile_compare.png": "(P) plan_overlay.py",
+    "last_curvature.json": "(B) highlight_test.py",
+}
+
 NOT_A_REPORT = {
     "goal_baseline.json": "a baseline is SUPPOSED to predate the build — that is what makes it one",
     "checkpoint01.txt": "a record of a decision taken on a date, not a measurement of the car now",
@@ -107,12 +132,19 @@ def main():
             else:
                 ok += 1
     for f, h in sorted(stale, key=lambda t: -t[1]):
-        print(f"  STALE  {f:56s} {h:8.1f} h older than the build")
+        w = WRITER.get(os.path.basename(f))
+        tag = "STALE " if w else "ORPHAN"
+        print(f"  {tag} {f:52s} {h:7.1f} h old   {w or 'NO SCRIPT WRITES THIS'}")
     print(f"\n  {ok} current, {len(stale)} stale, {skipped} not checked (historical, or listed in "
           f"NOT_A_REPORT with a reason)")
+    orphan = [f for f, _ in stale if os.path.basename(f) not in WRITER]
     if stale:
         print("\n  A stale report does not fail — it answers confidently about a car that no longer")
-        print("  exists. Re-run the scripts that write these before quoting any number from them.")
+        print("  exists. (B) runs inside Blender, (P) as python3 01_CAD/scripts/<name>.")
+    if orphan:
+        print(f"\n  {len(orphan)} ORPHAN(S): no script writes them, so they can never be refreshed")
+        print("  and will sit there looking like live data. That is how three of them survived a")
+        print("  week. Give the writer the file, or delete the file.")
     print("\n  It cannot tell a report re-run to an identical result from one never re-run, and")
     print("  it cannot see a change that came from a data file rather than a script.")
     return 1 if (stale or now_sha != built_sha) else 0

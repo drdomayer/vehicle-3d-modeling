@@ -427,6 +427,38 @@ FRONT_FLANK_Z_LO, FRONT_FLANK_Z_HI = 480.0, 800.0
 FRONT_FLANK_PULL = 0.82
 FRONT_FLANK_EASE_TOP = 60.0
 
+# 2d. HAUNCH SAIL — ATTEMPTED AND REVERTED 2026-09-21. Kept as a note so it is not tried again.
+#
+# The haunch is the worst zone on the car for curvature and the blame is in one band: Z 800-879
+# reads 0.61 on 70 vertices, with 880-959 at 0.43 on 138, against 0.21 at the nose. That is the
+# ramp between the top of the near-vertical flank at FLANK_Z_HI 660 and the deck edge, about 140 mm
+# tall, with nothing holding a direction in it -- the same shape of defect the front fender had
+# before front_flank().
+#
+# flank()'s cure does not apply: it pulls the section OUT toward the station maximum, and out is
+# the wrong way here. The width is locked at 925, the section already carries 862 at Z 800, and the
+# reference tucks this area IN above the shoulder toward the deck.
+#
+# So the band was made a RULED surface instead: the section straightened between the flank top and
+# its own crown, which costs no width and should drive one principal curvature to zero. Measured
+# A/B on the same base, strength the only difference:
+#
+#   strength   zone 1900-3050   Z 800-879   Z 880-959
+#      0.0          0.29           0.61        0.43
+#      0.5          0.31           0.73        0.36
+#      0.8          0.33           0.77        0.19
+#      1.0          0.28           0.70        0.31
+#
+# It moves the problem rather than solving it: the deck edge above improves sharply, the band itself
+# gets WORSE, and the zone is a wash. Straightening a curve pins its ends and moves its middle, and
+# the middle is not where the trouble is.
+#
+# The finding is the negative result. This band is not reachable by a field that acts on whole
+# sections, which is what every character field in this file is. CLAUDE.md says it: the free-form
+# surfaces are the owner's manual work in Blender and my job is to check and correct, not to
+# pretend to sculpt class-A surfaces with primitives. The band is named precisely so the sculpting
+# has a target: spec X 1900 to 3050, Z 800 to 880, on both sides.
+
 # 7. PLAN WAIST. The first measurement of the plan puts us 57 to 73 mm of half-width too wide from
 # 43 to 57% of the length -- spec X 930 to 1540, the middle of the door. The render has a waist
 # there and we run straight. It is a plan correction only: it takes width out and leaves every Z

@@ -229,6 +229,53 @@ def main():
     verdict = ("PASS — the surface holds a direction" if med < 0.25 else
                "BALLOONED" if med > 0.55 else "MIXED — parts of the car hold a highlight, parts do not")
     print(f"\n  {verdict}")
+    # ---- where to put a hand on it
+    # The number above says MIXED, and MIXED does not tell anyone where to work. Broken down by
+    # zone AND height band it does: on 2026-09-21 the whole-body figure was 0.28 while one band --
+    # the haunch at Z 800-880 -- sat at 0.61, and a parametric field aimed at exactly that band was
+    # measured, failed, and reverted. Which is the point. CLAUDE.md puts the free-form surfaces in
+    # the owner's hands and leaves me the checking, so the useful output is not a verdict but a
+    # target list, in the order worth touching.
+    print("\n" + "-" * 100)
+    print("WHERE TO SCULPT — the worst bands, so MIXED becomes a place to put a hand")
+    print("-" * 100)
+    # THE FLAT SHARE IS PART OF THE ANSWER, and leaving it out made the first version of this list
+    # point at the wrong places. A band that is mostly FLAT contributes only its transition
+    # vertices, and a transition vertex is spherical almost by definition, so a flat band scores as
+    # ballooned on a handful of points. Measured on the door at Z 640-760: 24 to 40 shaped vertices
+    # against 62 to 72 in the bands either side, median 0.85 -- and the surface there is the held
+    # vertical flank, which is flat on purpose and needs no hand at all. A band is only worth
+    # sculpting if there is something shaped in it to sculpt.
+    bands = {}
+    for p in P:
+        t, r = classify(p[3], p[4])
+        zone = next((n for n, a, b in ZONES if a <= p[0] < b), None)
+        if zone is None:
+            continue
+        d = bands.setdefault((zone, int(p[2] // 80) * 80), {"shaped": [], "n": 0})
+        d["n"] += 1
+        if t == "shaped":
+            d["shaped"].append(r)
+    rank, thin = [], 0
+    for (zone, z0), d in bands.items():
+        v, n = sorted(d["shaped"]), d["n"]
+        if len(v) < 25:            # a median of a handful of vertices is not a measurement
+            continue
+        if len(v) / n < 0.45:      # mostly flat: what is left is the transitions, not the panel
+            thin += 1
+            continue
+        rank.append((v[len(v) // 2], zone, z0, len(v), 100.0 * (1 - len(v) / n)))
+    rank.sort(reverse=True)
+    print(f"\n  {'zone':<20}{'Z band':>12}{'shaped':>8}{'flat %':>8}{'ratio':>8}   reading")
+    for med_b, zone, z0, n, fl in rank[:8]:
+        rd = ("BALLOONED" if med_b > 0.55 else "mixed" if med_b > 0.25 else "controlled")
+        print(f"  {zone:<20}{f'{z0}-{z0+79}':>12}{n:>8}{fl:>8.0f}{med_b:>8.2f}   {rd}")
+    if rank:
+        print(f"\n  {sum(1 for r in rank if r[0] > 0.55)} band(s) over 0.55 of {len(rank)} ranked."
+              f" {thin} more are over 55% flat and are NOT listed: what is")
+        print("  shaped in them is the transition into the flat, which is spherical by nature and")
+        print("  is not something to go and sculpt.")
+
     # Written out so check_goal.py can read it. It cannot run this itself -- the curvature needs the
     # mesh, and the mesh lives in Blender -- and a check that silently skips half of itself is worse
     # than no check.

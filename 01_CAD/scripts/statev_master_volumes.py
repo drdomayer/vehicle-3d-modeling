@@ -287,21 +287,44 @@ LIP_TRANS = 18.0     # mm of height over which the channel's upper edge closes. 
                      # follow. 12 was tried and reads as an undercut rather than an edge.
 
 
+def lower_edge(spec_x):
+    """The lower body edge: the rocker line forward, the undercut line aft, as ONE anchor pair.
+
+    They are the same family and they never coexist -- ROCKER_X1 is 1820 and the undercut starts at
+    2260 -- but feature_anchors() was placing both pairs at every station regardless, putting four
+    anchors inside a 40 mm band of Z where at most two are ever live. The 1 mm separation rule then
+    pushed the live pair off its own feature with a dead one: at spec X 2750 the inert rocker
+    anchors sat 2.8 and 7.2 mm from the undercut's, and the undercut rendered 46.5 degrees of a
+    designed 59.9.
+
+    Merged, on the same base: undercut 46.5 -> 69.5, rocker 46.1 -> 49.8 against a design of 49.6,
+    the channel's lower shoulder 12.5 -> 9.8 against 7.8, the lip 66.8 -> 68.2. The front crest
+    gives back 3.6 degrees because the two freed samples redistribute; it is still the sharpest
+    line on the car and still a recorded exception.
+
+    Returns (z, transition width)."""
+    u = REAR_UNDERCUT_FIELD
+    ez = table_z(u["edge"], spec_x)
+    if spec_x <= 1820.0:
+        return ROCKER_EDGE_Z, 10.0
+    if spec_x >= 2260.0:
+        return ez, u["trans"]
+    t = (spec_x - 1820.0) / 440.0
+    return ROCKER_EDGE_Z + (ez - ROCKER_EDGE_Z) * t, 10.0 + (u["trans"] - 10.0) * t
+
+
 def feature_anchors(spec_x):
     """Z levels that MUST carry a sample. Fixed count, every one from a table continuous in X."""
     ch = VOID_FIELDS["SIDE_CHANNEL"]
     c = table_z(ch["centre"], spec_x)
     lip = side_lip(spec_x)
-    u = REAR_UNDERCUT_FIELD
-    ez = table_z(u["edge"], spec_x)
+    lz, lt = lower_edge(spec_x)
     return [c - ch["w"],            # channel lower shoulder
             c,                      # channel floor
             lip - LIP_TRANS,        # steep approach to the lip
             lip,                    # THE LIP -- docs/16 G0
-            ROCKER_EDGE_Z - 10.0,   # rocker approach
-            ROCKER_EDGE_Z,          # rocker edge
-            ez - u["trans"],        # undercut approach
-            ez,                     # undercut edge -- docs/16 G0
+            lz - lt,                # lower edge approach
+            lz,                     # the lower body edge: rocker forward, undercut aft
             table_z(SHOULDER_TRAJECTORY, spec_x),   # the one main side line
             FLANK_Z_HI,             # top of the near-vertical rear flank
             # The front fender crest, added 2026-09-21. It was missed when this list was written

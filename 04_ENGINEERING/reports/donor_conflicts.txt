@@ -12,36 +12,37 @@ STATEV 001 v0.1  vs  Porsche 986 donor — conflict report
   front: donor half-track 732.5 + tyre 235/2 -> outer face Y 850.0 mm | tyre R 323.5, arch R 350 -> radial gap 26.5 mm
   rear: donor half-track 764.0 + tyre 275/2 -> outer face Y 901.5 mm | tyre R 337.5, arch R 365 -> radial gap 27.5 mm
   fender cover (section max vs tyre outer face):
-    S05 front: body max 916.3 vs tyre outer 850.0 -> +66.3 | at the arch crown Z 674 the body is 745.2
-    S11 rear: body max 953.1 vs tyre outer 901.5 -> +51.6 | at the arch crown Z 702 the body is 900.4
+    S05 front: body max 949.8 vs tyre outer 850.0 -> +99.8 | at the arch crown Z 674 the body is 751.0
+    S11 rear: body max 925.0 vs tyre outer 901.5 -> +23.5 | at the arch crown Z 702 the body is 898.0
 
 [wheel arches]
-  FRONT: R 350 vs tyre R 323.5 -> radial +26.5 | opening 350 vs tyre 235 -> axial +57.5 each side | outer edge Y 907.5 vs body 916.2811529493745 at S05 -> +8.8
-  REAR: R 365 vs tyre R 337.5 -> radial +27.5 | opening 370 vs tyre 275 -> axial +47.5 each side | outer edge Y 949.0 vs body 953.1326324770698 at S11 -> +4.1
+  FRONT: R 350 vs tyre R 323.5 -> radial +26.5 | opening 350 vs tyre 235 -> axial +57.5 each side | outer edge Y 907.5 vs body 949.8077104542856 at S05 -> +42.3
+  REAR: R 365 vs tyre R 337.5 -> radial +27.5 | opening 370 vs tyre 275 -> axial +47.5 each side | outer edge Y 949.0 vs body 925.0 at S11 -> -24.0
 
 [body vs donor skin]  (donor plan ±30 mm)
   Only matters where the OEM skin is KEPT. Front bumper, fenders, hood and rear bumper are
   bolt-on and thrown away (docs/02), so sitting inside them there is fine — it is clearance.
   Doors keep their shut lines and rear quarters are welded: there the new skin is an overlay
   and must sit OUTSIDE the OEM surface.
-  S00 specX  -950 (repo   950) front tip          STATEV   350 | donor   411 |    -61 | panel removed
-  S01 specX  -850 (repo   850) front mask         STATEV   580 | donor   601 |    -21 | panel removed
-  S02 specX  -700 (repo   700) headlights         STATEV   720 | donor   721 |     -1 | panel removed
-  S03 specX  -500 (repo   500) front fender in    STATEV   821 | donor   806 |    +16 | panel removed
-  S04 specX  -250 (repo   250) ahead of arch      STATEV   880 | donor   846 |    +35 | panel removed
-  S05 specX     0 (repo     0) FRONT AXLE         STATEV   916 | donor   850 |    +66 | panel removed
-  S06 specX   350 (repo  -350) behind front arch  STATEV   856 | donor   854 |     +2 | panel removed
-  S07 specX   800 (repo  -800) door centre        STATEV   875 | donor   846 |    +30 | OVERLAY
+  S00 specX  -950 (repo   950) front tip          STATEV   500 | donor   411 |    +89 | panel removed
+  S01 specX  -850 (repo   850) front mask         STATEV   700 | donor   601 |    +99 | panel removed
+  S02 specX  -700 (repo   700) headlights         STATEV   781 | donor   721 |    +60 | panel removed
+  S03 specX  -500 (repo   500) front fender in    STATEV   841 | donor   806 |    +35 | panel removed
+  S04 specX  -250 (repo   250) ahead of arch      STATEV   911 | donor   846 |    +65 | panel removed
+  S05 specX     0 (repo     0) FRONT AXLE         STATEV   950 | donor   850 |   +100 | panel removed
+  S06 specX   350 (repo  -350) behind front arch  STATEV   883 | donor   854 |    +29 | panel removed
+  S07 specX   800 (repo  -800) door centre        STATEV   876 | donor   846 |    +31 | OVERLAY
   S08 specX  1200 (repo -1200) side intake start  STATEV   880 | donor   846 |    +34 | OVERLAY
   S09 specX  1600 (repo -1600) side intake deep   STATEV   915 | donor   861 |    +54 | OVERLAY
-  S10 specX  2000 (repo -2000) rear haunch start  STATEV   931 | donor   875 |    +56 | OVERLAY
-  S11 specX  2415 (repo -2415) REAR AXLE          STATEV   953 | donor   887 |    +66 | OVERLAY
-  S12 specX  2800 (repo -2800) behind rear wheel  STATEV   908 | donor   847 |    +61 | OVERLAY
+  S10 specX  2000 (repo -2000) rear haunch start  STATEV   925 | donor   875 |    +50 | OVERLAY
+  S11 specX  2415 (repo -2415) REAR AXLE          STATEV   925 | donor   887 |    +38 | OVERLAY
+  S12 specX  2800 (repo -2800) behind rear wheel  STATEV   900 | donor   847 |    +53 | OVERLAY
   S13 specX  3200 (repo -3200) rear fascia        STATEV   820 | donor   680 |   +140 | panel removed
+  S13b specX  3320 (repo -3320) tail knee          STATEV   640 | donor   303 |   +337 | panel removed
 
 [lighting]
   projector cavity 110x110x150 (Hella 90 mm bi-LED class), centre Y +-560, Z 570
-  spans Y 505 … 615 vs body 680 at that height -> +65
+  spans Y 505 … 615 vs body 742 at that height -> +127
   lit-surface lower edge Z 515.0 vs the 500 mm minimum -> OK
   DRL blade runs along the body's widest line; position lamps need >= 350 mm — the blade's own z_range property carries the built value
 
@@ -56,7 +57,7 @@ STATEV 001 v0.1  vs  Porsche 986 donor — conflict report
   fin Y ±600 vs roll hoop tube plane Y ±350
 
 [rear deck vs donor]
-  deck centreline peak Z 960 | buttress top Z 1090 | hoop tops Z 1235 | windshield header Z 1255
+  deck centreline peak Z 880 | buttress top Z 1090 | hoop tops Z 1235 | windshield header Z 1255
   deck starts at specX 1760 | hoop plane specX 1760
 
 ====================================================================================================
@@ -66,10 +67,12 @@ STATEV 001 v0.1  vs  Porsche 986 donor — conflict report
 
 [CHECK] front overhang: the STATEV nose is 57 mm BEHIND the donor's front bumper face. The OEM crash beam and its brackets live inside that space — clearance to the beam must be confirmed on the scan before the nose section is locked.
 
-[CHECK] S05 arch crown: at the top of the arch (Z 674) the fender is only 745.2 wide while the tyre's outer face is 850.0. The arch line follows the surface inboard there, so the aperture narrows at its crown — acceptable, but it means the fender does not crown over the wheel. If that is not the intended look, add width to S05 around Z 674.
+[CHECK] S05 arch crown: at the top of the arch (Z 674) the fender is only 751.0 wide while the tyre's outer face is 850.0. The arch line follows the surface inboard there, so the aperture narrows at its crown — acceptable, but it means the fender does not crown over the wheel. If that is not the intended look, add width to S05 around Z 674.
 
-[CHECK] S11 arch crown: at the top of the arch (Z 702) the fender is only 900.4 wide while the tyre's outer face is 901.5. The arch line follows the surface inboard there, so the aperture narrows at its crown — acceptable, but it means the fender does not crown over the wheel. If that is not the intended look, add width to S11 around Z 702.
+[CHECK] S11 arch crown: at the top of the arch (Z 702) the fender is only 898.0 wide while the tyre's outer face is 901.5. The arch line follows the surface inboard there, so the aperture narrows at its crown — acceptable, but it means the fender does not crown over the wheel. If that is not the intended look, add width to S11 around Z 702.
+
+[CHECK] REAR arch width: the arch aperture reaches Y 949.0 but the body at S11 is 925.0 — the opening is 24.0 mm wider than the surface it is cut into. Either the section grows to about 959, or the opening narrows to 322.
 
 [OPEN ] roof: the soft-top fold envelope, the engine-lid aperture and the clamshell path are still unknown. The deck peak (Z 800) and the louvre field (specX 2100–2700) both sit over them. Nothing behind the hoops can be locked before the scan.
 
-6 items: fatal=2, check=3, note=0, open=1
+7 items: fatal=2, check=4, note=0, open=1

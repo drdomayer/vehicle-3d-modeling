@@ -203,6 +203,27 @@ def capture_plan():
     print("  - Photograph everything you unbolt, in place, before it moves.")
 
 
+# Write the report as well as printing it. Until 2026-09-21 this file only printed, while CLAUDE.md
+# and the decision log both name 04_ENGINEERING/reports/scan_dependency.txt as "its output" — the file in the repo had been
+# made once by redirecting stdout by hand and then sat there for a week looking like live data.
+# A report no script can regenerate is worse than no report.
+import io as _io
+import contextlib as _cx
+
+# GUARDED, and the guard is not cosmetic. panel_registry.py pulls this file's tables in by
+# exec'ing its source, so anything at module level here runs there too — an unguarded version of
+# this block called main() inside panel_registry's namespace and died on a name it does not have.
 if __name__ == "__main__":
-    main()
-    capture_plan()
+    _buf = _io.StringIO()
+    with _cx.redirect_stdout(_buf):
+        main()
+        capture_plan()
+    _out = _buf.getvalue()
+    print(_out, end="")
+    _p = os.path.join(os.path.dirname(os.path.dirname(HERE)),
+                      "04_ENGINEERING", "reports", "scan_dependency.txt")
+    os.makedirs(os.path.dirname(_p), exist_ok=True)
+    with open(_p, "w", encoding="utf-8") as _f:
+        _f.write(_out)
+    print(f"\nwrote {_p}")
+

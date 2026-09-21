@@ -22,7 +22,11 @@ REPO = os.path.dirname(os.path.dirname(HERE))
 
 _sd = {}
 with open(os.path.join(HERE, "scan_dependency_report.py"), "r", encoding="utf-8") as f:
-    exec(f.read().split("\ndef main(argv):")[0], {"__file__": os.path.join(HERE, "scan_dependency_report.py"), "__name__": "_sd"}, _sd)
+    # Split on THIS file's actual signature. It was "\ndef main(argv):", which scan_dependency_report
+    # does not have -- its main takes no argument -- so the split never matched and the WHOLE module
+    # was exec'd here, held back only by its __main__ guard. Code that silently does the opposite of
+    # what it says is one edit away from running someone else's script inside this one.
+    exec(f.read().split("\ndef main(")[0], {"__file__": os.path.join(HERE, "scan_dependency_report.py"), "__name__": "_sd"}, _sd)
 PANEL_STATUS = {k: v[2] for k, v in _sd["PANELS"].items()}
 
 # Preliminary design values. Every one is subject to the composite shop's answers (docs/13).
@@ -188,5 +192,24 @@ def main(argv):
     return 0
 
 
+# Write the report as well as printing it. Until 2026-09-21 this file only printed, while the
+# decision log names panel_register.txt as its output — the copy in the repo was made once by
+# redirecting stdout by hand and then sat for a week looking like live data. A report that no
+# script can regenerate is worse than no report at all.
+import io as _io
+import contextlib as _cx
+
 if __name__ == "__main__":
-    sys.exit(main(sys.argv))
+    _buf = _io.StringIO()
+    with _cx.redirect_stdout(_buf):
+        _rc = main(sys.argv)
+    _out = _buf.getvalue()
+    print(_out, end="")
+    _p = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+                  "04_ENGINEERING", "reports", "panel_register.txt")
+    os.makedirs(os.path.dirname(_p), exist_ok=True)
+    with open(_p, "w", encoding="utf-8") as _f:
+        _f.write(_out)
+    print(f"\nwrote {_p}")
+    sys.exit(_rc)
+

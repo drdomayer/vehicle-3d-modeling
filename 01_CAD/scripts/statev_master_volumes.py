@@ -26,7 +26,11 @@ import mathutils
 import bmesh
 import math
 import os
+import time
 
+SCRIPTS = os.path.join(os.path.dirname(os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__)))), "01_CAD", "scripts") \
+    if "__file__" in globals() else "/Users/miroslavstatev/vehicle-3d-modeling/01_CAD/scripts"
 REPO = "/Users/miroslavstatev/vehicle-3d-modeling"
 _here = os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() \
     else os.path.join(REPO, "01_CAD/scripts")
@@ -1257,6 +1261,24 @@ def build():
         build_seams(seam_coll, subs)
     else:
         print("  08_PANEL_SEAMS not in the scene — run statev_skeleton.py first; seams not drawn")
+
+    # Stamp what this scene was built from. check_reports.py needs two different facts and mtime
+    # cannot give either: whether the BUILD matches the scripts on disk, and whether each REPORT
+    # matches the build. A `git checkout` touches a script without changing it and makes every
+    # report look stale; editing a script without rebuilding makes the scene stale while every
+    # report looks fine. A content hash plus a build time separates the two.
+    try:
+        import hashlib as _hl
+        import json as _js
+        h = _hl.sha256()
+        for _n in ("statev_skeleton.py", "statev_master_volumes.py", "stage03_elements.py"):
+            with open(os.path.join(SCRIPTS, _n), "rb") as _f:
+                h.update(_f.read())
+        os.makedirs(os.path.join(SCRIPTS, "data"), exist_ok=True)
+        with open(os.path.join(SCRIPTS, "data", "last_build.json"), "w") as _f:
+            _js.dump({"when": time.time(), "scripts_sha": h.hexdigest()[:16]}, _f, indent=2)
+    except Exception as _e:
+        print(f"  could not stamp the build: {_e}")
 
     print(f"{ROOT}: " + " | ".join(f"{n} {f}f" for n, f in made))
     print("cut: cabin, 4 wheel arches, nose mouth. Built into the loft: front channel, "

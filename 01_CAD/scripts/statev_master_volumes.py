@@ -1182,11 +1182,36 @@ def build():
     for i, r in enumerate(raw):
         row = []
         for k in range(npts):
+            # SMOOTH BY NEAREST POINT, NOT BY INDEX. v030 gave every station ten anchored
+            # samples and spread the rest by arc length, and the allocation is recomputed per
+            # station: measured on v031 it CHANGES between neighbouring stations at 60 of 90
+            # steps, shuffling up to 38 samples in one step. Index k therefore means a different
+            # place on the section from one ring to the next, and this loop was mixing unrelated
+            # parts of the surface. Raw second difference along X came to 15.85 mm against 9.27
+            # for the plain resample, 5.01 against 4.26 once smoothed.
+            #
+            # Fixing the ALLOCATION was tried first and is worse: one shared allocation for every
+            # station gives 5.73 smoothed against 5.01 and blows the sample spacing out to 186 mm,
+            # because an interval that is long at one station is starved at another. The allocation
+            # is not the thing to fix -- the assumption that index k is the same feature is.
+            #
+            # So the neighbour contributing to a point is the CLOSEST point on that ring, searched
+            # in a window of +-6 indices, rather than the one with the same number. Correspondence
+            # stops being assumed. Measured: whole-body curvature ratio 0.279 -> 0.242, cylindrical
+            # 47% -> 51%, volume unchanged at 4.222 m3.
             acc_y = acc_z = wsum = 0.0
+            py, pz = r[k]
             for d, wgt in ((-2, 1), (-1, 4), (0, 6), (1, 4), (2, 1)):
                 j = min(len(raw) - 1, max(0, i + d))
-                acc_y += raw[j][k][0] * wgt
-                acc_z += raw[j][k][1] * wgt
+                if d == 0:
+                    qy, qz = raw[j][k]
+                else:
+                    lo2 = max(0, k - 6)
+                    hi2 = min(npts, k + 7)
+                    qy, qz = min(raw[j][lo2:hi2],
+                                 key=lambda p: (p[0] - py) ** 2 + (p[1] - pz) ** 2)
+                acc_y += qy * wgt
+                acc_z += qz * wgt
                 wsum += wgt
             row.append((acc_y / wsum, acc_z / wsum))
         smooth_rings.append(row)

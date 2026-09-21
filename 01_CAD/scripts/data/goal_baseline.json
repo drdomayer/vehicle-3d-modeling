@@ -1,8 +1,8 @@
 {
   "mean_mm": 16.0,
   "front_mm": 4.0,
-  "rear_mm": 22.0,
+  "rear_mm": 23.0,
   "plan_pct": 2.4,
   "edge_defects": 0.0,
-  "curvature": 0.2782
+  "curvature": 0.2409
 }

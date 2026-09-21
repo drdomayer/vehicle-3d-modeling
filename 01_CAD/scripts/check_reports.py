@@ -44,7 +44,8 @@ BUILD = ["statev_skeleton.py", "statev_master_volumes.py", "stage03_elements.py"
 WATCH = [("04_ENGINEERING/reports", (".csv", ".txt")),
          ("04_ENGINEERING/statev_v01/overlay", (".png",)),
          ("04_ENGINEERING/statev_v01/plan", (".png",)),
-         ("01_CAD/scripts/data", ("last_curvature.json", "goal_baseline.json"))]
+         ("01_CAD/scripts/data", ("last_curvature.json", "last_surface.json",
+                                 "goal_baseline.json"))]
 
 
 def scripts_sha():
@@ -84,6 +85,7 @@ WRITER = {
     "overlay_ref05_side.png": "(P) silhouette_overlay.py",
     "plan_profile_compare.png": "(P) plan_overlay.py",
     "last_curvature.json": "(B) highlight_test.py",
+    "last_surface.json": "(B) surface_probe.py",
 }
 
 NOT_A_REPORT = {

@@ -36,7 +36,13 @@ import sys
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 BASE = os.path.join(REPO, "01_CAD/scripts/data/goal_baseline.json")
 TOL = {"front_mm": 3.0, "rear_mm": 5.0, "mean_mm": 5.0, "curvature": 0.02, "plan_pct": 0.5,
-       "edge_defects": 0.0}   # a NEW line out of its docs/16 band is a regression, always
+       "edge_defects": 0.0,   # a NEW line out of its docs/16 band is a regression, always
+       "surf_x_mm": 1.0, "surf_z_mm": 1.0}
+# surf_* is the CONTROL. curvature and edge_defects are both read off the mesh, so a change
+# that only re-arranges vertices moves them -- on 2026-09-21 a smoothing change moved the
+# curvature from 0.279 to 0.242 and was committed as the biggest gain so far, while the
+# surface itself had not moved at all. surf_* is y(x, z) on a fixed grid and cannot be moved
+# that way. If curvature improves and surf_* does not, the surface did not change.
 
 
 def run(script):
@@ -118,6 +124,14 @@ def main():
         m = re.search(r"DEFECT (\d+)", et)
         if m and fresh(ep, "the edge test"):
             got["edge_defects"] = float(m.group(1))
+    sp = os.path.join(REPO, "01_CAD/scripts/data/last_surface.json")
+    if os.path.exists(sp) and fresh(sp, "the surface probe"):
+        with open(sp, encoding="utf-8") as f:
+            sj = json.load(f)
+        got["surf_x_mm"] = sj["surf_x_mm"]
+        got["surf_z_mm"] = sj["surf_z_mm"]
+    elif not os.path.exists(sp):
+        print("  no surface probe on file — run surface_probe.py inside Blender first")
     cp = os.path.join(REPO, "01_CAD/scripts/data/last_curvature.json")
     if os.path.exists(cp):
         with open(cp, encoding="utf-8") as f:
@@ -142,7 +156,8 @@ def main():
             old = json.load(f)
     print(f"\n  {'metric':<14}{'now':>9}{'baseline':>11}{'change':>9}   verdict")
     bad = 0
-    for k in ("front_mm", "rear_mm", "mean_mm", "plan_pct", "curvature", "edge_defects"):
+    for k in ("front_mm", "rear_mm", "mean_mm", "plan_pct", "curvature", "edge_defects",
+              "surf_x_mm", "surf_z_mm"):
         if k not in got:
             continue
         n = got[k]

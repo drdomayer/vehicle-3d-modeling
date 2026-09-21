@@ -293,6 +293,36 @@ def face_outward(ob):
     return ob
 
 
+def cap_cuts(ob):
+    """Close the faces the grid cut opened, WITHOUT adding material.
+
+    The panel is already a closed 3 mm core before it is cut; a section of it is open only where
+    the cut planes passed. Until 2026-09-21 that was closed by running solidify a SECOND time on
+    every section, and it worked in the sense that the section came out watertight -- but a second
+    solidify does not know it is being asked to cap a hole, so it built another wall, and on the
+    outer surface it built it OUTWARD. Traced on P15: the extracted surface and the walled panel
+    both sit exactly on the locked half-width of 925.00; the section before the second pass reads
+    925.21, and after it 928.14. Three and a half millimetres of core outside a dimension that is
+    not allowed to move, with laminate and filler still to go on top.
+
+    Filling the boundary loops does the one thing that was wanted and nothing else."""
+    bm = bmesh.new()
+    bm.from_mesh(ob.data)
+    bm.edges.ensure_lookup_table()
+    holes = [e for e in bm.edges if len(e.link_faces) == 1]
+    if holes:
+        bmesh.ops.holes_fill(bm, edges=holes, sides=0)
+        still = [e for e in bm.edges if len(e.link_faces) == 1]
+        if still:
+            # a loop holes_fill would not take; triangulating its edge net closes it
+            bmesh.ops.triangle_fill(bm, use_beauty=True, edges=still)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(ob.data)
+    bm.free()
+    ob.data.update()
+    return ob
+
+
 def thicken(ob):
     face_outward(ob)
     m = ob.modifiers.new("core", "SOLIDIFY")
@@ -596,6 +626,10 @@ def main():
         ob, nf = built
         if pid not in STAGE03:
             thicken(ob)
+        else:
+            # already a closed solid from stage03_elements; it only needs its normals sane before
+            # the cut, never a wall
+            face_outward(ob)
         bm = bmesh.new()
         bm.from_mesh(ob.data)
         vol = abs(bm.calc_volume(signed=True)) * 1e9
@@ -605,7 +639,7 @@ def main():
         secs = cut_into_sections(ob, plan, pid)
         made = []
         for j, sec in enumerate(secs, 1):
-            thicken(sec)
+            cap_cuts(sec)
             for pc, part in enumerate(loose_pieces(sec)):
                 place = lay_flat(part)
                 w = [part.matrix_world @ v.co for v in part.data.vertices]

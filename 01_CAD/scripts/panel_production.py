@@ -277,15 +277,27 @@ def face_outward(ob):
     with the outward radial direction does, and the whole shell is flipped on it if needed."""
     bm = bmesh.new()
     bm.from_mesh(ob.data)
+    bm.edges.ensure_lookup_table()
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
-    acc = 0.0
-    for f in bm.faces:
-        c = f.calc_center_median()
-        r = mathutils.Vector((0.0, c.y, c.z - 0.570))
-        if r.length < 1e-6:
-            continue
-        acc += f.normal.normalized().dot(r.normalized()) * f.calc_area()
-    if acc < 0.0:
+    # A CLOSED mesh answers this exactly and the radial guess must not be asked. The signed volume
+    # of a closed surface is positive when its normals face out, full stop. The radial version is a
+    # heuristic for open shells -- "away from the body's axis" -- and on 2026-09-21 it flipped two
+    # already-solid stage 03 pieces, P13 and P14's second loose part, which then went through
+    # solidify inverted and exported with a volume of -700.9 cm3. A slicer would print the
+    # complement of that part.
+    closed = not any(len(e.link_faces) == 1 for e in bm.edges)
+    if closed:
+        flip = bm.calc_volume(signed=True) < 0.0
+    else:
+        acc = 0.0
+        for f in bm.faces:
+            c = f.calc_center_median()
+            r = mathutils.Vector((0.0, c.y, c.z - 0.570))
+            if r.length < 1e-6:
+                continue
+            acc += f.normal.normalized().dot(r.normalized()) * f.calc_area()
+        flip = acc < 0.0
+    if flip:
         bmesh.ops.reverse_faces(bm, faces=bm.faces)
     bm.to_mesh(ob.data)
     bm.free()
@@ -323,7 +335,69 @@ def cap_cuts(ob):
     return ob
 
 
+def split_pinch(ob):
+    """Separate the shell where its own boundary pinches to a single vertex.
+
+    Traced on 2026-09-21, and the correspondence is exact: the number of vertices where more than
+    two boundary edges meet equals the number of non-manifold edges the wall then produces. P01 has
+    2 and 2, P21 has 9 and 9, P07, P22 and P28 have 0 and 0. A panel region extracted from the body
+    can touch itself at a point; solidify runs its rim through that point twice and the result is an
+    edge with four faces on it, which no slicer handles predictably.
+
+    Splitting it is not a workaround, it is the honest shape: two areas joined at a single point
+    cannot be printed as one part and would fall apart if they were. The pipeline already exports
+    each loose piece of a section separately, so they come out as the two parts they are."""
+    bm = bmesh.new()
+    bm.from_mesh(ob.data)
+    bm.verts.ensure_lookup_table()
+    split = 0
+    for v in list(bm.verts):
+        if sum(1 for e in v.link_edges if len(e.link_faces) == 1) <= 2:
+            continue
+        # group this vertex's faces into fans, walking only through interior edges
+        faces = list(v.link_faces)
+        fans, seen = [], set()
+        for f in faces:
+            if f in seen:
+                continue
+            fan, stack = [], [f]
+            while stack:
+                g = stack.pop()
+                if g in seen:
+                    continue
+                seen.add(g)
+                fan.append(g)
+                for e in g.edges:
+                    if v not in e.verts or len(e.link_faces) != 2:
+                        continue
+                    for h in e.link_faces:
+                        if h is not g and h not in seen:
+                            stack.append(h)
+            fans.append(fan)
+        if len(fans) < 2:
+            continue
+        for fan in fans[1:]:
+            nv = bm.verts.new(v.co)
+            for g in fan:
+                vs = [nv if x is v else x for x in g.verts]
+                try:
+                    nf = bm.faces.new(vs)
+                    nf.normal_update()
+                except ValueError:
+                    continue
+            bmesh.ops.delete(bm, geom=fan, context="FACES")
+            split += 1
+        bm.verts.ensure_lookup_table()
+    if split:
+        bm.normal_update()
+    bm.to_mesh(ob.data)
+    bm.free()
+    ob.data.update()
+    return split
+
+
 def thicken(ob):
+    split_pinch(ob)
     face_outward(ob)
     m = ob.modifiers.new("core", "SOLIDIFY")
     m.thickness, m.offset, m.use_even_offset = D["wall_mm"] / 1000.0, -1.0, False
@@ -668,6 +742,11 @@ def main():
             face_outward(sec)
             thicken(sec)
             for pc, part in enumerate(loose_pieces(sec)):
+                # Orientation is settled PER PIECE, here, because a section holding two pieces can
+                # have a positive signed volume overall while one of them is inverted -- which is
+                # exactly what P13 and P14's second piece did, exporting at -700.9 cm3 after the
+                # section as a whole had passed. A slicer given that prints the complement.
+                face_outward(part)
                 place = lay_flat(part)
                 w = [part.matrix_world @ v.co for v in part.data.vertices]
                 ss = [(max(p[i] for p in w) - min(p[i] for p in w)) * 1000 for i in range(3)]

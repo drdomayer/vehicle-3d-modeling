@@ -45,7 +45,8 @@ WATCH = [("04_ENGINEERING/reports", (".csv", ".txt")),
          ("04_ENGINEERING/statev_v01/overlay", (".png",)),
          ("04_ENGINEERING/statev_v01/plan", (".png",)),
          ("01_CAD/scripts/data", ("last_curvature.json", "last_surface.json",
-                                 "goal_baseline.json"))]
+                                 "goal_baseline.json")),
+         ("03_PRINT", ("README.md", "handoff.json"))]
 
 
 def scripts_sha():
@@ -86,6 +87,9 @@ WRITER = {
     "plan_profile_compare.png": "(P) plan_overlay.py",
     "last_curvature.json": "(B) highlight_test.py",
     "last_surface.json": "(B) surface_probe.py",
+    "handoff.json": "(B) panel_production.py",
+    "README.md": "(P) print_qc.py",
+    "fit_test_P39.txt": "(P) fit_test.py P39",
 }
 
 NOT_A_REPORT = {

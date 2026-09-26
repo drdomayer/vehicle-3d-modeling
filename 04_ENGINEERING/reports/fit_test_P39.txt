@@ -37,24 +37,24 @@ FIT TEST — P39 ROCKER_END_L
     front-most        2735.6     669.5     166.9
     rear-most         3017.0     713.2     266.8
     left-most         2779.6     911.7     330.0
-    right-most        2999.5     585.0     144.7
+    right-most        3000.0     586.9     142.5
     lowest            2735.8     610.9     121.3
     highest           2779.4     910.9     332.9
 
     DESIGN DISTANCES, in millimetres. These are what the part is checked against.
       front-most     -> rear-most          301.8
       front-most     -> left-most          295.2
-      front-most     -> right-most         278.0
+      front-most     -> right-most         278.1
       front-most     -> lowest              74.3
       front-most     -> highest            296.2
       rear-most      -> left-most          315.8
-      rear-most      -> right-most         178.0
+      rear-most      -> right-most         178.1
       rear-most      -> lowest             332.8
       rear-most      -> highest            316.0
-      left-most      -> right-most         435.2
+      left-most      -> right-most         435.0
       left-most      -> lowest             368.7
-      right-most     -> lowest             266.0
-      right-most     -> highest            436.0
+      right-most     -> lowest             266.1
+      right-most     -> highest            435.8
       lowest         -> highest            369.7
 
   WHEN TO MEASURE, and what a change at each stage means

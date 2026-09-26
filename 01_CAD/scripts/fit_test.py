@@ -66,7 +66,13 @@ def read_stl(path):
 
 
 def panel_points(pid, placement):
-    """Every vertex of the panel, back in car coordinates, in millimetres of spec X / Y / Z."""
+    """Vertices of the panel's OUTER surface, back in car coordinates, in millimetres of spec X/Y/Z.
+
+    Only the outer surface, because a landmark has to be something a caliper jaw can reach. The
+    first version took every vertex, which includes the inner face of the wall and the tabs, and a
+    "front-most" point on the inside of a 3 mm shell is not a place anyone can measure to. A
+    triangle is outer if its normal points away from the body's axis -- the same radial test the
+    production script uses to orient the wall."""
     pts = []
     for name, mat in placement.items():
         if not name.startswith(pid + "_"):
@@ -76,11 +82,22 @@ def panel_points(pid, placement):
             continue
         M = mat
         for t in read_stl(p):
+            w = []
             for k in range(3):
                 x, y, z = t[k * 3] / 1000.0, t[k * 3 + 1] / 1000.0, t[k * 3 + 2] / 1000.0
                 wx = M[0][0] * x + M[0][1] * y + M[0][2] * z + M[0][3]
                 wy = M[1][0] * x + M[1][1] * y + M[1][2] * z + M[1][3]
                 wz = M[2][0] * x + M[2][1] * y + M[2][2] * z + M[2][3]
+                w.append((wx, wy, wz))
+            # face normal in car space (repo axes), then the radial outward test
+            ux, uy, uz = (w[1][i] - w[0][i] for i in range(3))
+            vx, vy, vz = (w[2][i] - w[0][i] for i in range(3))
+            nx, ny, nz = uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx
+            cy = sum(q[1] for q in w) / 3.0
+            cz = sum(q[2] for q in w) / 3.0 - 0.570
+            if ny * cy + nz * cz <= 0.0:
+                continue
+            for wx, wy, wz in w:
                 pts.append((-wx * 1000.0, wy * 1000.0, wz * 1000.0))
     return pts
 

@@ -1,0 +1,72 @@
+{
+ "when": 1790436088.958925,
+ "decisions": {
+  "wall_mm": 3.0,
+  "density_g_cm3": 1.24,
+  "flange_w_mm": 30.0,
+  "bond_line_mm": 1.0,
+  "panel_gap_mm": 4.0,
+  "bed_mm": [
+   350.0,
+   350.0,
+   350.0
+  ],
+  "bed_margin_mm": 10.0,
+  "tab_mm": 20.0,
+  "orient": "smallest dimension vertical"
+ },
+ "ready_to_bond": {
+  "parts": [
+   "P01",
+   "P05",
+   "P06",
+   "P07",
+   "P08",
+   "P13",
+   "P14",
+   "P21",
+   "P22",
+   "P24",
+   "P25",
+   "P26",
+   "P27",
+   "P28",
+   "P29",
+   "P30",
+   "P31",
+   "P32",
+   "P34",
+   "P35",
+   "P36",
+   "P39",
+   "P40",
+   "P41"
+  ],
+  "sections": 311,
+  "one_piece": 311,
+  "fits_bed": 311
+ },
+ "shape_only": {
+  "parts": [
+   "P03",
+   "P04",
+   "P09",
+   "P10",
+   "P15",
+   "P16"
+  ],
+  "sections": 220,
+  "one_piece": 220,
+  "fits_bed": 220,
+  "missing": {
+   "P03": "outer form ours; the inner face is the donor's fender line and the trim at the door shut line moves with door_front_x, +-15 to 30 mm. Needs a trim allowance at that edge, which is NOT in the file.",
+   "P04": "mirror of P03, same note",
+   "P09": "outer form ours; the inner face is currently just the outer offset by the wall and is NOT the OEM door skin. Fit and bond surface come from the scan.",
+   "P10": "mirror of P09, same note",
+   "P15": "outer form ours; overlay on the welded quarter, inner face provisional as P09.",
+   "P16": "mirror of P15, same note"
+  }
+ },
+ "core_kg": 47.4,
+ "small_sections_under_40mm": 149
+}

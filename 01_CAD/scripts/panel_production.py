@@ -23,6 +23,7 @@ import json as _json
 import math
 import mathutils
 import os
+import time
 
 REPO = "/Users/miroslavstatev/vehicle-3d-modeling"
 OUT = os.path.join(REPO, "03_PRINT", "production")
@@ -457,10 +458,16 @@ def cut_into_sections(ob, plan, pid):
     440 of those were under 60 mm. The shape of the mistake is worth keeping. Merging has to be done
     as GROUPS of cells rather than by gluing objects together afterwards, because the plane between
     two merged cells stops being a cut, and a tab ramped there would press a groove into the middle
-    of a continuous panel. That part was right. What broke it was the tab gather: a face outside the
-    group was accepted if it sat within one tab of ANY cell of the group instead of the group's own
-    outer boundary, so distant material was pulled in, the sections came out disconnected, and
-    loose_pieces split each of them into several.
+    of a continuous panel. That part was right.
+
+    WHY IT BROKE IS NOT ESTABLISHED, and the first write-up of this note said it was. It blamed the
+    tab gather. The more likely mechanism, on reflection, is that a corner flake is usually a
+    separate ISLAND of the shell inside its own cell, attached to the rest only across a cut plane
+    -- so merging its faces into "the neighbour with the most faces" does nothing to connect them
+    unless that neighbour is the one it hangs off, and loose_pieces splits it straight back out,
+    now with tab faces from further cells as more loose pieces. A fix would have to merge by
+    CONNECTIVITY across the plane, not by grid adjacency. Unverified; the numbers above are the
+    only facts.
 
     The real cure is probably not a 3D grid at all. A shell wants cutting along its own two surface
     directions, not the world's three axes, and that is a larger change than a merge."""
@@ -888,6 +895,25 @@ def main():
                              "back where it belongs on the car."),
                     "parts": PLACEMENT}, f, indent=1)
     print(f"wrote {pl}  ({len(PLACEMENT)} parts)")
+    # What a print farm needs to know, as data. print_qc.py turns this plus its own result into
+    # 03_PRINT/README.md, so the document a farm reads is generated from the run that made the
+    # files and cannot drift from them the way a hand-written one would.
+    hand = {"when": time.time(),
+            "decisions": {k: (list(v) if isinstance(v, tuple) else v) for k, v in D.items()},
+            "ready_to_bond": {"parts": sorted({r["PANEL"] for r in SCHEDULE}),
+                              "sections": len(SCHEDULE),
+                              "one_piece": sum(1 for r in SCHEDULE if r["PIECES_IN_FILE"] == 1),
+                              "fits_bed": sum(1 for r in SCHEDULE if r["FITS_BED"] == "yes")},
+            "shape_only": {"parts": sorted({r["PANEL"] for r in SHAPE_SCHEDULE}),
+                           "sections": len(SHAPE_SCHEDULE),
+                           "one_piece": sum(1 for r in SHAPE_SCHEDULE if r["PIECES_IN_FILE"] == 1),
+                           "fits_bed": sum(1 for r in SHAPE_SCHEDULE if r["FITS_BED"] == "yes"),
+                           "missing": SHAPE_ONLY},
+            "core_kg": round(total_m, 1),
+            "small_sections_under_40mm": sum(1 for r in SCHEDULE + SHAPE_SCHEDULE
+                                             if max(r["X_MM"], r["Y_MM"], r["Z_MM"]) < 40)}
+    with open(os.path.join(REPO, "03_PRINT", "handoff.json"), "w", encoding="utf-8") as f:
+        _json.dump(hand, f, indent=1)
     if SHAPE_SCHEDULE:
         sh = os.path.join(REPO, "04_ENGINEERING", "reports", "shape_only_schedule.csv")
         with open(sh, "w", newline="", encoding="utf-8") as f:

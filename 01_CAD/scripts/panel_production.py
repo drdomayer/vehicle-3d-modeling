@@ -156,6 +156,14 @@ SHAPE_ONLY = {
     "P15": "outer form ours; overlay on the welded quarter, inner face provisional as P09. "
            "Carries a 30 mm TRIM ALLOWANCE past the rear shut line (overlaps P09).",
     "P16": "mirror of P15, same note",
+    # 2026-09-26: the hood joins the tier. It was PROCEED "on an artefact" and left out of every
+    # run: the built surface ends at spec X ~385 where the cabin cutter starts to bite, 35 mm
+    # short of the donor cowl at 420. That gap IS the donor's scuttle; where the hood's rear
+    # edge really lands is the scan's answer, like the fenders' door line. Outer form ours.
+    "P02": "outer form ours between the fender crests (|Y| < 380). Rear edge: the file ends at "
+           "spec X ~385, 35 mm short of the donor cowl (420) -- no allowance can be carried across "
+           "the cabin cut, so the real rear edge, the hinges and the frunk aperture come from "
+           "the scan.",
 }
 
 # Stage 03 elements are built by stage03_elements.py as closed solids in their own right -- a blade

@@ -1,5 +1,5 @@
 {
- "when": 1790445835.5940092,
+ "when": 1790446134.160533,
  "decisions": {
   "wall_mm": 3.0,
   "density_g_cm3": 1.24,
@@ -54,6 +54,7 @@
  },
  "shape_only": {
   "parts": [
+   "P02",
    "P03",
    "P04",
    "P09",
@@ -61,19 +62,20 @@
    "P15",
    "P16"
   ],
-  "sections": 6,
-  "one_piece": 6,
-  "fits_bed": 4,
+  "sections": 7,
+  "one_piece": 7,
+  "fits_bed": 5,
   "missing": {
    "P03": "outer form ours; the inner face is the donor's fender line. Carries a 30 mm TRIM ALLOWANCE past the door shut line (overlaps P09 by 30 mm): the line moves with door_front_x by +-15..30 mm and the scan says where to cut.",
    "P04": "mirror of P03, same note",
    "P09": "outer form ours; the inner face is currently just the outer offset by the wall and is NOT the OEM door skin. Carries a 30 mm TRIM ALLOWANCE past both shut lines (overlaps P03 and P15). Fit and bond surface come from the scan.",
    "P10": "mirror of P09, same note",
    "P15": "outer form ours; overlay on the welded quarter, inner face provisional as P09. Carries a 30 mm TRIM ALLOWANCE past the rear shut line (overlaps P09).",
-   "P16": "mirror of P15, same note"
+   "P16": "mirror of P15, same note",
+   "P02": "outer form ours between the fender crests (|Y| < 380). Rear edge: the file ends at spec X ~385, 35 mm short of the donor cowl (420) -- no allowance can be carried across the cabin cut, so the real rear edge, the hinges and the frunk aperture come from the scan."
   }
  },
- "core_kg": 52.7,
+ "core_kg": 55.9,
  "dropped_skin_mm2": 54603,
  "small_sections_under_40mm": 0
 }

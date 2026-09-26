@@ -1,5 +1,5 @@
 {
- "when": 1790436707.691893,
+ "when": 1790436912.664103,
  "decisions": {
   "wall_mm": 3.0,
   "density_g_cm3": 1.24,
@@ -55,18 +55,18 @@
    "P15",
    "P16"
   ],
-  "sections": 184,
-  "one_piece": 184,
-  "fits_bed": 184,
+  "sections": 206,
+  "one_piece": 206,
+  "fits_bed": 206,
   "missing": {
-   "P03": "outer form ours; the inner face is the donor's fender line and the trim at the door shut line moves with door_front_x, +-15 to 30 mm. Needs a trim allowance at that edge, which is NOT in the file.",
+   "P03": "outer form ours; the inner face is the donor's fender line. Carries a 30 mm TRIM ALLOWANCE past the door shut line (overlaps P09 by 30 mm): the line moves with door_front_x by +-15..30 mm and the scan says where to cut.",
    "P04": "mirror of P03, same note",
-   "P09": "outer form ours; the inner face is currently just the outer offset by the wall and is NOT the OEM door skin. Fit and bond surface come from the scan.",
+   "P09": "outer form ours; the inner face is currently just the outer offset by the wall and is NOT the OEM door skin. Carries a 30 mm TRIM ALLOWANCE past both shut lines (overlaps P03 and P15). Fit and bond surface come from the scan.",
    "P10": "mirror of P09, same note",
-   "P15": "outer form ours; overlay on the welded quarter, inner face provisional as P09.",
+   "P15": "outer form ours; overlay on the welded quarter, inner face provisional as P09. Carries a 30 mm TRIM ALLOWANCE past the rear shut line (overlaps P09).",
    "P16": "mirror of P15, same note"
   }
  },
- "core_kg": 47.4,
- "small_sections_under_40mm": 59
+ "core_kg": 47.9,
+ "small_sections_under_40mm": 73
 }

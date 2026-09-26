@@ -119,15 +119,35 @@ PANELS = ["P01", "P28", "P41", "P07", "P08", "P39", "P40", "P21", "P22",
 # They go to their own directory with their own schedule, and they are NOT in the supplier package
 # or the "quote this now" list. A shape master for fitting and a part ready to bond are different
 # things and mixing them in one folder is how someone bonds the wrong one.
+# Trim allowance carried across a DONOR shut line, shape-only tier only. (axis, plane, side the
+# neighbour is on, neighbour ids, width). The planes are panel_map.B's, by name, so they cannot
+# drift from the panel boundaries. 30 mm covers the +-15..30 mm the blueprint value carries; the
+# scan then says where to cut, and the cut is a trim, not a remodel.
+TRIM_W_MM = 30.0
+
+
+def trim_at(base):
+    """The allowances for a base panel. A function, because panel_map (and its B) is loaded
+    further down this file and a table here would read it before it exists."""
+    B = _pm["B"]
+    return {
+        "P03": [("x", B["door_front"], "above", {"P09"}, TRIM_W_MM)],
+        "P09": [("x", B["door_front"], "below", {"P03"}, TRIM_W_MM),
+                ("x", B["door_rear"], "above", {"P15"}, TRIM_W_MM)],
+        "P15": [("x", B["door_rear"], "below", {"P09"}, TRIM_W_MM)],
+    }.get(base, [])
+
 SHAPE_ONLY = {
-    "P03": "outer form ours; the inner face is the donor's fender line and the trim at the door "
-           "shut line moves with door_front_x, +-15 to 30 mm. Needs a trim allowance at that edge, "
-           "which is NOT in the file.",
+    "P03": "outer form ours; the inner face is the donor's fender line. Carries a 30 mm TRIM "
+           "ALLOWANCE past the door shut line (overlaps P09 by 30 mm): the line moves with "
+           "door_front_x by +-15..30 mm and the scan says where to cut.",
     "P04": "mirror of P03, same note",
     "P09": "outer form ours; the inner face is currently just the outer offset by the wall and is "
-           "NOT the OEM door skin. Fit and bond surface come from the scan.",
+           "NOT the OEM door skin. Carries a 30 mm TRIM ALLOWANCE past both shut lines (overlaps "
+           "P03 and P15). Fit and bond surface come from the scan.",
     "P10": "mirror of P09, same note",
-    "P15": "outer form ours; overlay on the welded quarter, inner face provisional as P09.",
+    "P15": "outer form ours; overlay on the welded quarter, inner face provisional as P09. "
+           "Carries a 30 mm TRIM ALLOWANCE past the rear shut line (overlaps P09).",
     "P16": "mirror of P15, same note",
 }
 
@@ -197,7 +217,24 @@ def gather(pid):
                         is_flange = True
                         break
                 if not is_flange:
-                    continue
+                    # TRIM ALLOWANCE across a DONOR line, for the shape-only tier. A flange is
+                    # carried across a seam that is ours; a donor shut line is not ours and until
+                    # 2026-09-26 nothing was carried across it -- so a fender core ended exactly on
+                    # a line the blueprint places to +-15..30 mm, with no material to trim to the
+                    # real one. The allowance is the neighbour's surface within TRIM_W past the
+                    # plane, NOT ramped like a flange: it is skin at full height, cut off on the
+                    # car. Consequence, stated in the schedule: shape-only neighbours overlap each
+                    # other by TRIM_W at every donor shut line.
+                    for axis, plane, into, neigh, w in trim_at(base):
+                        if who not in neigh:
+                            continue
+                        v = sx if axis == "x" else z
+                        d = (v - plane) if into == "above" else (plane - v)
+                        if 0 < d <= w:
+                            is_flange = None      # taken, but not a flange: no ramp
+                            break
+                    if is_flange is not True and is_flange is not None:
+                        continue
             b = len(verts)
             for v in f.verts:
                 verts.append((src.matrix_world @ v.co).copy())

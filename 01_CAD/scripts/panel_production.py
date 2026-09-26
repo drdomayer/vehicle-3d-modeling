@@ -141,6 +141,9 @@ SHAPE_SCHEDULE = []
 SHAPE_PLACEMENT = {}
 TIER_EXTRA = []   # filled in main() from SHAPE_ONLY
 SECT_CACHE = {}   # base panel -> its section meshes, so its mirror reuses them
+CRUMB_AREA_MM2 = 600.0   # a fan smaller than ~25 x 25 mm at a pinch is deleted, not detached
+MIN_SECTION_MM = 40.0    # below this span a piece is not handleable; a fan this small at a
+                         # pinch stays attached rather than becoming a flake
 # P40 reads P39's seam through MIRROR_OF, so it is not listed in FLANGE_AT a second time.
 
 _pm = {"__file__": os.path.join(REPO, "01_CAD/scripts/panel_map.py"), "__name__": "_pm"}
@@ -358,7 +361,15 @@ def split_pinch(ob):
     bm.verts.ensure_lookup_table()
     split = 0
     for v in list(bm.verts):
-        if sum(1 for e in v.link_edges if len(e.link_faces) == 1) <= 2:
+        # deleting a crumb fan can remove vertices this loop has not reached yet
+        if not v.is_valid:
+            continue
+        # Every vertex is tested for more than one fan. The first version only looked at vertices
+        # with more than two BOUNDARY edges, and that misses the bowtie where one of the two fans
+        # is wholly interior at the vertex -- two boundary edges, two fans. Measured on P21 on
+        # 2026-09-26: 21 flakes survived the crumb rule, all of them single faces solidify had cut
+        # loose at exactly such vertices. Counting fans is the test; the boundary count was a proxy.
+        if len(v.link_faces) < 2:
             continue
         # group this vertex's faces into fans, walking only through interior edges
         faces = list(v.link_faces)
@@ -382,7 +393,30 @@ def split_pinch(ob):
             fans.append(fan)
         if len(fans) < 2:
             continue
+        # A tiny fan is not a part, it is a crumb. Splitting it off makes it a separate loose
+        # piece, and solidify then turns a one- or two-face crumb into a 6-to-10-vertex prism a
+        # few millimetres across. Measured on P21 on 2026-09-26: with this split in place the panel
+        # produced 118 parts of which 45 were under 40 mm; with it disabled, 65 parts and 3 -- but
+        # 78 non-manifold edges instead of 8. The 149 flakes across the whole set were THIS, not the
+        # grid, and the note on cut_into_sections that blamed the grid was wrong about the cause.
+        # A fan below CRUMB_AREA_MM2 is deleted instead of detached: what is left is a notch in the
+        # shell edge a few millimetres wide, which the laminate never sees.
+        fans.sort(key=lambda fn: -sum(g.calc_area() for g in fn))
         for fan in fans[1:]:
+            area = sum(g.calc_area() for g in fan) * 1e6
+            if area < CRUMB_AREA_MM2:
+                bmesh.ops.delete(bm, geom=[g for g in fan if g.is_valid], context="FACES")
+                split += 1
+                continue
+            # SMALL BUT REAL: one or two faces of a 38 mm mesh, 27 to 40 mm across. Detached they
+            # become flakes nobody can handle; deleted they leave a notch that wide in the panel's
+            # own edge, which is geometry lost. So they stay ATTACHED and the vertex stays a pinch:
+            # one non-manifold edge, which print_qc reports and most slicers repair. Measured on
+            # P21 on 2026-09-26, this is the whole of the 23 flakes that survived the crumb rule.
+            pts = [x.co for g in fan for x in g.verts]
+            fspan = max(max(c[i] for c in pts) - min(c[i] for c in pts) for i in range(3)) * 1000.0
+            if fspan < MIN_SECTION_MM:
+                continue
             nv = bm.verts.new(v.co)
             for g in fan:
                 vs = [nv if x is v else x for x in g.verts]

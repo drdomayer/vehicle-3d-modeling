@@ -6,8 +6,8 @@
 
 | folder | parts | sections | one piece | fits bed | what it is |
 |---|---|---|---|---|---|
-| `production/` | 24 | 311 | 311 | 311 | cores whose outer shape is final; mounting interface still to come from the donor scan |
-| `shape_only/` | 6 | 220 | 220 | 220 | shape masters for fitting — **not** parts to bond; the inner face or the trim edge depends on the car |
+| `production/` | 24 | 238 | 238 | 238 | cores whose outer shape is final; mounting interface still to come from the donor scan |
+| `shape_only/` | 6 | 184 | 184 | 184 | shape masters for fitting — **not** parts to bond; the inner face or the trim edge depends on the car |
 
 Every file is one printable solid, laid on its flattest face, sitting on Z = 0, in **millimetres**. Print it as it comes. `placement.json` in each folder carries the matrix that puts each file back on the car; `04_ENGINEERING/reports/print_schedule.csv` carries the same as degrees and millimetres.
 
@@ -27,25 +27,27 @@ Estimated core mass across both tiers at these assumptions: **~47.4 kg**.
 
 ## Quality of the files, as a slicer sees them
 
-`print_qc.py` reads every file back: closed, manifold, consistently wound, positive volume. Last run: **520 of 531 clean**, 11 with a defect.
+`print_qc.py` reads every file back: closed, manifold, consistently wound, positive volume. Last run: **409 of 422 clean**, 13 with a defect.
 
 Files with something to say (all non-manifold edges, a handful each; most slicers repair these, but that is not a guarantee):
 
 - `P01_FRONT_FASCIA_s01.stl` — 11 non-manifold edge(s)
 - `P01_FRONT_FASCIA_s05.stl` — 3 non-manifold edge(s)
 - `P21_REAR_FASCIA_s16.stl` — 1 non-manifold edge(s)
-- `P21_REAR_FASCIA_s16b.stl` — 1 non-manifold edge(s)
 - `P21_REAR_FASCIA_s25.stl` — 5 non-manifold edge(s)
 - `P21_REAR_FASCIA_s27.stl` — 3 non-manifold edge(s)
-- `P21_REAR_FASCIA_s49.stl` — 10 non-manifold edge(s)
 - `P22_DIFFUSER_s04.stl` — 2 non-manifold edge(s)
+- `P03_FRONT_FENDER_L_s32.stl` — 1 non-manifold edge(s)
+- `P03_FRONT_FENDER_L_s37.stl` — 2 non-manifold edge(s)
 - `P03_FRONT_FENDER_L_s39.stl` — 1 non-manifold edge(s)
+- `P04_FRONT_FENDER_R_s32.stl` — 1 non-manifold edge(s)
+- `P04_FRONT_FENDER_R_s37.stl` — 2 non-manifold edge(s)
 - `P04_FRONT_FENDER_R_s39.stl` — 1 non-manifold edge(s)
 - `P04_FRONT_FENDER_R_s40.stl` — 1 non-manifold edge(s)
 
 ## Known problems, stated rather than hidden
 
-- **149 sections are under 40 mm** in their largest dimension. A 3D grid over a thin curved shell leaves corner fragments; they are real geometry but not handleable parts. A fix is known to be needed and is not done. Expect to lose or discard some.
+- **59 sections are under 40 mm** in their largest dimension. A 3D grid over a thin curved shell leaves corner fragments; they are real geometry but not handleable parts. A fix is known to be needed and is not done. Expect to lose or discard some.
 - The files are the **core** only. Laminate, filler and paint go on top and none of their thicknesses exist as data yet.
 - Nothing here touches the donor car. Every mounting point, hinge, hole and flange that lands on the Porsche is deliberately absent until the car is scanned.
 

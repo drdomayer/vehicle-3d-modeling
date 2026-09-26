@@ -1,5 +1,5 @@
 {
- "when": 1790436088.958925,
+ "when": 1790436707.691893,
  "decisions": {
   "wall_mm": 3.0,
   "density_g_cm3": 1.24,
@@ -42,9 +42,9 @@
    "P40",
    "P41"
   ],
-  "sections": 311,
-  "one_piece": 311,
-  "fits_bed": 311
+  "sections": 238,
+  "one_piece": 238,
+  "fits_bed": 238
  },
  "shape_only": {
   "parts": [
@@ -55,9 +55,9 @@
    "P15",
    "P16"
   ],
-  "sections": 220,
-  "one_piece": 220,
-  "fits_bed": 220,
+  "sections": 184,
+  "one_piece": 184,
+  "fits_bed": 184,
   "missing": {
    "P03": "outer form ours; the inner face is the donor's fender line and the trim at the door shut line moves with door_front_x, +-15 to 30 mm. Needs a trim allowance at that edge, which is NOT in the file.",
    "P04": "mirror of P03, same note",
@@ -68,5 +68,5 @@
   }
  },
  "core_kg": 47.4,
- "small_sections_under_40mm": 149
+ "small_sections_under_40mm": 59
 }

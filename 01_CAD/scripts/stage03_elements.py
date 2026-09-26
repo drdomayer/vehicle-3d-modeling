@@ -67,15 +67,22 @@ def surface_y(spec_x, z, tol=28.0):
 def surface_z(spec_x, y, tol=26.0):
     """The body's own top at this station and lateral position. An element that has to sit INSIDE
     the surface needs to know where the surface is, not a number typed from memory."""
+    # A ray from above, since 2026-09-26. The vertex search within `tol` found nothing at the top
+    # wherever the rings were sparse and fell through to the FLOOR vertices at Z 120 -- and it
+    # did so silently: the louvre comb was built 681 mm tall, down to Z 108, on a body whose slot
+    # had already been cut by a previous run of this script. The ray answers "where is the skin
+    # at this (X, Y)" for any tessellation. It still answers with the slot floor on a body this
+    # script has already cut -- so run statev_master_volumes.build() first, always.
     best = None
     for o in body_objects():
-        M = o.matrix_world
-        for v in o.data.vertices:
-            w = M @ v.co
-            if abs(-w.x * 1000 - spec_x) < tol and abs(abs(w.y * 1000) - abs(y)) < tol:
-                z = w.z * 1000
-                if best is None or z > best:
-                    best = z
+        inv = o.matrix_world.inverted()
+        origin = inv @ mathutils.Vector((-mm(spec_x), mm(y), 3.0))
+        d = inv.to_3x3() @ mathutils.Vector((0.0, 0.0, -1.0))
+        h, loc, n, i = o.ray_cast(origin, d)
+        if h:
+            z = (o.matrix_world @ loc).z * 1000.0
+            if best is None or z > best:
+                best = z
     return best
 
 
@@ -295,16 +302,58 @@ def main():
     # 75 to 109 mm proud of a body whose crown there is 865 to 899 -- a fin out of the bonnet, which
     # the silhouette overlay read as the car's own top line and scored as the front regressing from
     # 3 mm to 21. A liner that pokes out of the panel it lines is not a liner.
+    # 2026-09-26: the single 14 mm liner became a LOUVRE COMB. ref-09 shows this opening on every
+    # view -- four slats, set diagonally in plan (outer-rear to inner-front), in a vent about
+    # 430 x 230 at Y 380..608, spec X -400..+40 read off the top view at 6.5 mm/px. Our slot is
+    # 385..545 by -235..165: the same opening, one lath in it. The lath was the honest minimum on
+    # 2026-09-17; the reference's read is the slats. Four 6 mm slats across the slot at ~60 degrees
+    # to the car's axis, tops 12 mm under the surface, joined by two 6 mm rails along the slot's
+    # walls so the part is ONE piece -- the union is of closed solids, which is the only union
+    # that has ever held in this file.
+    def slab(name, p0, p1, z0, z1, thick):
+        dx, dy = p1[0] - p0[0], p1[1] - p0[1]
+        L_ = math.hypot(dx, dy)
+        nx, ny = -dy / L_ * thick / 2.0, dx / L_ * thick / 2.0
+        corners = [(p0[0] - nx, p0[1] - ny), (p0[0] + nx, p0[1] + ny),
+                   (p1[0] - nx, p1[1] - ny), (p1[0] + nx, p1[1] + ny)]
+        v = [(-mm(x), mm(y), mm(z)) for (x, y) in corners for z in (z0, z1)]
+        f = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]
+        me = bpy.data.meshes.new(name)
+        me.from_pydata(v, [], f)
+        me.update()
+        ob = bpy.data.objects.new(name, me)
+        coll.objects.link(ob)
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        bm.to_mesh(me)
+        bm.free()
+        return ob
     for sgn in (1, -1):
-        st = []
-        for sx in (fs[0][0] + 20, -110, 40, fs[-1][0] - 20):
-            top = surface_z(sx, 465)
-            st.append((sx, sgn * 465, 712, (top - 12.0) if top else 860.0))
-        lin = blade(f"FENDER_CHANNEL_{'L' if sgn > 0 else 'R'}", coll, st, 14.0)
-        lin["panel_id"] = "P05" if sgn > 0 else "P06"
-        lin["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
-        made.append(lin)
-    print("  fender channel liner: a 14 mm wall inside the slot -> registered P05 / P06")
+        tag = "L" if sgn > 0 else "R"
+        tops = {}
+        for sx in (-215, -125, -35, 55, 145):
+            t = surface_z(sx, 465)
+            tops[sx] = (t - 12.0) if t else 860.0
+        z_top_rail = min(tops.values())
+        # two rails along the slot walls, 4 mm off them, and four diagonal slats between
+        comb = slab(f"FENDER_CHANNEL_{tag}", (-225.0, sgn * 391.0), (155.0, sgn * 391.0),
+                    712.0, z_top_rail, 6.0)
+        parts = [slab(f"_rail2_{tag}", (-225.0, sgn * 539.0), (155.0, sgn * 539.0),
+                      712.0, z_top_rail, 6.0)]
+        for sx in (-215, -125, -35, 55):
+            parts.append(slab(f"_slat_{tag}_{sx}", (sx, sgn * 391.0), (sx + 90.0, sgn * 539.0),
+                              712.0, tops[sx], 6.0))
+        for p in parts:
+            m = comb.modifiers.new("u", "BOOLEAN")
+            m.operation, m.object, m.solver = "UNION", p, "EXACT"
+            bpy.context.view_layer.objects.active = comb
+            bpy.ops.object.modifier_apply(modifier=m.name)
+            bpy.data.objects.remove(p, do_unlink=True)
+        comb["panel_id"] = "P05" if sgn > 0 else "P06"
+        comb["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
+        made.append(comb)
+    print("  fender vent: a louvre comb -- four diagonal 6 mm slats on two rails, one part -> P05 / P06")
 
 
     # ---- 4. the rear. In ref-05 the tail is not a wall: a recessed centre mask sits between the

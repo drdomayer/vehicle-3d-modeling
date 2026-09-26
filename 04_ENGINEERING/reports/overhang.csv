@@ -1,7 +1,7 @@
 tier,file,area_cm2,over45,over60,worst,support_cm3,gap_max_mm,flip_over45,flip_over60,flip_worst,flip_support_cm3,flip_gap_max_mm,better_flipped
 ready to bond,P01_FRONT_FASCIA_whole.stl,22333.76,0.211,0.133,90.0,53440.648,298.894,0.211,0.133,90.0,35445.386,298.672,yes
-ready to bond,P05_FENDER_CHANNEL_L_whole.stl,907.67,0.0,0.0,0.0,0.0,0.0,0.426,0.426,90.0,541.518,14.0,
-ready to bond,P06_FENDER_CHANNEL_R_whole.stl,907.67,0.0,0.0,0.0,0.0,0.0,0.426,0.426,90.0,541.518,14.0,
+ready to bond,P05_FENDER_CHANNEL_L_whole.stl,2758.719,0.0,0.0,0.0,0.0,0.0,0.031,0.031,90.0,939.798,109.935,
+ready to bond,P06_FENDER_CHANNEL_R_whole.stl,2758.719,0.0,0.0,0.0,0.0,0.0,0.031,0.031,90.0,939.798,109.935,
 ready to bond,P07_ROCKER_L_whole.stl,9872.346,0.133,0.055,75.066,2973.753,202.014,0.133,0.055,75.066,8542.362,210.954,
 ready to bond,P08_ROCKER_R_whole.stl,9872.341,0.133,0.055,75.066,2972.347,202.014,0.133,0.055,75.066,8542.983,210.954,
 ready to bond,P13_INTAKE_BLADE_L_whole.stl,995.577,0.414,0.414,85.101,296.987,16.667,0.414,0.414,85.101,1518.677,42.0,

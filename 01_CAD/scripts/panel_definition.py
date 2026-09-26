@@ -64,7 +64,7 @@ DEF = {
             "off for wheelhouse and suspension", "splits at the arch crown"),
     "P04": ("sculpted fender over the front wheel", T_BOLT, 20,
             "off for wheelhouse and suspension", "splits at the arch crown"),
-    "P05": ("insert closing the fender channel", T_OURS, 8, "clips out from inside the channel",
+    "P05": ("louvre comb standing in the fender vent (four diagonal slats on two rails)", T_OURS, 8, "clips out from inside the channel",
             "single piece on any machine"),
     "P06": ("insert closing the fender channel", T_OURS, 8, "clips out from inside the channel",
             "single piece on any machine"),

@@ -115,7 +115,7 @@ ARCH = {
     "P02": ("MIXED", "yes", "outer shape ours; rear edge lands on the donor cowl"),
     "P03": ("DONOR", "yes", "arch opening and the front shut line govern it"),
     "P04": ("DONOR", "yes", "arch opening and the front shut line govern it"),
-    "P05": ("OURS",  "yes", "insert inside our own channel"),
+    "P05": ("OURS",  "yes", "louvre comb inside our own vent slot"),
     "P06": ("OURS",  "yes", "insert inside our own channel"),
     "P07": ("MIXED", "yes", "outer form ours; the sill profile governs where it can bond"),
     "P08": ("MIXED", "yes", "outer form ours; the sill profile governs where it can bond"),

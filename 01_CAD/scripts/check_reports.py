@@ -90,6 +90,7 @@ WRITER = {
     "handoff.json": "(B) panel_production.py",
     "README.md": "(P) print_qc.py",
     "fit_test_P39.txt": "(P) fit_test.py P39",
+    "overhang.csv": "(P) overhang_report.py",
 }
 
 NOT_A_REPORT = {

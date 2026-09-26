@@ -221,6 +221,13 @@ def write_readme(total, bad):
              f"done. Expect to lose or discard some.")
     L.append("- The files are the **core** only. Laminate, filler and paint go on top and none of "
              "their thicknesses exist as data yet.")
+    ov = os.path.join(REPO, "04_ENGINEERING", "reports", "overhang.csv")
+    if os.path.exists(ov):
+        L.append("- Orientation is *lay flattest, class-A face up* — never chosen against an "
+                 "overhang limit (Q32). "
+                 "`04_ENGINEERING/reports/overhang.csv` says, per file, how much area hangs past "
+                 "45° and 60° as laid and turned over, so the shop's limit turns into a count "
+                 "rather than a question.")
     L.append("- Nothing here touches the donor car. Every mounting point, hinge, hole and flange "
              "that lands on the Porsche is deliberately absent until the car is scanned.")
     L.append("")

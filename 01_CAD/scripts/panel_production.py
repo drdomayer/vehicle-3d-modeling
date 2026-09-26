@@ -683,16 +683,56 @@ def cut_into_sections(ob, plan, pid):
     return out
 
 
+def class_a_normal(ob):
+    """Area-weighted mean normal of the section's CLASS-A faces, in the car frame.
+
+    The section's mesh is in car coordinates with an identity matrix at this point, so the same
+    radial test face_outward() uses -- pointing away from the body's axis at mid height -- picks
+    the outer skin, and the inner face of the wall, whose normal points the other way, is left out."""
+    bm = bmesh.new()
+    bm.from_mesh(ob.data)
+    acc = mathutils.Vector((0.0, 0.0, 0.0))
+    for f in bm.faces:
+        c = f.calc_center_median()
+        r = mathutils.Vector((0.0, c.y, c.z - 0.570))
+        if r.length < 1e-6:
+            continue
+        n = f.normal.normalized()
+        if n.dot(r.normalized()) > 0.0:
+            acc += n * f.calc_area()
+    bm.free()
+    return acc
+
+
 def lay_flat(ob):
-    """Rotate the section so its smallest dimension is vertical, and drop it onto Z = 0."""
+    """Rotate the section so its smallest dimension is vertical, put the CLASS-A face UP, and
+    drop it onto Z = 0.
+
+    WHICH SIDE UP was never decided until 2026-09-26. lay_flat chose "smallest dimension vertical"
+    and left the sign to chance, so roughly half the sections printed with the outer skin face
+    down -- on supports for a curved shell, which is the worst surface a printer makes and the one
+    that then needs the most filler. overhang_report measured the other half of the cost: 222
+    litres of support volume across the ready-to-bond tier as laid, with 43 files that would need
+    markedly less turned over. The rule is not "least support"; it is class-A up, because the
+    outer face is the one that gets laminated and finished, and a support scar there is paid for
+    twice. The support that costs is then a Q32/Q33 conversation with real numbers."""
     w = [ob.matrix_world @ v.co for v in ob.data.vertices]
     size = [max(p[i] for p in w) - min(p[i] for p in w) for i in range(3)]
     small = size.index(min(size))
+    n_a = class_a_normal(ob)
     if small == 0:
         ob.rotation_euler = (0.0, math.radians(90), 0.0)
     elif small == 1:
         ob.rotation_euler = (math.radians(90), 0.0, 0.0)
     bpy.context.view_layer.update()
+    if n_a.length > 1e-9:
+        up = (ob.matrix_world.to_3x3() @ n_a).z
+        if up < 0.0:
+            # turn it over about the plate's own X axis, on top of whatever laid it flat
+            ob.rotation_euler = (mathutils.Matrix.Rotation(math.pi, 3, "X")
+                                 @ ob.matrix_world.to_3x3()).to_euler()
+            bpy.context.view_layer.update()
+    ob["class_a_up"] = "yes" if n_a.length > 1e-9 else "unknown"
     w = [ob.matrix_world @ v.co for v in ob.data.vertices]
     ob.location.z -= min(p.z for p in w)
     bpy.context.view_layer.update()
@@ -894,12 +934,13 @@ def main():
                                           global_scale=1000.0)
                 except AttributeError:
                     bpy.ops.export_mesh.stl(filepath=path, use_selection=True, global_scale=1000.0)
-                made.append((sfx, ss, fits, path, one_piece(part), place))
+                made.append((sfx, ss, fits, path, one_piece(part), place,
+                             part.get("class_a_up", "unknown")))
         total_m += mass
         total_s += len(made)
         over = [m for m in made if not m[2]]
         split_files = [m for m in made if m[4] > 1]
-        for sfx, ss, fits, path, np_, place in made:
+        for sfx, ss, fits, path, np_, place, cau in made:
             inv = place.inverted()
             o = inv @ mathutils.Vector((0.0, 0.0, 0.0))
             e = inv.to_euler()
@@ -908,6 +949,7 @@ def main():
                                  X_MM=round(ss[0], 1), Y_MM=round(ss[1], 1), Z_MM=round(ss[2], 1),
                                  FITS_BED="yes" if fits else "NO",
                                  PIECES_IN_FILE=np_,
+                                 CLASS_A_UP=cau,
                                  # where the printed file goes back on the car: rotate by these
                                  # degrees about X, Y, Z, then move the file's origin to this point.
                                  PLACE_RX=round(math.degrees(e.x), 2),

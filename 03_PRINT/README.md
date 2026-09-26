@@ -49,6 +49,7 @@ Files with something to say (all non-manifold edges, a handful each; most slicer
 
 - **73 sections are under 40 mm** in their largest dimension. A 3D grid over a thin curved shell leaves corner fragments; they are real geometry but not handleable parts. A fix is known to be needed and is not done. Expect to lose or discard some.
 - The files are the **core** only. Laminate, filler and paint go on top and none of their thicknesses exist as data yet.
+- Orientation is *lay flattest, class-A face up* — never chosen against an overhang limit (Q32). `04_ENGINEERING/reports/overhang.csv` says, per file, how much area hangs past 45° and 60° as laid and turned over, so the shop's limit turns into a count rather than a question.
 - Nothing here touches the donor car. Every mounting point, hinge, hole and flange that lands on the Porsche is deliberately absent until the car is scanned.
 
 ## Before printing all of it: print ONE panel

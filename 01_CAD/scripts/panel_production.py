@@ -443,7 +443,27 @@ def plan_cuts(ob):
 
 def cut_into_sections(ob, plan, pid):
     """Build the printed sections on the planned grid. A section runs to its cut and then one TAB
-    past it, dropped inward by a wall plus the bond line, so the next section lands on that tab."""
+    past it, dropped inward by a wall plus the bond line, so the next section lands on that tab.
+
+    KNOWN AND NOT FIXED: THE GRID MAKES FLAKES. Measured on 2026-09-26 across the whole set, 149 of
+    531 sections are under 40 mm in their largest dimension and 68 are under 20. A twelve-millimetre
+    flake of a 3 mm wall is not a part -- it cannot be handled, aligned or bonded, and a farm given
+    149 of them will lose some. Worst on P21 (45), P01 (18) and P03/P04 (17 each).
+
+    The cause is geometric rather than a bug: a 3D grid laid over a thin curved shell leaves a
+    corner fragment in every cell the shell merely clips, and no spacing removes that.
+
+    MERGING SLIVER CELLS WAS TRIED ON 2026-09-26 AND MADE IT WORSE -- 311 sections became 623, and
+    440 of those were under 60 mm. The shape of the mistake is worth keeping. Merging has to be done
+    as GROUPS of cells rather than by gluing objects together afterwards, because the plane between
+    two merged cells stops being a cut, and a tab ramped there would press a groove into the middle
+    of a continuous panel. That part was right. What broke it was the tab gather: a face outside the
+    group was accepted if it sat within one tab of ANY cell of the group instead of the group's own
+    outer boundary, so distant material was pulled in, the sections came out disconnected, and
+    loose_pieces split each of them into several.
+
+    The real cure is probably not a 3D grid at all. A shell wants cutting along its own two surface
+    directions, not the world's three axes, and that is a larger change than a merge."""
     if not plan:
         return [ob]
     edges = {}

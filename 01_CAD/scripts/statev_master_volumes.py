@@ -24,6 +24,7 @@ Donor hardpoints are read, never written. Nothing here moves a wheel, the screen
 import bpy
 import mathutils
 import bmesh
+import json
 import math
 import os
 import time
@@ -145,6 +146,86 @@ NOSE_MOUTH = [(-900, 5, 190, 330), (-850, 60, 185, 400), (-770, 110, 180, 460),
 # that meets the undercut edge (Z ~330 at the tail, the P21/P22 seam) instead of a flat slab.
 # Side silhouette: unaffected by construction -- silhouette_overlay compares the TOP line only.
 DIFFUSER_FLOOR = [(2870, 120), (3000, 150), (3145, 215), (3300, 290), (3420, 330)]
+
+# THE DONOR CLEARANCE, 2026-09-26. CLAUDE.md hard constraint 3: 15-20 mm of air to every OEM
+# structure until the car is scanned. Measured today with rays against BLOCK_986_approx along the
+# whole side: the SILL band (Z 150-320) was inside the donor at 146 of 150 samples, worst -189 mm
+# at spec X 1200 / Z 150 (ours 627, donor 817); the DOOR band (Z 400-700) inside at 101 of 140,
+# worst -125 at 1180 / 550 -- the door channel's floor, 126 mm inside the OEM door skin. The lower
+# body had been drawn as a hull narrowing to the floor while the 986 carries wide sills, and the
+# side's negative spaces were cut without anything to stop them at the donor. Nothing measured
+# this: check_donor_fit looked at the nose, the arches and the quarter, not the sill or the door.
+# The clamp: below, the section may not come inside the donor's own half-width plus DONOR_CLEAR.
+# It is applied AFTER the voids, so a channel keeps its lip and loses only the depth the donor
+# forbids. Rocker/sill: spec X 330..2300 below Z 330 (welded structure). Door and quarter:
+# 440..2300, Z 330..800 (the OEM door stays; the quarter is an overlay). The front fenders and
+# both bumpers are replaced outright and are not clamped. Table: data/donor_side_986.json, from
+# the block, APPROX +-30..50 mm -- the scan replaces it, the rule does not change.
+# 30, not 20: the clamp acts per station and the rings are then smoothed along X, and the
+# smoothing takes 8-11 mm back where the channel depth varies between neighbours (measured:
+# ring 869.6 at spec X 1000 / Z 654, mesh 861). 30 leaves the 15-20 the rule asks for after
+# that, against a block that is itself +-30..50.
+DONOR_CLEAR = 30.0
+# The zones start ahead of the structure they protect and end behind it, because the rings are
+# smoothed along X over about +-100 mm after ring() and a clamp that starts AT the sill is
+# still fading in 95 mm later (measured: +1 mm of air at spec X 425 with x0 = 330). 250..330 is
+# inside the front arch cut and 380..440 is the replaced fender, so starting there costs nothing;
+# the end runs to 2600, past the side-intake field's tail at 2300, which the old 2300 end let
+# fade back inside the quarter (-303 mm at spec X 2294, Z 682).
+# DISABLED on 2026-09-26, the same day, and the reason is a design decision that is not mine.
+# With the clamp on, the sill measures +15 and the door +22 -- but the door channel is gone
+# (its lip 68 -> 3.8 degrees, "the light does not break"), the side reads as a slab, and the
+# plan against ref-09 regresses 2.4 -> 3.2%. The fact underneath: ref-09's waist at the doors is
+# 0.88 W = 814 mm half-width, and the 986's own door skin sits at 845..860 there. The render's
+# waist cannot be built on this donor; the side's negative spaces can, but only OUTBOARD of the
+# OEM skin -- door upper skin pushed to ~918, channel floor at donor + 30, rocker as a blade at
+# ~918 with the DECIDED ROCKER_CHANNEL undercut cut into it (floor ~850 over a sill of ~818).
+# That is a rebuilt side and a plan that departs from the reference on purpose. It waits for the
+# owner's call (docs/14 section I). Until then the geometry is v040 and check_donor_fit carries
+# the conflict as CHECK rows: sill -189 mm, door -125 mm. The zones to switch on:
+#     (250.0, 2600.0, 125.0, 330.0), (440.0, 2600.0, 330.0, 800.0)
+DONOR_CLAMP = []
+DONOR_CLAMP_RAMP = 60.0   # mm over which the clamp fades in at each X end, so it cannot step
+# edge_test.py and others exec this file's source without __file__; fall back to the script dir.
+_SCRIPTS = (os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals()
+            else "/Users/miroslavstatev/vehicle-3d-modeling/01_CAD/scripts")
+try:
+    with open(os.path.join(_SCRIPTS, "data", "donor_side_986.json"), encoding="utf-8") as _f:
+        _DS = json.load(_f)
+    _DS_X = _DS["spec_x"]
+    _DS_Z = _DS["z"]
+    _DS_H = _DS["half_width"]
+except (OSError, KeyError):
+    _DS = None
+
+
+def donor_hw(spec_x, z):
+    """The donor block's half-width at (spec X, Z), bilinear on the 50 x 25 mm table; None off it
+    or where the block has no body (a niche, the wheel well)."""
+    if _DS is None or not (_DS_X[0] <= spec_x <= _DS_X[-1]) or not (_DS_Z[0] <= z <= _DS_Z[-1]):
+        return None
+    i = min(int((spec_x - _DS_X[0]) / 50.0), len(_DS_X) - 2)
+    j = min(int((z - _DS_Z[0]) / 25.0), len(_DS_Z) - 2)
+    fx = (spec_x - _DS_X[i]) / 50.0
+    fz = (z - _DS_Z[j]) / 25.0
+    c = [_DS_H[str(_DS_X[i + a])][str(_DS_Z[j + b])] for a in (0, 1) for b in (0, 1)]
+    if any(v is None for v in c):
+        return None
+    return ((c[0] * (1 - fz) + c[1] * fz) * (1 - fx) + (c[2] * (1 - fz) + c[3] * fz) * fx)
+
+
+def donor_clamp(spec_x, z, y):
+    """y, or the donor's half-width plus the clearance where the section came inside it."""
+    for x0, x1, z0, z1 in DONOR_CLAMP:
+        if x0 <= spec_x <= x1 and z0 <= z < z1:
+            d = donor_hw(spec_x, z)
+            if d is None:
+                return y
+            w = min(smoothstep(x0, x0 + DONOR_CLAMP_RAMP, spec_x),
+                    1.0 - smoothstep(x1 - DONOR_CLAMP_RAMP, x1, spec_x))
+            floor = d + DONOR_CLEAR
+            return y + (max(y, floor) - y) * w
+    return y
 
 # The blade itself: thin the nose above the mouth so the upper line reads sharp, not blunt.
 NOSE_BLADE_X0, NOSE_BLADE_X1 = -965.0, -640.0
@@ -946,6 +1027,7 @@ def ring(spec_x):
         # they were pulled straight back out again by flank(), which is a second reason the door
         # channel measured nothing through the middle.
         y -= void_field(spec_x, z)
+        y = donor_clamp(spec_x, z, y)
         pts.append((min(MAX_HALF_WIDTH, max(20.0, y)), z))
     half = [(0.0, z_floor)] + pts
     # The door top, carried inboard past the cabin cut. Without this the shelf stopped around

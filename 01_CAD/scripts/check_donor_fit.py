@@ -69,6 +69,64 @@ def main():
     def add(sev, what, got, want, prov, note):
         rows.append((sev, what, got, want, prov, note))
 
+    # ---- 0. THE SIDE, against the donor block, 2026-09-26. Added after the sill band measured
+    # inside the donor at 146 of 150 samples (worst -189 mm) and the door band at 101 of 140
+    # (worst -125) without any row here saying so. Body vertices in each band against
+    # data/donor_side_986.json (the block, +-30..50); vertices inside a stage-03 pocket box are
+    # skipped, because a pocket floor is a hole, not skin.
+    try:
+        with open(os.path.join(HERE, "data", "donor_side_986.json"), encoding="utf-8") as f:
+            ds = json.load(f)
+        _pm = {"__name__": "_pm"}
+        with open(os.path.join(HERE, "panel_map.py"), encoding="utf-8") as f:
+            exec(f.read().split("\ndef main(")[0], _pm)
+        pockets = _pm["POCKETS"]
+
+        def dhw(sx, z):
+            X, Z, H = ds["spec_x"], ds["z"], ds["half_width"]
+            if not (X[0] <= sx <= X[-1] and Z[0] <= z <= Z[-1]):
+                return None
+            i = min(int((sx - X[0]) / 50.0), len(X) - 2)
+            j = min(int((z - Z[0]) / 25.0), len(Z) - 2)
+            fx, fz = (sx - X[i]) / 50.0, (z - Z[j]) / 25.0
+            c = [H[str(X[i + a])][str(Z[j + b])] for a in (0, 1) for b in (0, 1)]
+            if any(v is None for v in c):
+                return None
+            return (c[0] * (1 - fz) + c[1] * fz) * (1 - fx) + (c[2] * (1 - fz) + c[3] * fz) * fx
+
+        for what, x0, x1, z0, z1 in (("sill band air, Z 150..320", 360, 1820, 150, 320),
+                                     ("door band air, Z 400..700", 460, 1620, 400, 700),
+                                     ("rear quarter air, Z 400..700", 1700, 2300, 400, 700)):
+            worst, n, n_in = None, 0, 0
+            for x, y, z in P:
+                if not (x0 <= x <= x1 and z0 <= z <= z1):
+                    continue
+                if any(px0 <= x <= px1 and py0 <= abs(y) <= py1 and pz0 <= z <= pz1
+                       for _, px0, px1, py0, py1, pz0, pz1 in pockets):
+                    continue
+                # nor the arch cylinders' own walls and end caps: the first run reported -303 mm
+                # at spec X 2294 / Z 682 from a vertex ON the rear arch cylinder (d = 365) at the
+                # cutter's inboard end, Y 579 -- the wheel well, not the quarter's skin.
+                if any(math.hypot(x - ax, z - tod / 2.0) < radius + 6.0
+                       for ax, radius, open_w, tod, twid in ARCHES.values()):
+                    continue
+                d = dhw(x, z)
+                if d is None:
+                    continue
+                n += 1
+                air = abs(y) - d
+                if air < 15.0:
+                    n_in += 1
+                if worst is None or air < worst[0]:
+                    worst = (air, x, z, abs(y), d)
+            if worst:
+                add("CHECK" if worst[0] < 15.0 else "OK", what, f"{worst[0]:+.0f}", ">= 15",
+                    "donor block approx +-30..50 mm",
+                    f"{n_in} of {n} skin vertices under +15 mm; worst at spec X {worst[1]:.0f} "
+                    f"Z {worst[2]:.0f}: ours {worst[3]:.0f}, donor {worst[4]:.0f}. Hard constraint 3.")
+    except (OSError, KeyError) as e:
+        add("CHECK", "side vs donor", "--", "table", "data/donor_side_986.json", f"not measured: {e}")
+
     # ---- 1. the nose against the donor's own front face
     nose = min(X)
     donor_nose = -DIMS["front_overhang"][0]

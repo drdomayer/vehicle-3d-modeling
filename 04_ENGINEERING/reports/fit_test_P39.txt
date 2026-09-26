@@ -1,0 +1,86 @@
+================================================================================================
+FIT TEST — P39 ROCKER_END_L
+================================================================================================
+
+  CLAUDE.md hard constraint 6: one panel is printed, laminated and checked BEFORE
+  the rest. This is that panel, and this sheet is what the check consists of.
+
+  WHAT ONE PRINT ANSWERS
+    - does a 3 mm printed wall survive lamination without distorting
+        docs/13 Q30 — the wall is a DESIGN ASSUMPTION, never tested
+    - does the tab joint hold two sections in line while they are bonded
+        the tab is 20 mm, dropped inward by a wall plus a 1 mm bond line — decided, not proven
+    - does the section print at the orientation the pipeline chose
+        docs/13 Q32/Q33 — orientation is 'lay flattest', not chosen against an overhang limit
+    - do filler and paint bury the character lines
+        the side lip turns 67 degrees and the crest 55; nobody has seen either under paint
+    - is the printed part the size the file says
+        shrinkage is assumed zero; PLA and PETG are not zero
+    - does the finished panel still match the design surface
+        assembly_check says the FILES do, to a median of 0.00 mm. The PART is a different claim.
+
+  THE FILES — 3 section(s), print all of them
+    file                                               L       W       H  one piece
+    P39_ROCKER_END_L_s01.stl                       281.5   200.5   182.3  yes
+    P39_ROCKER_END_L_s02.stl                        67.6    38.9    14.5  yes
+    P39_ROCKER_END_L_s03.stl                       221.7   165.9    97.1  yes
+
+    Each file is already laid on its flattest face and sitting on Z = 0. Print it as
+    it comes; do not re-orient it, because the schedule's placement puts it back on
+    the car in that orientation and nothing else records which way up it went.
+
+  THE MEASUREMENTS — a caliper and a steel rule, no scanner
+    Six landmarks, each an extreme of the part, so each is a corner or a tip you can
+    put a jaw on. Measure every pair at every stage and write the number down.
+
+    landmark          spec X         Y         Z
+    front-most        2735.6     669.5     166.9
+    rear-most         3017.0     713.2     266.8
+    left-most         2779.6     911.7     330.0
+    right-most        2999.5     585.0     144.7
+    lowest            2735.8     610.9     121.3
+    highest           2779.4     910.9     332.9
+
+    DESIGN DISTANCES, in millimetres. These are what the part is checked against.
+      front-most     -> rear-most          301.8
+      front-most     -> left-most          295.2
+      front-most     -> right-most         278.0
+      front-most     -> lowest              74.3
+      front-most     -> highest            296.2
+      rear-most      -> left-most          315.8
+      rear-most      -> right-most         178.0
+      rear-most      -> lowest             332.8
+      rear-most      -> highest            316.0
+      left-most      -> right-most         435.2
+      left-most      -> lowest             368.7
+      right-most     -> lowest             266.0
+      right-most     -> highest            436.0
+      lowest         -> highest            369.7
+
+  WHEN TO MEASURE, and what a change at each stage means
+    1. straight off the printer, per section   -> shrinkage, and whether the
+       printer built the file it was given
+    2. sections bonded, before laminate        -> whether the tab joint held them
+       in line; this is the number most likely to move
+    3. after laminate, before filler           -> whether the wall distorted under
+       the resin's heat and shrinkage
+    4. after filler and paint                  -> the finished panel, and whether
+       the character lines are still readable
+
+  WHAT PASSING MEANS, and it is a decision, not a measurement
+    This project has no tolerance from anybody yet — docs/13 Q16 is unanswered — so
+    no number here can be called a limit without inventing one. What the sheet can
+    say honestly is the SCALE the rest of the work assumes:
+      - the panel gaps are designed at 4 mm, so a joint that moves more than about
+        2 mm eats half the gap and will show;
+      - the flange is 30 mm with a 1 mm bond line, so a face out of plane by more
+        than 1 mm has nothing left to bond into;
+      - the whole car is built to a locked width of 1850 mm; a panel 1 % off is
+        18 mm, which is four gaps.
+    Write the measured numbers down, then decide with the composite shop. The point
+    of this panel is to have real numbers in that conversation instead of a plan.
+
+  WHAT THIS TEST CANNOT TELL YOU
+    It says nothing about anything that touches the donor — this panel was chosen
+    because it does not. Fit to the car is a separate test, after the scan, and it
+    is the only one of the two that the scan can change.

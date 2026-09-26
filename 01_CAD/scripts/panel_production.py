@@ -139,6 +139,7 @@ PLACEMENT = {}   # printed file -> the 4x4 that puts it back on the car
 SHAPE_SCHEDULE = []
 SHAPE_PLACEMENT = {}
 TIER_EXTRA = []   # filled in main() from SHAPE_ONLY
+SECT_CACHE = {}   # base panel -> its section meshes, so its mirror reuses them
 # P40 reads P39's seam through MIRROR_OF, so it is not listed in FLANGE_AT a second time.
 
 _pm = {"__file__": os.path.join(REPO, "01_CAD/scripts/panel_map.py"), "__name__": "_pm"}
@@ -692,6 +693,7 @@ def main():
     SHAPE_SCHEDULE.clear()
     SHAPE_PLACEMENT.clear()
     TIER_EXTRA[:] = [p for p in SHAPE_ONLY if p not in PANELS]
+    SECT_CACHE.clear()
     os.makedirs(SHAPE_OUT, exist_ok=True)
     for pid in list(PANELS) + list(TIER_EXTRA):
         for o in list(bpy.data.objects):
@@ -740,7 +742,35 @@ def main():
         mass = vol / 1000.0 * D["density_g_cm3"] / 1000.0
         plan, size, ext = plan_cuts(probe)
         bpy.data.objects.remove(probe, do_unlink=True)
-        secs = cut_into_sections(ob, plan, pid)
+        # A MIRRORED PANEL IS THE MIRROR OF ITS BASE'S SECTIONS, not a second independent cut.
+        #
+        # Measured on 2026-09-26: P07 and P08 come out of build() identical -- 366 vertices, 314
+        # faces, the same bounding box to a tenth of a millimetre -- and plan_cuts gives them the
+        # same grid, 5 cuts in X and 1 in Y. P07 then yields 17 sections and P08 yields 13. The
+        # left and right of a symmetric car were being cut into different numbers of parts.
+        #
+        # The cause is in the cell test: a cell takes its neighbour's faces as a TAB only in the
+        # PLUS direction of each axis, `hi <= cc < hi + tab`. That direction is absolute, so on the
+        # left it reaches outboard and on the right inboard, and a thin cell that survives the
+        # `len(faces) < 3` guard on one side is dropped on the other.
+        #
+        # Making the tab direction relative would change every existing file. Mirroring is both
+        # smaller and more correct: the car is symmetric by construction, panel_map already builds
+        # the right half as a mirror of the left, and two sides that differ are a manufacturing
+        # nuisance rather than a design. The base is always processed first -- PANELS lists it that
+        # way -- and its section meshes are kept until its mirror has used them.
+        base = MIRROR_OF.get(pid)
+        if base is not None and base in SECT_CACHE:
+            secs = []
+            for k, md in enumerate(SECT_CACHE[base]):
+                cp = bpy.data.objects.new(f"SEC_{pid}_m{k}", md.copy())
+                bpy.context.scene.collection.objects.link(cp)
+                mirror_in_place(cp)
+                secs.append(cp)
+        else:
+            secs = cut_into_sections(ob, plan, pid)
+            if any(pid == b for b in MIRROR_OF.values()):
+                SECT_CACHE[pid] = [o.data.copy() for o in secs]
         made = []
         for j, sec in enumerate(secs, 1):
             face_outward(sec)

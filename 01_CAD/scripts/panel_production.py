@@ -785,6 +785,17 @@ def loose_pieces(ob):
         if o is not ob:
             bpy.data.objects.remove(o, do_unlink=True)
     out = [o for o in out if o not in dead]
+    # Drop the CRUMBS too. split_pinch deletes a fan under CRUMB_AREA_MM2 instead of detaching it,
+    # but a pinch that only becomes a separate piece AFTER thicken() never met that rule: on
+    # 2026-09-26 P03 s14b was a 12-triangle box 15 x 6 x 15 mm at the top of the fender wall, and
+    # because its skin has two faces of nearly equal area face_outward() had no majority to go by,
+    # so it was thickened OUTWARD and put the assembled width at 1853.6 against the locked 1850.
+    # The same rule as the fan rule, on the same number: half the solid's surface is its skin, and
+    # a skin under 25 x 25 mm is not a part.
+    crumbs = [o for o in out if o is not ob and sum(p.area for p in o.data.polygons) * 1e6 / 2.0 < CRUMB_AREA_MM2]
+    for o in crumbs:
+        bpy.data.objects.remove(o, do_unlink=True)
+    out = [o for o in out if o not in crumbs]
     if not out:
         return []
     # biggest first, so a section's own numbering runs from its main piece outward
@@ -814,6 +825,19 @@ def one_piece(ob):
 
 def main():
     os.makedirs(OUT, exist_ok=True)
+    os.makedirs(SHAPE_OUT, exist_ok=True)
+    # The output directories are REGENERATED, not appended to. Until 2026-09-26 an export only
+    # wrote the files it made, and every file from an earlier numbering stayed: 288 files in
+    # production against 213 in placement.json, and print_qc.py read all 288 as if they were
+    # the car -- 75 of its "files" were sections that no longer existed. placement.json is the
+    # list of parts; a file not in it is not a part, and it is removed before the new ones land.
+    stale = 0
+    for d_ in (OUT, SHAPE_OUT):
+        for fn in os.listdir(d_):
+            if fn.lower().endswith(".stl"):
+                os.remove(os.path.join(d_, fn))
+                stale += 1
+    print(f"  cleared {stale} .stl file(s) from the two output directories before exporting")
     print("=" * 104)
     print("PANEL PRODUCTION — the blanks become decisions, written down and argued for")
     print("=" * 104)

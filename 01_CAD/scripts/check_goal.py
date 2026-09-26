@@ -37,7 +37,13 @@ REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 BASE = os.path.join(REPO, "01_CAD/scripts/data/goal_baseline.json")
 TOL = {"front_mm": 3.0, "rear_mm": 5.0, "mean_mm": 5.0, "curvature": 0.02, "plan_pct": 0.5,
        "edge_defects": 0.0,   # a NEW line out of its docs/16 band is a regression, always
-       "surf_x_mm": 1.0, "surf_z_mm": 1.0}
+       "surf_x_mm": 1.0, "surf_z_mm": 1.0,
+       # END VIEWS, added 2026-09-26 (endview_overlay.py): the fender shoulder shape against
+       # ref-09's front and rear panels, mean |diff| of the normalised climb over the outer
+       # quarter. The silhouette and the plan are contours; neither sees whether the fender is
+       # a wall with a plateau or a dome. This does. 0.18 / 0.19 before the shoulder work,
+       # 0.03 / 0.08 after.
+       "endview_front": 0.02, "endview_rear": 0.02}
 # surf_* is the CONTROL. curvature and edge_defects are both read off the mesh, so a change
 # that only re-arranges vertices moves them -- on 2026-09-21 a smoothing change moved the
 # curvature from 0.279 to 0.242 and was committed as the biggest gain so far, while the
@@ -114,6 +120,17 @@ def main():
     # The plan is the third measurement and the newest. Until 2026-09-17 nothing in this repo had
     # ever looked at it, and it turned out to carry the difference the side elevation could not see.
     got.update(parse_plan(run("plan_overlay.py")))
+    for p, lbl in ((os.path.join(REPO, "04_ENGINEERING/statev_v01/front/model_front.png"),
+                    "the front silhouette (ortho_views.py)"),
+                   (os.path.join(REPO, "04_ENGINEERING/statev_v01/front/model_rear.png"),
+                    "the rear silhouette (ortho_views.py)")):
+        if os.path.exists(p):
+            fresh(p, lbl)
+    ev = run("endview_overlay.py")
+    for view, key in (("FRONT", "endview_front"), ("REAR", "endview_rear")):
+        m = re.search(r"  " + view + r"\n(?:.*\n)*?    mean \|diff\| ([\d.]+)", ev)
+        if m:
+            got[key] = float(m.group(1))
     # The curvature half needs the mesh, which lives in Blender, so highlight_test.py writes its
     # result out and this reads it. The age is checked: a value older than the scripts that build
     # the car is a value from a different car, and reporting it as current would be the same class
@@ -156,8 +173,8 @@ def main():
             old = json.load(f)
     print(f"\n  {'metric':<14}{'now':>9}{'baseline':>11}{'change':>9}   verdict")
     bad = 0
-    for k in ("front_mm", "rear_mm", "mean_mm", "plan_pct", "curvature", "edge_defects",
-              "surf_x_mm", "surf_z_mm"):
+    for k in ("front_mm", "rear_mm", "mean_mm", "plan_pct", "endview_front", "endview_rear",
+              "curvature", "edge_defects", "surf_x_mm", "surf_z_mm"):
         if k not in got:
             continue
         n = got[k]

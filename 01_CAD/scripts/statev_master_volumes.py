@@ -188,12 +188,37 @@ CABIN_FLANK_PULL = 0.92
 # hood can stay sunk between the fenders, which is what "layered panels, floating fenders" means.
 # `out` and `drop` give the crest a steep approach instead of a single point, the same fix the deck
 # edge needed on 2026-09-15 -- one control point gets averaged away by resample.
+# 2026-09-26: the crest is the FENDER SHOULDER, not the silhouette line. endview_overlay measured
+# the reference's shoulder at 0.78 of the climb from the widest point to the outer hood, sitting
+# 15 to 25% of the half-width in from the edge, with a valley to 0.67 at 35% before the hood
+# rises. The model had the crest at 35% in and at 1.05 -- higher than its own hood. So: z comes
+# down about 40 mm from the old table (which moved to HOOD_SPINE), y moves OUTBOARD from 600 to
+# 740 at the axle so the climb from the widest point is steep and short, and a VALLEY is added
+# inboard of the crest -- the DRL / vent channel between fender and hood in every view of ref-09.
+# All three are front-view shape; the side silhouette is HOOD_SPINE's and does not move.
 FRONT_CREST = dict(
-    z=[(-950, 530), (-850, 584), (-700, 650), (-500, 774), (-350, 849), (-250, 874),
-       (-150, 892), (0, 903), (150, 906), (300, 909), (430, 935)],
-    y=[(-950, 170), (-850, 330), (-700, 470), (-500, 560), (-250, 590), (0, 600),
-       (300, 585), (430, 560)],
-    out=26.0, drop=30.0)
+    z=[(-950, 500), (-850, 550), (-700, 612), (-500, 734), (-350, 809), (-250, 834),
+       (-150, 852), (0, 863), (150, 866), (300, 869), (430, 895)],
+    # y moved OUTBOARD again on 2026-09-26, +40, after the front-zone measurement: with the flank a
+    # wall at the locked 925 up to Z 700, the reference puts the shoulder 5..11% of the half-width
+    # in (y ~850) and the top edge at 14..18% (y ~780); the section had them at 800 and 740.
+    y=[(-950, 240), (-850, 420), (-700, 600), (-500, 730), (-250, 770), (0, 780),
+       (300, 765), (430, 740)],
+    out=26.0, drop=30.0,
+    # The SHOULDER, 2026-09-26, in two points, because one was measured and was not enough.
+    # The first version put one control point at (crest y + 70, crest z - 50) and the end view
+    # read a straight 50-degree ramp from the widest point to the crest: 0.08 / 0.25 / 0.42 of the
+    # climb at 1 / 3 / 5 % in, against the reference's 0.36 / 0.55 / 0.63. The reference is a
+    # WALL that keeps going ~60 mm above the widest row, a tight shoulder, and a PLATEAU (0.63 ->
+    # 0.73 between 5 and 11 % in), then the top edge. So: the wall top sits sh_in inboard of the
+    # section's own widest point at crest z - sh_drop, and a plateau point sits at (crest y +
+    # pl_out, crest z - pl_drop). Both heights are anchored in feature_anchors.
+    sh_in=6.0, sh_drop=103.0,      # wall top at (top_y - 6, 760 at the axle): near-vertical
+    pl_out=90.0, pl_drop=45.0,     # plateau at (870, 818 at the axle), then approach and crest
+    # the valley between fender and hood: y position and how far below the crest it sits
+    vy=[(-950, 120), (-850, 240), (-700, 380), (-500, 520), (-250, 580), (0, 600),
+        (300, 590), (430, 560)],
+    valley_drop=50.0)
 
 BUTTRESS = dict(x0=1740, x1=3200, y=620, w=300, height=152)   # starts at the hoop plane,
                                                               # outboard of the cabin cut
@@ -326,7 +351,7 @@ def feature_anchors(spec_x):
             lz - lt,                # lower edge approach
             lz,                     # the lower body edge: rocker forward, undercut aft
             table_z(SHOULDER_TRAJECTORY, spec_x),   # the one main side line
-            FLANK_Z_HI,             # top of the near-vertical rear flank
+            table_z(FLANK_TOP, spec_x),   # top of the near-vertical rear flank
             # The front fender crest, added 2026-09-21. It was missed when this list was written
             # because it is APPENDED after pts rather than being part of the profile, and the cost
             # showed up as the largest representation loss on the car: the design turns 55.5 degrees
@@ -337,6 +362,8 @@ def feature_anchors(spec_x):
             # maximum snap added on 2026-09-16 after crests arrived 68 mm short. Measured here it
             # was costing 2.1 mm on average and 4.4 at worst, small but real, and the anchor is the
             # better cure because it fixes the ANGLE too.
+            table_z(FRONT_CREST["z"], spec_x) - FRONT_CREST["sh_drop"],  # fender wall top
+            table_z(FRONT_CREST["z"], spec_x) - FRONT_CREST["pl_drop"],  # fender plateau
             table_z(FRONT_CREST["z"], spec_x) - FRONT_CREST["drop"],   # crest approach
             table_z(FRONT_CREST["z"], spec_x)]                          # the front fender crest
 
@@ -456,14 +483,41 @@ ROCKER_X0, ROCKER_X1 = 330.0, 1820.0
 # 2b. Rear flank. Every section was a smooth arc from floor to crown, so the haunch read as a bulge.
 # In the reference the flank is near vertical between the shoulder and the undercut.
 FLANK_X0, FLANK_X1 = 1900.0, 3050.0
-FLANK_Z_LO, FLANK_Z_HI = 300.0, 660.0      # the band held near constant width
+FLANK_Z_LO, FLANK_Z_HI = 300.0, 660.0      # the band held near constant width (Z_HI: see FLANK_TOP)
+# The top of the wall became a TABLE on 2026-09-26, after the rear end view was measured against
+# ref-09 (endview_overlay.py): the reference keeps the haunch side a wall to about 0.55 of the
+# climb from the widest point to the 25%-in height, turns a tight corner, and runs a PLATEAU from
+# 4 to 12% in before rising onto the buttress. Ours stopped the wall at 660 and ramped in at 45
+# degrees from there: 0.07 / 0.17 / 0.26 of the climb at 1 / 3 / 5% in against 0.29 / 0.55 / 0.59.
+# The HAUNCH SAIL note below read the reference as "tucking in above the shoulder"; measured, it
+# does not, not until the plateau. Falls toward the tail so the haunch top drops with the body.
+FLANK_TOP = [(1900, 660), (2100, 800), (2600, 800), (2850, 740), (3050, 660)]
+# the plateau on top of the wall, as (in from the section top, up from it), scaled by the band's
+# own end fade; both are skipped where they would run into the deck-edge approach
+# (30, 35), (75, 50) measured first: plateau at 0.4 of the climb from the widest row to the
+# buttress approach where the reference has it at 0.57..0.72 -- the reference's haunch top is the
+# DECK LEVEL carried out to the flank wall, not a step half-way up. So the plateau now sits at
+# 860..880 at the axle, the deck spine's own 878, and the wall leans on up to it.
+HAUNCH_PLATEAU = [(12.0, 60.0), (60.0, 80.0)]
 # 0.88 -> 0.95 on 2026-09-16. check_donor_fit measured the rear quarter with ONE millimetre of air
 # over the donor's own skin at spec X 2107 -- our 883 against the donor's 882 -- and that panel is an
 # OVERLAY, so it has to sit outside the OEM skin by the 15 to 20 mm CLAUDE.md requires, plus its own
 # laminate. Pulling the flank harder onto the station maximum is width the locked 1850 already
 # allows: the rear is +-925 at its widest and this band was sitting 42 mm inside that.
 FLANK_PULL = 0.95                          # how strongly it is pulled to the station maximum
-FLANK_EASE_TOP = 34.0                      # short: a crisp shoulder edge, not a roll
+# 34 -> 140 on 2026-09-26. With the wall top at 800 a 34 mm ease dumped 84 mm of width in the last
+# 20 mm of height: an exactly vertical wall to 780 and then a SHELF at 17 degrees, which the end
+# view measured at 0.02 of the climb 1% in (the reference: 0.29). The reference wall LEANS -- about
+# 82 degrees over its upper 140 mm -- and the corner into the plateau comes after that. So the ease
+# now runs over the whole upper band: 925 at 660 to the raw ~840 at 800 is 80 degrees on average.
+FLANK_EASE_TOP = 140.0
+# ...and measured, that alone was still a 39 degree chamfer from 735 to 800, because the pull
+# fades to ZERO at the band top and the raw section tucks 84 mm in over that height. Unclamped the
+# station reaches 980 at the axle; the locked 925 is the clamp, and a clamp is a wall, which is
+# what docs/16 asks the flank to be. So the top of the band keeps a floor of the pull: the wall
+# leans from 925 at ~760 to ~900 at 800 instead of falling to the raw 841, and the plateau starts
+# from there.
+FLANK_TOP_HOLD = 0.45
 FLANK_SHOULDER = 16.0                      # extra mass in the shoulder just above the flank
 
 # 2c. FRONT flank. The rear got this treatment on 2026-09-14 and the front never did, and the
@@ -474,12 +528,19 @@ FLANK_SHOULDER = 16.0                      # extra mass in the shoulder just abo
 # Same mechanism as the rear: hold the section near its station maximum through a Z band so the side
 # runs flat along X and the curvature collects at the crest above and the tuck below.
 FRONT_FLANK_X0, FRONT_FLANK_X1 = -700.0, 500.0
-FRONT_FLANK_Z_LO, FRONT_FLANK_Z_HI = 480.0, 800.0
+FRONT_FLANK_Z_LO, FRONT_FLANK_Z_HI = 480.0, 790.0
 # Z_LO was tried at 380 as well and made the band below WORSE, 0.46 -> 0.56: the lower ramp then
 # lands inside Z 330-500 and a ramp is itself curvature in two directions. Left at 480, where the
 # ramp falls in a band that is already being held.
-FRONT_FLANK_PULL = 0.82
-FRONT_FLANK_EASE_TOP = 60.0
+# 2026-09-26, from the first front-view measurement of the FRONT ZONE alone (endview_overlay,
+# outer quarter): the reference's fender side reaches 0.63 of the shoulder height within 5% of the
+# half-width of the widest point -- about 45 mm inboard -- so it is close to vertical; the model
+# reached 0.23 there and 0.48 at 10%, a slope spread over 20%. Bias -0.171 across the whole
+# climb: rounded where the reference is a wall. Pull 0.82 -> 0.95 and the ease shortened so the
+# hold really is a wall up to the shoulder. Z_HI 800 -> 790, the shoulder height, so the flank
+# hands over to the shoulder point below rather than to a roll.
+FRONT_FLANK_PULL = 0.95
+FRONT_FLANK_EASE_TOP = 30.0
 
 # 2d. HAUNCH SAIL — ATTEMPTED AND REVERTED 2026-09-21. Kept as a note so it is not tried again.
 #
@@ -576,12 +637,18 @@ def table_z(table, spec_x):
 def flank(spec_x, z, hw, hw_max):
     """Pull the profile toward the station's widest value across a Z band, which turns a rolling
     arc into a near-vertical flank. Returns the corrected half-width."""
-    if not (FLANK_X0 <= spec_x <= FLANK_X1) or not (FLANK_Z_LO <= z <= FLANK_Z_HI):
+    z_hi = table_z(FLANK_TOP, spec_x)
+    if not (FLANK_X0 <= spec_x <= FLANK_X1) or not (FLANK_Z_LO <= z <= z_hi + 60.0):
         return hw
     ends = min(smoothstep(FLANK_X0, FLANK_X0 + 300, spec_x),
                1.0 - smoothstep(FLANK_X1 - 300, FLANK_X1, spec_x))
-    inb = min(smoothstep(FLANK_Z_LO, FLANK_Z_LO + 70, z),
-              1.0 - smoothstep(FLANK_Z_HI - FLANK_EASE_TOP, FLANK_Z_HI, z))
+    if z <= z_hi:
+        top = 1.0 - (1.0 - FLANK_TOP_HOLD) * smoothstep(z_hi - FLANK_EASE_TOP, z_hi, z)
+    else:
+        # the held pull lets go over 60 mm ABOVE the band top, where the raw section is taller
+        # than the table (toward the tail); without this the hold was a 74 mm step at specX 2800
+        top = FLANK_TOP_HOLD * (1.0 - smoothstep(z_hi, z_hi + 60.0, z))
+    inb = min(smoothstep(FLANK_Z_LO, FLANK_Z_LO + 70, z), top)
     k = FLANK_PULL * ends * inb
     return hw + (hw_max - hw) * k
 
@@ -615,7 +682,7 @@ def character(spec_x, z):
     if FLANK_X0 <= spec_x <= FLANK_X1:
         ends = min(smoothstep(FLANK_X0, FLANK_X0 + 300, spec_x),
                    1.0 - smoothstep(FLANK_X1 - 300, FLANK_X1, spec_x))
-        add += FLANK_SHOULDER * ends * math.exp(-((z - (FLANK_Z_HI + 40)) / 85.0) ** 2)
+        add += FLANK_SHOULDER * ends * math.exp(-((z - (table_z(FLANK_TOP, spec_x) + 40)) / 85.0) ** 2)
     # waist between the nose and the front fender, so the fender reads as a separate volume
     add -= 16.0 * math.exp(-((spec_x - (-560)) / 190.0) ** 2) * math.exp(-((z - 430) / 190.0) ** 2)
     # plan waist through the door, measured off ref-09's top view. No Z term: it is the plan that
@@ -878,15 +945,40 @@ def ring(spec_x):
     if fz is not None and fz > pts[-1][1] + 8:
         fy = table_z(fc["y"], spec_x)
         fdrop = min(fc["drop"], 0.6 * (fz - pts[-1][1]))
+        # the wall top and the plateau first, each only if there is room for it
+        top_y, top_z = pts[-1]
+        if "sh_in" in fc:
+            sy, sz = top_y - fc["sh_in"], fz - fc["sh_drop"]
+            if sz > top_z + 8 and sy > fy + fc["out"] + 20:
+                half.append((sy, sz))
+            py, pz = fy + fc["pl_out"], fz - fc["pl_drop"]
+            if pz > max(sz, top_z) + 6 and py < half[-1][0] - 10 and py > fy + fc["out"] + 10:
+                half.append((py, pz))
         if fdrop > 6:
             half.append((fy + fc["out"], fz - fdrop))
         half.append((fy, fz))
+        # the valley inboard of the crest, if there is room for it below the crest and above the
+        # section's own top; the crown then rises from it to the centreline
+        if "vy" in fc:
+            vy = table_z(fc["vy"], spec_x)
+            vz = fz - fc["valley_drop"]
+            if vy < fy - 20 and vz > pts[-1][1] + 6:
+                half.append((vy, vz))
     if b_top is not None and b_top > pts[-1][1] + 8:
         y_crest = b["y"] + b["w"] * BUTTRESS_TOP_FRAC / 2
         # The drop is capped at 60 % of the height actually available above the section top. A
         # fixed 34 mm was simply skipped wherever the buttress is low — at specX 2200 and again
         # out at 3100 — which left the edge strong over the wheel and absent at both ends of it.
         drop = min(DECK_EDGE_DROP, 0.60 * (b_top - pts[-1][1]))
+        # the haunch plateau on top of the flank wall, 2026-09-26 (see FLANK_TOP)
+        if FLANK_X0 <= spec_x <= FLANK_X1:
+            ends = min(smoothstep(FLANK_X0, FLANK_X0 + 300, spec_x),
+                       1.0 - smoothstep(FLANK_X1 - 300, FLANK_X1, spec_x))
+            ty, tz = pts[-1]
+            for dy, dz in HAUNCH_PLATEAU:
+                py, pz = ty - dy * ends, tz + dz * ends
+                if ends > 0.05 and py > y_crest + DECK_EDGE_OUT + 10 and pz < b_top - drop - 6:
+                    half.append((py, pz))
         if drop > 6:
             half.append((y_crest + DECK_EDGE_OUT, b_top - drop))   # steep approach into the crest
         half.append((y_crest, b_top))                              # the blade crest

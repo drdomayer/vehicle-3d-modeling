@@ -7,13 +7,13 @@ EDGE TEST — docs/16's CONTINUITY classes, as dihedral angles on the built mesh
   and a crease where the map says G2 is the same defect inverted).
 
   line                                         cls    n    mesh   design    lost  verdict
-  DOOR_UPPER -> DOOR_CHANNEL (the side lip)    G0    14    68.2     65.7    -2.6  ok
-  REAR_FASCIA -> DIFFUSER (undercut edge)      G0     4    69.5     59.9    -9.5  ok
-  DOOR_CHANNEL lower shoulder                  G1    12     9.8      7.8    -2.0  ok
-  DOOR_UPPER -> ROCKER (sill line)             G1     9    49.8     49.6    -0.2  out of band — RECORDED exception
-  the one main side line (shoulder)            G1    25    16.1      6.5    -9.6  ok
-  REAR_HAUNCH_TOP -> REAR_HAUNCH_SIDE          G1     4    30.9     11.8   -19.1  ok
-  FRONT_FENDER_TOP -> FRONT_FENDER_SIDE (crest) G1     9    48.1     55.2     7.1  out of band — RECORDED exception
+  DOOR_UPPER -> DOOR_CHANNEL (the side lip)    G0    15    68.3     65.7    -2.6  ok
+  REAR_FASCIA -> DIFFUSER (undercut edge)      G0     4    69.9     59.9    -9.9  ok
+  DOOR_CHANNEL lower shoulder                  G1    12    10.5      7.8    -2.7  ok
+  DOOR_UPPER -> ROCKER (sill line)             G1     9    52.7     49.6    -3.0  out of band — RECORDED exception
+  the one main side line (shoulder)            G1    25    16.1      3.8   -12.3  ok
+  REAR_HAUNCH_TOP -> REAR_HAUNCH_SIDE          G1     7    17.1     15.4    -1.7  ok
+  FRONT_FENDER_TOP -> FRONT_FENDER_SIDE (crest) G1     9    62.4     64.0     1.5  out of band — RECORDED exception
 
   LINES IN BAND 5 / RECORDED EXCEPTION 2 / DEFECT 0  (of 7 measured)
 
@@ -27,21 +27,21 @@ EDGE TEST — docs/16's CONTINUITY classes, as dihedral angles on the built mesh
   transition                             cls             crease  break made by                               
   BUTTRESS -> REAR_DECK                  G1     no line defined  nothing                                     
   DOOR_CHANNEL -> SIDE_INTAKE_MOUTH      G1     no line defined  opening INTAKE_BLADE_L                      
-  DOOR_UPPER -> DOOR_CHANNEL             G0         68.2 deg ok  nothing                                     
+  DOOR_UPPER -> DOOR_CHANNEL             G0         68.3 deg ok  nothing                                     
   DOOR_UPPER -> REAR_HAUNCH_TOP          G2     no line defined  seam DOOR_SHUT_REAR (0.00 mm off skin)      
-  DOOR_UPPER -> ROCKER                   G1          49.8 deg !  seam ROCKER_to_UPPER_BODY (0.00 mm off skin)
+  DOOR_UPPER -> ROCKER                   G1          52.7 deg !  seam ROCKER_to_UPPER_BODY (0.00 mm off skin)
   ENGINE_COVER -> REAR_FASCIA            G1     no line defined  seam REAR_FASCIA_to_DECK (0.00 mm off skin) 
   FRONT_FENDER_SIDE -> DOOR_UPPER        G0     no line defined  seam FRONT_FENDER_to_DOOR (0.00 mm off skin)
-  FRONT_FENDER_TOP -> FRONT_FENDER_SIDE  G1          48.1 deg !  nothing                                     
+  FRONT_FENDER_TOP -> FRONT_FENDER_SIDE  G1          62.4 deg !  nothing                                     
   HOOD -> FRONT_FENDER_TOP               G2     no line defined  seam HOOD_to_FRONT_BODY (0.00 mm off skin)  
   HOOD -> HEADLIGHT_SURROUND             G1     no line defined  opening HEADLIGHT_SURROUND_L                
   NOSE -> FRONT_LOWER_INTAKE             G0     no line defined  opening NOSE_MOUTH                          
   NOSE -> HOOD                           G1     no line defined  nothing                                     
   REAR_DECK -> ENGINE_COVER              G1     no line defined  seam ENGINE_COVER_to_DECK (0.00 mm off skin)
-  REAR_FASCIA -> DIFFUSER                G0         69.5 deg ok  seam DIFFUSER_to_FASCIA (0.00 mm off skin)  
+  REAR_FASCIA -> DIFFUSER                G0         69.9 deg ok  seam DIFFUSER_to_FASCIA (0.00 mm off skin)  
   REAR_HAUNCH_SIDE -> DIFFUSER           G1     no line defined  seam DIFFUSER_to_FASCIA (0.00 mm off skin)  
   REAR_HAUNCH_TOP -> BUTTRESS            G0     no line defined  nothing                                     
-  REAR_HAUNCH_TOP -> REAR_HAUNCH_SIDE    G1         30.9 deg ok  nothing                                     
+  REAR_HAUNCH_TOP -> REAR_HAUNCH_SIDE    G1         17.1 deg ok  nothing                                     
 
   14 of 17 transitions have evidence: a measured crease, a registered panel seam, or a real opening.
   A seam is not a substitute for a class. The class is about the SURFACE; the seam is

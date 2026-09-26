@@ -27,6 +27,7 @@ overhangs, thin walls and supports depend on the shop's answers in docs/13 Q30 a
 """
 
 import glob
+import json
 import os
 import struct
 import sys
@@ -97,6 +98,21 @@ def main():
         files = sorted(glob.glob(os.path.join(d, "*.stl")))
         if not files:
             continue
+        # The list of PARTS is placement.json, not the directory. On 2026-09-26 this read 288
+        # files in production against 213 parts: 75 were sections from an earlier numbering that
+        # panel_production.py had never removed, audited here as if they were the car. A file
+        # not in placement.json is an orphan and is reported as one, not counted as a part.
+        pj = os.path.join(d, "placement.json")
+        if os.path.exists(pj):
+            with open(pj, encoding="utf-8") as f:
+                parts = set(json.load(f)["parts"])
+            orphans = [p for p in files if os.path.basename(p) not in parts]
+            absent = sorted(parts - {os.path.basename(p) for p in files})
+            if orphans or absent:
+                print(f"\n  {label}: {len(orphans)} file(s) on disk that are NOT in placement.json"
+                      f" and {len(absent)} part(s) in placement.json with no file -- "
+                      "re-run panel_production.py; neither is audited here")
+            files = [p for p in files if os.path.basename(p) in parts]
         issues = 0
         for p in files:
             total += 1

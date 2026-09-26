@@ -34,6 +34,13 @@ import numpy as np
 REPO = "/Users/miroslavstatev/vehicle-3d-modeling"
 SIDE = os.path.join(REPO, "04_ENGINEERING/statev_v01/overlay/model_side.png")
 TOP = os.path.join(REPO, "04_ENGINEERING/statev_v01/plan/model_plan.png")
+# FRONT and REAR, added 2026-09-26. Until then the goal check saw the car from the side and from
+# above and never from ahead -- and ahead is the view in which the model looked nothing like the
+# reference while every metric passed. Rendered as a silhouette of the whole car looking along
+# the axis, so the outline is the widest extent at each height, which is what a front view shows.
+FRONT = os.path.join(REPO, "04_ENGINEERING/statev_v01/front/model_front.png")
+REAR = os.path.join(REPO, "04_ENGINEERING/statev_v01/front/model_rear.png")
+END_W, END_H = 1000, 560          # plan-style contract: compared normalised, framing is free
 BODY = ["STATEV_FRONT_VOLUME", "STATEV_SIDE_VOLUME", "STATEV_REAR_VOLUME"]
 
 # The contract, copied from the top of silhouette_overlay.py. If that changes, this changes with it.
@@ -127,6 +134,23 @@ def main():
     mt = fill(top_px, TOP_W, TOP_H)
     save(ms, SIDE)
     save(mt, TOP)
+    # front view: image x = car Y (left of the car on the right of the image, as a person standing
+    # in front sees it), image y down = Z down; rear view is the mirror in x.
+    zs = [p[2] for t in T for p in t]
+    zc = (min(zs) + max(zs)) / 2.0
+    # ZONE-FILTERED. The first version projected the whole car, and the audit on 2026-09-26 showed
+    # that the front zone then owns NOTHING in the outline: from |Y| 350 to 775 the highest thing
+    # is the rear buttress and haunch, from 800 to 875 the door tops. A front view of the whole
+    # car measures the rear. The front mask is the front zone only (spec X < door_front), the rear
+    # mask the rear zone only (spec X > hoop plane), so each measures the surfaces its name says.
+    ft = [t for t in T if max(p[0] for p in t) < 440.0]
+    rt = [t for t in T if min(p[0] for p in t) > 1760.0]
+    front_px = [[(END_W / 2.0 - p[1] / MMPX, END_H / 2.0 - (p[2] - zc) / MMPX) for p in t] for t in ft]
+    rear_px = [[(END_W / 2.0 + p[1] / MMPX, END_H / 2.0 - (p[2] - zc) / MMPX) for p in t] for t in rt]
+    save(fill(front_px, END_W, END_H), FRONT)
+    save(fill(rear_px, END_W, END_H), REAR)
+    print(f"  front/rear: {END_W}x{END_H}, {MMPX} mm/px, Z centred; FRONT ZONE ONLY / REAR ZONE ONLY"
+          f" ({len(ft)} / {len(rt)} triangles); compared normalised")
 
     cols = np.where(ms.any(axis=0))[0]
     rows = np.where(mt.any(axis=0))[0]

@@ -92,5 +92,3 @@ NOT IN THIS REGISTER YET — needs geometry or the shop's answers:
   - door operation envelope — needs hinge positions from the scan
 
 status of the 42 parts: RED 17, YELLOW 25
-
-wrote /Users/miroslavstatev/vehicle-3d-modeling/04_ENGINEERING/reports/panel_bom.csv

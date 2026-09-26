@@ -273,8 +273,16 @@ DIFFUSER_FINS = ("DIFFUSER_FIN", "03_AERO", 7, 2870, 3420, None, 230, 550, 16, 2
 # Raised with the sections, but NOT to the same line. This is the hood CENTRELINE and the section
 # tops above are the fender crests either side of it; the render shows the hood sunk between them by
 # roughly 60-70 mm through the middle, converging at the cowl where there is only one line left.
-HOOD_SPINE = [(-950, 515), (-850, 565), (-700, 625), (-500, 712),
-              (-250, 800), (0, 838), (200, 845), (420, 970)]
+# 2026-09-26: HOOD_SPINE now CARRIES the side silhouette. Until today FRONT_CREST did -- its z
+# table was taken from ref-05's side outline on 2026-09-16 and matched it to 3 mm -- but a side
+# outline is the maximum over Y and cannot say whether the line it shows is the fender or the
+# hood. endview_overlay.py, the first front-view measurement this project has had, says which:
+# the reference climbs steeply to a fender shoulder at 0.78 of the way up, DIPS to 0.67 between
+# fender and hood, and rises to the hood centre; the model peaked at 1.05 at the fender crest
+# with no dip, so the fender sat ABOVE the hood. The silhouette line therefore belongs to the
+# hood. These are FRONT_CREST's old z values; the crest itself now sits below them.
+HOOD_SPINE = [(-950, 530), (-850, 584), (-700, 650), (-500, 774), (-350, 849), (-250, 874),
+              (-150, 892), (0, 903), (150, 906), (300, 909), (420, 970)]
 HOOD_SPINE_NOTE = ("last point = donor cowl (windshield base), locked. Nose tip height is the design "
                    "call; everything between is the ref-08 side silhouette.")
 

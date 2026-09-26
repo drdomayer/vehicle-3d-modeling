@@ -111,7 +111,7 @@ def lines(M):
         ("the one main side line (shoulder)", "G1",
          lambda x: tz(M["SHOULDER_TRAJECTORY"], x), (-300.0, 3100.0)),
         ("REAR_HAUNCH_TOP -> REAR_HAUNCH_SIDE", "G1",
-         lambda x: M["FLANK_Z_HI"], (M["FLANK_X0"] + 300, M["FLANK_X1"] - 300)),
+         lambda x: tz(M["FLANK_TOP"], x), (M["FLANK_X0"] + 300, M["FLANK_X1"] - 300)),
         # FRONT_CREST is the OUTER top line of the front fender, so its class is
         # FRONT_FENDER_TOP -> FRONT_FENDER_SIDE (G1), not HOOD -> FRONT_FENDER_TOP (G2). The first
         # run of this test had it as G2 and called 38.6 degrees a defect. It is not: the crest was
@@ -243,7 +243,14 @@ def edges_index(bm):
         if r.length < 1e-6:
             continue
         r.normalize()
-        if min(f.normal.normalized().dot(r) for f in e.link_faces) < 0.20:
+        # Two faces that BOTH face up cannot be a cut wall -- cut walls are near vertical -- so a
+        # crest between them is skin whatever the radial test says. Added 2026-09-26, when the
+        # front crest gained a valley inboard of it: the valley-side face points up and slightly
+        # inboard, its radial dot came out at 0.05, and the whole crest vanished from this test
+        # (0.5 degrees measured against 67.8 in the profile). A filter built for arch walls was
+        # rejecting the hood.
+        both_up = all(f.normal.normalized().z > 0.30 for f in e.link_faces)
+        if not both_up and min(f.normal.normalized().dot(r) for f in e.link_faces) < 0.20:
             continue
 
         sx, z = -m.x * 1000.0, m.z * 1000.0

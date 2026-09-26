@@ -6,8 +6,8 @@
 
 | folder | parts | sections | one piece | fits bed | what it is |
 |---|---|---|---|---|---|
-| `production/` | 24 | 238 | 238 | 238 | cores whose outer shape is final; mounting interface still to come from the donor scan |
-| `shape_only/` | 6 | 206 | 206 | 206 | shape masters for fitting — **not** parts to bond; the inner face or the trim edge depends on the car |
+| `production/` | 24 | 213 | 213 | 213 | cores whose outer shape is final; mounting interface still to come from the donor scan |
+| `shape_only/` | 6 | 212 | 212 | 212 | shape masters for fitting — **not** parts to bond; the inner face or the trim edge depends on the car |
 
 Every file is one printable solid, laid on its flattest face, sitting on Z = 0, in **millimetres**. Print it as it comes. `placement.json` in each folder carries the matrix that puts each file back on the car; `04_ENGINEERING/reports/print_schedule.csv` carries the same as degrees and millimetres.
 
@@ -23,31 +23,31 @@ Every file is one printable solid, laid on its flattest face, sitting on Z = 0, 
 | joint tab | 20 mm past each cut, dropped inward by wall + bond | fit test |
 | orientation | smallest dimension vertical | Q32 / Q33 |
 
-Estimated core mass across both tiers at these assumptions: **~47.9 kg**.
+Estimated core mass across both tiers at these assumptions: **~47.5 kg**.
 
 ## Quality of the files, as a slicer sees them
 
-`print_qc.py` reads every file back: closed, manifold, consistently wound, positive volume. Last run: **431 of 444 clean**, 13 with a defect.
+`print_qc.py` reads every file back: closed, manifold, consistently wound, positive volume. Last run: **412 of 425 clean**, 13 with a defect.
 
 Files with something to say (all non-manifold edges, a handful each; most slicers repair these, but that is not a guarantee):
 
-- `P01_FRONT_FASCIA_s01.stl` — 11 non-manifold edge(s)
-- `P01_FRONT_FASCIA_s05.stl` — 3 non-manifold edge(s)
-- `P21_REAR_FASCIA_s16.stl` — 1 non-manifold edge(s)
-- `P21_REAR_FASCIA_s25.stl` — 5 non-manifold edge(s)
-- `P21_REAR_FASCIA_s27.stl` — 3 non-manifold edge(s)
-- `P22_DIFFUSER_s04.stl` — 2 non-manifold edge(s)
-- `P03_FRONT_FENDER_L_s31.stl` — 1 non-manifold edge(s)
-- `P03_FRONT_FENDER_L_s35.stl` — 2 non-manifold edge(s)
-- `P03_FRONT_FENDER_L_s37.stl` — 1 non-manifold edge(s)
-- `P04_FRONT_FENDER_R_s31.stl` — 1 non-manifold edge(s)
-- `P04_FRONT_FENDER_R_s35.stl` — 2 non-manifold edge(s)
-- `P04_FRONT_FENDER_R_s37.stl` — 1 non-manifold edge(s)
-- `P04_FRONT_FENDER_R_s39.stl` — 1 non-manifold edge(s)
+- `P01_FRONT_FASCIA_s01.stl` — 12 non-manifold edge(s)
+- `P01_FRONT_FASCIA_s03.stl` — 1 non-manifold edge(s)
+- `P01_FRONT_FASCIA_s04.stl` — 2 non-manifold edge(s)
+- `P21_REAR_FASCIA_s12.stl` — 1 non-manifold edge(s)
+- `P21_REAR_FASCIA_s20.stl` — 1 non-manifold edge(s)
+- `P21_REAR_FASCIA_s30.stl` — 2 non-manifold edge(s)
+- `P21_REAR_FASCIA_s33.stl` — 2 non-manifold edge(s)
+- `P21_REAR_FASCIA_s51.stl` — 2 non-manifold edge(s)
+- `P22_DIFFUSER_s05.stl` — 2 non-manifold edge(s)
+- `P03_FRONT_FENDER_L_s36.stl` — 1 non-manifold edge(s)
+- `P03_FRONT_FENDER_L_s44.stl` — 1 non-manifold edge(s)
+- `P04_FRONT_FENDER_R_s36.stl` — 1 non-manifold edge(s)
+- `P04_FRONT_FENDER_R_s44.stl` — 1 non-manifold edge(s)
 
 ## Known problems, stated rather than hidden
 
-- **73 sections are under 40 mm** in their largest dimension. A 3D grid over a thin curved shell leaves corner fragments; they are real geometry but not handleable parts. A fix is known to be needed and is not done. Expect to lose or discard some.
+- **34 sections are under 40 mm** in their largest dimension. A 3D grid over a thin curved shell leaves corner fragments; they are real geometry but not handleable parts. A fix is known to be needed and is not done. Expect to lose or discard some.
 - The files are the **core** only. Laminate, filler and paint go on top and none of their thicknesses exist as data yet.
 - Orientation is *lay flattest, class-A face up* — never chosen against an overhang limit (Q32). `04_ENGINEERING/reports/overhang.csv` says, per file, how much area hangs past 45° and 60° as laid and turned over, so the shop's limit turns into a count rather than a question.
 - Nothing here touches the donor car. Every mounting point, hinge, hole and flange that lands on the Porsche is deliberately absent until the car is scanned.

@@ -8,10 +8,10 @@ EDGE TEST — docs/16's CONTINUITY classes, as dihedral angles on the built mesh
 
   line                                         cls    n    mesh   design    lost  verdict
   DOOR_UPPER -> DOOR_CHANNEL (the side lip)    G0    15    68.3     65.7    -2.6  ok
-  REAR_FASCIA -> DIFFUSER (undercut edge)      G0     4    69.9     59.9    -9.9  ok
+  REAR_FASCIA -> DIFFUSER (undercut edge)      G0     4    69.8     59.9    -9.8  ok
   DOOR_CHANNEL lower shoulder                  G1    12    10.5      7.8    -2.7  ok
   DOOR_UPPER -> ROCKER (sill line)             G1     9    52.7     49.6    -3.0  out of band — RECORDED exception
-  the one main side line (shoulder)            G1    25    16.1      3.8   -12.3  ok
+  the one main side line (shoulder)            G1    25    16.1      4.5   -11.6  ok
   REAR_HAUNCH_TOP -> REAR_HAUNCH_SIDE          G1     7    17.1     15.4    -1.7  ok
   FRONT_FENDER_TOP -> FRONT_FENDER_SIDE (crest) G1     9    62.4     64.0     1.5  out of band — RECORDED exception
 
@@ -38,7 +38,7 @@ EDGE TEST — docs/16's CONTINUITY classes, as dihedral angles on the built mesh
   NOSE -> FRONT_LOWER_INTAKE             G0     no line defined  opening NOSE_MOUTH                          
   NOSE -> HOOD                           G1     no line defined  nothing                                     
   REAR_DECK -> ENGINE_COVER              G1     no line defined  seam ENGINE_COVER_to_DECK (0.00 mm off skin)
-  REAR_FASCIA -> DIFFUSER                G0         69.9 deg ok  seam DIFFUSER_to_FASCIA (0.00 mm off skin)  
+  REAR_FASCIA -> DIFFUSER                G0         69.8 deg ok  seam DIFFUSER_to_FASCIA (0.00 mm off skin)  
   REAR_HAUNCH_SIDE -> DIFFUSER           G1     no line defined  seam DIFFUSER_to_FASCIA (0.00 mm off skin)  
   REAR_HAUNCH_TOP -> BUTTRESS            G0     no line defined  nothing                                     
   REAR_HAUNCH_TOP -> REAR_HAUNCH_SIDE    G1         17.1 deg ok  nothing                                     

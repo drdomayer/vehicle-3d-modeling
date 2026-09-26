@@ -28,6 +28,7 @@ import os
 
 import bmesh
 import bpy
+import mathutils
 
 REPO = "/Users/miroslavstatev/vehicle-3d-modeling"
 
@@ -514,6 +515,43 @@ def main():
     made.append(fm)
     print("  central mouth: trapezoid pocket 900/680 wide x 185 tall to a floor at spec X -820,")
     print("    a 26 mm frame standing in it -> P43 FRONT_MASK; the corner bites became corner intakes")
+
+    # ---- 8. DIFFUSER FINS, 2026-09-26. ref-09's rear detail: a rising floor with four tall fins,
+    # two each side of the exhaust housing. The floor now rises (DIFFUSER_FLOOR in
+    # statev_master_volumes); each fin is a 16 mm blade standing in it, its top 12 mm inside the
+    # floor surface and its bottom at Z 125 -- the body's own floor is Z 120, so the 120 mm road
+    # clearance is untouched. The tail narrows to ~260 mm at spec X 3420, so the outer pair stops
+    # at 3300 where the underside is still ~960 wide; the inner pair runs to 3400.
+    def floor_z(sx):
+        a = [(-mm(sx), mm(0.0), mm(-1.0))]
+        best = None
+        for o in body_objects():
+            inv = o.matrix_world.inverted()
+            origin = inv @ mathutils.Vector((-mm(sx), 0.0, -1.0))
+            d = inv.to_3x3() @ mathutils.Vector((0.0, 0.0, 1.0))
+            h, loc, n, i = o.ray_cast(origin, d)
+            if h:
+                z = (o.matrix_world @ loc).z * 1000.0
+                best = z if best is None else min(best, z)
+        return best
+    for pid_l, pid_r, y, x_end, nm in (("P44", "P45", 150.0, 3400.0, "INNER"),
+                                       ("P46", "P47", 330.0, 3300.0, "OUTER")):
+        xs = [3000.0 + k * (x_end - 3000.0) / 4.0 for k in range(5)]
+        for sgn in (1, -1):
+            st = []
+            for x in xs:
+                fz = floor_z(x)
+                if fz is None:
+                    continue
+                st.append((x, sgn * y, 125.0, fz + 12.0))
+            if len(st) < 2:
+                continue
+            b = blade(f"DIFFUSER_FIN_{nm}_{'L' if sgn > 0 else 'R'}", coll, st, 16.0)
+            b["panel_id"] = pid_l if sgn > 0 else pid_r
+            b["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
+            made.append(b)
+    print("  diffuser fins: four 16 mm blades standing in the rising floor, bottoms at Z 125")
+    print("    -> P44 / P45 inner at Y +-150, P46 / P47 outer at Y +-330")
 
     # cut them all out of the body
     for c in cuts:

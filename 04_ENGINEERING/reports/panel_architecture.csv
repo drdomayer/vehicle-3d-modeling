@@ -36,6 +36,10 @@ P21,REAR_FASCIA,-,REAR,19,-X,printed master -> composite,OURS,C,yes,YELLOW,A1 B1
 P34,REAR_CENTRE_MASK,-,REAR,20,-X,direct print,OURS,C,yes,YELLOW,A1 B1 C2,our centre mask between the light bar and the diffuser
 P36,PLATE_RECESS,-,REAR,21,-X,direct print,OURS,C,yes,YELLOW,A1 B1 C2,"our recess; the plate size is legislated, not donor"
 P22,DIFFUSER,-,REAR,22,-X,printed master -> composite,OURS,C,yes,RED,A1 B0 C3,our diffuser; only its top edge meets the donor floor
+P44,DIFFUSER_FIN_INNER_L,L,REAR,23,-Z,direct print,OURS,C,yes,RED,A1 B0 C3,our fin in our diffuser floor; nothing of the donor reaches it
+P45,DIFFUSER_FIN_INNER_R,R,REAR,23,-Z,direct print,OURS,C,yes,RED,A1 B0 C3,our fin in our diffuser floor; nothing of the donor reaches it
+P46,DIFFUSER_FIN_OUTER_L,L,REAR,23,-Z,direct print,OURS,C,yes,RED,A1 B0 C3,our fin in our diffuser floor; nothing of the donor reaches it
+P47,DIFFUSER_FIN_OUTER_R,R,REAR,23,-Z,direct print,OURS,C,yes,RED,A1 B0 C3,our fin in our diffuser floor; nothing of the donor reaches it
 P35,EXHAUST_SURROUND,-,REAR,23,-X,"direct print, heat-capable",OURS,C,yes,YELLOW,A1 B1 C2,our surround around bought tips; sees exhaust heat
 P23,REAR_SPOILER,-,REAR,24,-Z,direct print or composite,OURS,C,yes,RED,A0 B0 C1,our ducktail
 P24,HEADLIGHT_HOUSING_L,L,LIGHTS,25,+X,"direct print, ASA",OURS,C,yes,YELLOW,A0 B0 C2,housing around a bought E-marked module; the module is fixed

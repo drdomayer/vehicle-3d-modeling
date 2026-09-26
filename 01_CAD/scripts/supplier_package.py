@@ -53,6 +53,14 @@ def read(name):
 
 
 def pilot_file(pid):
+    # Since 2026-09-26 production writes ONE file per part; that file is the part's file, and a
+    # pilot directory is no longer the only evidence one exists. P43..P47 read "proven, no file
+    # yet" with their whole-panel files sitting in 03_PRINT/production.
+    prod = os.path.join(PRINT_DIR, "production")
+    if os.path.isdir(prod):
+        for fn in sorted(os.listdir(prod)):
+            if fn.startswith(pid + "_") and fn.endswith("_whole.stl"):
+                return os.path.relpath(os.path.join(prod, fn), REPO)
     d = os.path.join(PRINT_DIR, f"pilot_{pid}")
     if not os.path.isdir(d):
         return ""

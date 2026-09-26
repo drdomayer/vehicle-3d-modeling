@@ -4,10 +4,10 @@ P28,FRONT_SPLITTER_L,whole,297.7,743.3,181.7,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0
 P41,FRONT_SPLITTER_R,whole,297.7,743.3,181.7,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,301.7,,03_PRINT/production/P41_FRONT_SPLITTER_R_whole.stl
 P07,ROCKER_L,whole,1831.2,318.3,211.4,NO,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,331.4,,03_PRINT/production/P07_ROCKER_L_whole.stl
 P08,ROCKER_R,whole,1831.2,318.3,211.4,NO,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,331.4,,03_PRINT/production/P08_ROCKER_R_whole.stl
-P39,ROCKER_END_L,whole,319.3,349.5,212.9,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,332.9,,03_PRINT/production/P39_ROCKER_END_L_whole.stl
-P40,ROCKER_END_R,whole,319.3,349.5,212.9,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,332.9,,03_PRINT/production/P40_ROCKER_END_R_whole.stl
-P21,REAR_FASCIA,whole,608.3,1733.6,421.7,yes,1,yes,33922,0.0,-90.0,0.0,-2998.3,0.0,-0.0,,03_PRINT/production/P21_REAR_FASCIA_whole.stl
-P22,DIFFUSER,whole,420.7,1658.8,212.4,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,332.4,,03_PRINT/production/P22_DIFFUSER_whole.stl
+P39,ROCKER_END_L,whole,322.6,911.9,212.0,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,332.9,,03_PRINT/production/P39_ROCKER_END_L_whole.stl
+P40,ROCKER_END_R,whole,322.6,911.9,212.0,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,332.9,,03_PRINT/production/P40_ROCKER_END_R_whole.stl
+P21,REAR_FASCIA,whole,607.6,1733.4,421.7,yes,1,yes,54551,0.0,-90.0,0.0,-2998.3,0.0,-0.0,,03_PRINT/production/P21_REAR_FASCIA_whole.stl
+P22,DIFFUSER,whole,391.7,1665.0,177.3,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,332.8,,03_PRINT/production/P22_DIFFUSER_whole.stl
 P05,FENDER_CHANNEL_L,whole,360.0,148.0,14.0,yes,1,yes,0,-90.0,-0.0,-0.0,0.0,458.0,-0.0,,03_PRINT/production/P05_FENDER_CHANNEL_L_whole.stl
 P06,FENDER_CHANNEL_R,whole,360.0,148.0,14.0,yes,1,yes,0,90.0,-0.0,0.0,0.0,-458.0,-0.0,,03_PRINT/production/P06_FENDER_CHANNEL_R_whole.stl
 P13,INTAKE_BLADE_L,whole,175.0,244.0,44.0,yes,1,yes,0,-90.0,-0.0,-0.0,0.0,849.9,-0.0,,03_PRINT/production/P13_INTAKE_BLADE_L_whole.stl
@@ -18,6 +18,10 @@ P34,REAR_CENTRE_MASK,whole,192.0,592.0,20.0,yes,1,yes,0,180.0,-90.0,0.0,-3372.0,
 P35,EXHAUST_SURROUND,whole,122.0,280.0,24.0,yes,1,yes,0,180.0,-90.0,0.0,-3346.0,0.0,0.0,,03_PRINT/production/P35_EXHAUST_SURROUND_whole.stl
 P36,PLATE_RECESS,whole,114.0,502.0,16.0,yes,1,yes,0,0.0,-90.0,0.0,-3366.0,0.0,-0.0,,03_PRINT/production/P36_PLATE_RECESS_whole.stl
 P43,FRONT_MASK,whole,185.0,900.0,22.0,yes,1,yes,0,0.0,-90.0,0.0,852.0,0.0,0.0,,03_PRINT/production/P43_FRONT_MASK_whole.stl
+P44,DIFFUSER_FIN_INNER_L,whole,400.0,210.1,16.0,yes,1,yes,0,-90.0,-0.0,-0.0,0.0,142.0,-0.0,,03_PRINT/production/P44_DIFFUSER_FIN_INNER_L_whole.stl
+P45,DIFFUSER_FIN_INNER_R,whole,400.0,210.1,16.0,yes,1,yes,0,90.0,-0.0,0.0,0.0,-142.0,-0.0,,03_PRINT/production/P45_DIFFUSER_FIN_INNER_R_whole.stl
+P46,DIFFUSER_FIN_OUTER_L,whole,300.0,175.8,16.0,yes,1,yes,0,-90.0,-0.0,-0.0,0.0,322.0,-0.0,,03_PRINT/production/P46_DIFFUSER_FIN_OUTER_L_whole.stl
+P47,DIFFUSER_FIN_OUTER_R,whole,300.0,175.8,16.0,yes,1,yes,0,90.0,-0.0,0.0,0.0,-322.0,-0.0,,03_PRINT/production/P47_DIFFUSER_FIN_OUTER_R_whole.stl
 P24,HEADLIGHT_HOUSING_L,whole,162.0,122.0,122.0,yes,1,yes,0,-90.0,-0.0,-0.0,0.0,499.0,-0.0,,03_PRINT/production/P24_HEADLIGHT_HOUSING_L_whole.stl
 P25,HEADLIGHT_HOUSING_R,whole,162.0,122.0,122.0,yes,1,yes,0,90.0,-0.0,0.0,0.0,-499.0,-0.0,,03_PRINT/production/P25_HEADLIGHT_HOUSING_R_whole.stl
 P31,INTAKE_DUCT_L,whole,310.0,700.0,270.0,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,700.0,,03_PRINT/production/P31_INTAKE_DUCT_L_whole.stl

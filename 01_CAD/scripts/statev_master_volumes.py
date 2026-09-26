@@ -137,6 +137,15 @@ REAR_UNDERCUT_FIELD = dict(depth=108.0, x0=2260.0, xa=2560.0, xb=2950.0, x1=3400
 NOSE_MOUTH = [(-900, 5, 190, 330), (-850, 60, 185, 400), (-770, 110, 180, 460),
               (-700, 100, 200, 480), (-640, 5, 215, 470)]
 
+# THE DIFFUSER FLOOR, 2026-09-26. Measured from below on v038: the underside is the flat floor at
+# Z 120 all the way to the tail -- there was no diffuser, only a panel called one (P22) and an
+# envelope (DIFFUSER, Z 130..350, "height 180-250"). ref-09's rear detail is a floor that rises
+# from the rear axle line to the tail with four tall fins standing in it. This table is the floor
+# height by station; ring() lifts the section's floor to it, so the loft carries a planar ramp
+# that meets the undercut edge (Z ~330 at the tail, the P21/P22 seam) instead of a flat slab.
+# Side silhouette: unaffected by construction -- silhouette_overlay compares the TOP line only.
+DIFFUSER_FLOOR = [(2870, 120), (3000, 150), (3145, 215), (3300, 290), (3420, 330)]
+
 # The blade itself: thin the nose above the mouth so the upper line reads sharp, not blunt.
 NOSE_BLADE_X0, NOSE_BLADE_X1 = -965.0, -640.0
 NOSE_BLADE_Z = 350.0        # everything above this at the nose is drawn in
@@ -816,6 +825,11 @@ def ring(spec_x):
         keep = [(z, y) for z, y in prof if z <= deck - 40]
         if len(keep) >= 3:
             prof = keep
+    if DIFFUSER_FLOOR[0][0] <= spec_x <= DIFFUSER_FLOOR[-1][0]:
+        fz = table_z(DIFFUSER_FLOOR, spec_x)
+        if fz > prof[0][0] + 1.0:
+            hw_f = half_width_at(prof, fz)
+            prof = [(fz, hw_f)] + [(z, y) for z, y in prof if z > fz]
     z_floor = prof[0][0]
     z_top, hw_top = prof[-1]
     # Crown handover. HOOD_SPINE ends at the cowl (specX 420, Z 970) and DECK_SPINE starts at the

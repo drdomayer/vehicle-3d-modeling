@@ -100,6 +100,11 @@ PARTS = [
     ("P34", "REAR_CENTRE_MASK",    "-",  "REAR",  20, "-X", "direct print", "REAR_FASCIA"),
     ("P36", "PLATE_RECESS",        "-",  "REAR",  21, "-X", "direct print", "REAR_FASCIA"),
     ("P22", "DIFFUSER",            "-",  "REAR",  22, "-X", "printed master -> composite", "DIFFUSER"),
+    # 2026-09-26: the diffuser has a rising floor for the first time, and fins standing in it
+    ("P44", "DIFFUSER_FIN_INNER_L", "L",  "REAR",  23, "-Z", "direct print", "DIFFUSER"),
+    ("P45", "DIFFUSER_FIN_INNER_R", "R",  "REAR",  23, "-Z", "direct print", "DIFFUSER"),
+    ("P46", "DIFFUSER_FIN_OUTER_L", "L",  "REAR",  23, "-Z", "direct print", "DIFFUSER"),
+    ("P47", "DIFFUSER_FIN_OUTER_R", "R",  "REAR",  23, "-Z", "direct print", "DIFFUSER"),
     ("P35", "EXHAUST_SURROUND",    "-",  "REAR",  23, "-X", "direct print, heat-capable", "REAR_FASCIA"),
     ("P23", "REAR_SPOILER",        "-",  "REAR",  24, "-Z", "direct print or composite", "REAR_SPOILER"),
     ("P24", "HEADLIGHT_HOUSING_L", "L",  "LIGHTS", 25, "+X", "direct print, ASA", "HEADLIGHT"),

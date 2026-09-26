@@ -130,7 +130,11 @@ def not_panel(sx, ay, z, nz, ny):
         # well's ceiling -- 14 162 mm2 facets at Z 675..701 with their normals pointing DOWN
         # (nz -0.92..-1.0), which no exterior face does -- and they reached P15 as a detached
         # 273 x 346 mm shelf. Skin over the lip faces UP; only that is spared.
-        if abs(d - r) < CAP_TOL and nz < 0.9:
+        # 2 mm, not CAP_TOL. Measured 2026-09-26: every wall face sits within 0.6 mm of the
+        # cylinder, while 39 (rear) and 46 (front) SKIN faces at the arch lip sat 1.3..10.8 mm
+        # off it and were being thrown away with the wall -- which is what made the arch edge of
+        # every printed fender and haunch a staircase. The wall is ON the cylinder; skin is not.
+        if abs(d - r) < 2.0 and nz < 0.9:
             return "X_ARCH_WALL"            # on the cylinder itself: the wheel well, not the skin
         # and the disc that closes the cylinder's inboard end. The arch cutter is a cylinder of
         # finite depth, so it leaves a flat wall at the inner end of the wheel well as well as the

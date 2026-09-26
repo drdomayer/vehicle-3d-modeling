@@ -114,6 +114,10 @@ INTERFACE_BY_PANEL = {
         "rear_crash_structure":        None,  # SCAN
         "bumper_mount_points":         None,  # SCAN
     },
+    "P43": {
+        "front_crash_structure":       None,  # SCAN
+        "what_the_mouth_feeds":        None,  # SCAN: the 986 carries its radiators in the corners
+    },
     "P35": {
         "exhaust_tip_centres":         None,  # SCAN: two central tips, actual centres and diameter
         "exhaust_hanger_positions":    None,  # SCAN

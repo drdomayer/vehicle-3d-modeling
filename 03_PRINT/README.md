@@ -8,7 +8,7 @@
 
 | folder | parts | files | one piece | fits bed | what it is |
 |---|---|---|---|---|---|
-| `production/` | 24 | 24 | 24 | 22 | cores whose outer shape is final; mounting interface still to come from the donor scan |
+| `production/` | 25 | 25 | 25 | 23 | cores whose outer shape is final; mounting interface still to come from the donor scan |
 | `shape_only/` | 6 | 6 | 6 | 4 | shape masters for fitting — **not** parts to bond; the inner face or the trim edge depends on the car |
 
 Every file is one printable solid, laid on its flattest face, sitting on Z = 0, in **millimetres**. Print it as it comes. `placement.json` in each folder carries the matrix that puts each file back on the car; `04_ENGINEERING/reports/print_schedule.csv` carries the same as degrees and millimetres.
@@ -25,23 +25,21 @@ Every file is one printable solid, laid on its flattest face, sitting on Z = 0, 
 | joint tab | 20 mm past each cut, dropped inward by wall + bond | fit test |
 | orientation | smallest dimension vertical | Q32 / Q33 |
 
-Estimated core mass across both tiers at these assumptions: **~46.6 kg**.
+Estimated core mass across both tiers at these assumptions: **~47.9 kg**.
 
 ## Quality of the files, as a slicer sees them
 
-`print_qc.py` reads every file back: closed, manifold, consistently wound, positive volume. Last run: **25 of 30 clean**, 5 with a defect.
+`print_qc.py` reads every file back: closed, manifold, consistently wound, positive volume. Last run: **28 of 31 clean**, 3 with a defect.
 
 Files with something to say (all non-manifold edges, a handful each; most slicers repair these, but that is not a guarantee):
 
-- `P01_FRONT_FASCIA_whole.stl` — 14 non-manifold edge(s)
-- `P21_REAR_FASCIA_whole.stl` — 8 non-manifold edge(s)
-- `P22_DIFFUSER_whole.stl` — 1 non-manifold edge(s)
-- `P03_FRONT_FENDER_L_whole.stl` — 1 non-manifold edge(s)
-- `P04_FRONT_FENDER_R_whole.stl` — 2 non-manifold edge(s)
+- `P01_FRONT_FASCIA_whole.stl` — 16 non-manifold edge(s)
+- `P21_REAR_FASCIA_whole.stl` — 30 non-manifold edge(s)
+- `P04_FRONT_FENDER_R_whole.stl` — 1 non-manifold edge(s)
 
 ## Known problems, stated rather than hidden
 
-- **355 cm² of skin is in no file**: seam slivers and lone faces the region rule handed to a panel without connecting them to it, dropped and counted per file in `DROPPED_MM2`. The laminate bridges these; none is a part.
+- **340 cm² of skin is in no file**: seam slivers and lone faces the region rule handed to a panel without connecting them to it, dropped and counted per file in `DROPPED_MM2`. The laminate bridges these; none is a part.
 - The files are the **core** only. Laminate, filler and paint go on top and none of their thicknesses exist as data yet.
 - Orientation is *lay flattest, class-A face up* — never chosen against an overhang limit (Q32). `04_ENGINEERING/reports/overhang.csv` says, per file, how much area hangs past 45° and 60° as laid and turned over, so the shop's limit turns into a count rather than a question.
 - Nothing here touches the donor car. Every mounting point, hinge, hole and flange that lands on the Porsche is deliberately absent until the car is scanned.

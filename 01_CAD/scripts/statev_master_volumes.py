@@ -122,8 +122,20 @@ VOID_FIELDS = {
 REAR_UNDERCUT_FIELD = dict(depth=108.0, x0=2260.0, xa=2560.0, xb=2950.0, x1=3400.0, trans=24.0,
                            edge=[(2260, 322), (2960, 336), (3400, 300)])
 
-NOSE_MOUTH = [(-965, 0, 200, 330), (-930, 155, 185, 345), (-850, 215, 180, 350),
-              (-770, 195, 185, 342), (-700, 95, 200, 325), (-655, 0, 215, 310)]
+# 2026-09-26: this was never the mouth. make_cutter eats IN FROM THE SIDE, so these stations
+# were two corner bites 155-215 deep reaching to y 357..437 at Z 180-350, and there was no
+# central opening at all -- docs/14 locks "a large central opening to the radiators". Read off
+# ref-09's front view (car width 1010 px): the central mouth is a trapezoid, half-width 357 at
+# the top and 467 at the bottom, ~190 tall, right under the DRL; the CORNER INTAKES sit on the
+# corner faces at half-width 604..787, ~310 tall, and a painted strake ~140 mm wide separates
+# them from the mouth. The old bites reached 150-250 mm further inboard than that and would have
+# merged with any central mouth. The mouth is now a stage-03 pocket (stage03_elements, P43);
+# these stations are the corner intakes: inner edge ~590-650 (hw - depth), Z 185..480.
+# The end stations carry depth 5, not 0: a zero-depth end ring is a degenerate section and the
+# exact boolean returned an EMPTY body for the right-hand cutter (10645 -> 0 faces). Tested in
+# isolation on 2026-09-26 -- the same table with 5 at both ends cuts cleanly.
+NOSE_MOUTH = [(-900, 5, 190, 330), (-850, 60, 185, 400), (-770, 110, 180, 460),
+              (-700, 100, 200, 480), (-640, 5, 215, 470)]
 
 # The blade itself: thin the nose above the mouth so the upper line reads sharp, not blunt.
 NOSE_BLADE_X0, NOSE_BLADE_X1 = -965.0, -640.0

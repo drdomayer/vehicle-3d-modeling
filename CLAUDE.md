@@ -859,18 +859,24 @@ branches and never let them diverge for more than one session.
   1831, калници 829 високи). Оттам излязоха три дефекта на картата: фасадата беше 23 файла от
   фугови триъгълници, стените на прореза в калника не влизаха във файла, таванът на арката минаваше
   за кожа — и трите поправени, изхвърлената кожа се БРОИ (`DROPPED_MM2`, 354 cm²). Картинки:
-  `review/rv_panels_*.png` (`render_panels.py`). 5 файла с non-manifold ръбове (прищипване).
+  `04_ENGINEERING/statev_v01/review/rv_panels_front34.png` (`render_panels.py`). 5 файла с non-manifold ръбове (прищипване).
 
-- **Текуща база: `02_DESIGN/exterior/STATEV_001_v037.blend`. Откат: v036.**
+- 2026-09-26 (local, 10): **v038 — централната уста съществува.** `NOSE_MOUTH` беше два странични
+  изреза, не уста. Прочетено от ref-09: трапец 357/467 полуширина × 190 под DRL-а, ъглови входове
+  при 604..787. Построени: уста като stage-03 джоб + рамка **P43 FRONT_MASK** (регистър 43 части),
+  захапките → ъглови входове (край на таблицата с дълбочина 5, не 0 — нулев пръстен срива boolean-а).
+  Метрики непроменени освен план 2.4 → 2.5 (допуск 0.5). 31 файла, 99.8% в 8 mm, 3 non-manifold.
+  Отворено: какво храни устата — донорски въпрос.
+
+- **Текуща база: `02_DESIGN/exterior/STATEV_001_v038.blend`. Откат: v037.**
   Авторитетни източници: геометрия — `statev_master_volumes.py` (v030.blend е регенерируем от него);
   измервания — `check_goal.py` (силует, план, кривина, ръбове) и
   `04_ENGINEERING/reports/edge_test.txt`; решения — `docs/09-decision-log.md`;
   заключени визуални решения — `docs/14-locked-visual-decisions.md`. Всеки доклад с версия в
   името е исторически и НЕ е текущ.
-- Next: **носът срещу ref-09** — устата е един клиновиден срез, референцията има трапецовидна
-  уста със сплитер, два ъглови входа и DRL острие през цялата ширина; това са stage-03 елементи с
-  джобове, по модела на фара, и искат маска-мярка за предния изглед като `endview_overlay.py`.
-  После: **решение по прага** (`docs/14` раздел D — 47° при G1 лента 8–40; или лентата е твърде
+- Next: **носът, втори pass** — диагоналните лайстни между устата и ъгловите входове са
+  скулптиране, не параметър; мярка за предния изглед на маската няма (цветовата класификация на
+  ref-09 не дели тъмнозелена боя от отвор — тествано и отхвърлено). После: **решение по прага** (`docs/14` раздел D — 47° при G1 лента 8–40; или лентата е твърде
   тясна, или преходът се връща на ~18 mm). После `NOSE → HOOD` — единственият преход без каквото и
   да е доказателство, който НЕ е блокиран от скана; границата му е в `SECTIONS` S00–S03 и местенето
   ѝ е дизайнерско решение, не поправка. И **етап 02 — реални повърхности по зони**, patch-базирани
@@ -936,4 +942,6 @@ branches and never let them diverge for more than one session.
 - Whether the raised rear deck must move with the top's clamshell — check on
   the real mechanism.
 - Print farm build volume (determines panel splitting).
+- What the central mouth feeds: the 986 carries its radiators in the front corners, so the
+  centre opening is oil cooler / brake air / a relocated radiator — a donor decision (`P43`).
 - BG individual-approval route and required documentation for a rebodied car.

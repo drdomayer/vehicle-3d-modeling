@@ -474,6 +474,47 @@ def main():
     print("  NOT built: P37 / P38 MIRROR_CAP — the skeleton has no mirror envelope at all, so its")
     print("    position is the donor's and inventing it is not an option")
 
+    # ---- 7. THE CENTRAL MOUTH, 2026-09-26. docs/14 locks "a large central opening to the
+    # radiators" and the body never had one: what statev_master_volumes called NOSE_MOUTH eats in
+    # from the SIDE and was two corner bites. Read off ref-09's front view: a trapezoid right under
+    # the DRL, half-width 357 at the top and 467 at the bottom, about 190 tall, a splitter lip under
+    # it, and the corner intakes outboard of a ~140 mm painted strake. Built like the rear mask: a
+    # pocket with vertical walls to a floor plane, and a frame standing in it as the mask part.
+    # The FRONT_MASK envelope in the skeleton (spec X -920..-820, Y +-325, Z 235..385) sits inside it.
+    # What the opening FEEDS is a donor question (the 986 carries its radiators in the corners):
+    # the shape is ours, the duct behind the floor is not drawn.
+    def trap(name, x0, x1, hw_lo, z_lo, hw_hi, z_hi):
+        v = [(-mm(x), mm(y), mm(z)) for x in (x0, x1)
+             for (y, z) in ((-hw_lo, z_lo), (-hw_hi, z_hi), (hw_lo, z_lo), (hw_hi, z_hi))]
+        f = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]
+        me = bpy.data.meshes.new(name)
+        me.from_pydata(v, [], f)
+        me.update()
+        ob = bpy.data.objects.new(name, me)
+        coll.objects.link(ob)
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        bm.to_mesh(me)
+        bm.free()
+        return ob
+    MOUTH = dict(x_face=-1050.0, x_floor=-820.0, hw_lo=450.0, z_lo=200.0, hw_hi=340.0, z_hi=385.0)
+    cuts.append(trap("CUT_MOUTH", MOUTH["x_face"], MOUTH["x_floor"],
+                     MOUTH["hw_lo"], MOUTH["z_lo"], MOUTH["hw_hi"], MOUTH["z_hi"]))
+    fm = trap("FRONT_MASK", -852.0, -830.0, MOUTH["hw_lo"], MOUTH["z_lo"], MOUTH["hw_hi"], MOUTH["z_hi"])
+    fv = trap("FRONT_MASK_void", -858.0, -824.0, MOUTH["hw_lo"] - 26.0, MOUTH["z_lo"] + 26.0,
+              MOUTH["hw_hi"] - 26.0, MOUTH["z_hi"] - 26.0)
+    m = fm.modifiers.new("void", "BOOLEAN")
+    m.operation, m.object, m.solver = "DIFFERENCE", fv, "EXACT"
+    bpy.context.view_layer.objects.active = fm
+    bpy.ops.object.modifier_apply(modifier=m.name)
+    bpy.data.objects.remove(fv, do_unlink=True)
+    fm["panel_id"] = "P43"
+    fm["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
+    made.append(fm)
+    print("  central mouth: trapezoid pocket 900/680 wide x 185 tall to a floor at spec X -820,")
+    print("    a 26 mm frame standing in it -> P43 FRONT_MASK; the corner bites became corner intakes")
+
     # cut them all out of the body
     for c in cuts:
         for o in body_objects():

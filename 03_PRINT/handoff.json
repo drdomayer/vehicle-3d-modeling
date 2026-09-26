@@ -1,5 +1,5 @@
 {
- "when": 1790444502.924289,
+ "when": 1790445191.6996748,
  "decisions": {
   "wall_mm": 3.0,
   "density_g_cm3": 1.24,
@@ -41,11 +41,12 @@
    "P36",
    "P39",
    "P40",
-   "P41"
+   "P41",
+   "P43"
   ],
-  "sections": 24,
-  "one_piece": 24,
-  "fits_bed": 22
+  "sections": 25,
+  "one_piece": 25,
+  "fits_bed": 23
  },
  "shape_only": {
   "parts": [
@@ -68,7 +69,7 @@
    "P16": "mirror of P15, same note"
   }
  },
- "core_kg": 46.6,
- "dropped_skin_mm2": 35488,
+ "core_kg": 47.9,
+ "dropped_skin_mm2": 33974,
  "small_sections_under_40mm": 0
 }

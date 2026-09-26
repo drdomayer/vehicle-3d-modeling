@@ -152,6 +152,7 @@ ARCH = {
     "P32": ("DONOR", "yes", "what the eye sees through the intake; the real opening governs it"),
     "P33": ("MIXED", "yes", "our louvres; the engine lid aperture governs where they can sit"),
     "P34": ("OURS",  "yes", "our centre mask between the light bar and the diffuser"),
+    "P43": ("OURS",  "yes", "our mask in the central mouth; what the mouth feeds is a donor question"),
     "P35": ("OURS",  "yes", "our surround around bought tips; sees exhaust heat"),
     "P36": ("OURS",  "yes", "our recess; the plate size is legislated, not donor"),
     "P37": ("DONOR", "yes", "cap over the OEM mirror body — its inner surface must match it"),

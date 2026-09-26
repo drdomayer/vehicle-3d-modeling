@@ -54,6 +54,8 @@ PARTS = [
     # nothing about the split touches a donor value.
     ("P28", "FRONT_SPLITTER_L",    "L",  "FRONT", 4,  "+Z", "printed master -> composite", "FRONT_CLAMSHELL"),
     ("P41", "FRONT_SPLITTER_R",    "R",  "FRONT", 4,  "+Z", "printed master -> composite", "FRONT_CLAMSHELL"),
+    # 2026-09-26: the central mouth exists for the first time (stage 03); this is the mask in it
+    ("P43", "FRONT_MASK",          "-",  "FRONT", 4,  "+X", "direct print", "FRONT_CLAMSHELL"),
     ("P02", "HOOD",                "-",  "FRONT", 5,  "-Z", "printed master -> composite", "HOOD"),
     ("P03", "FRONT_FENDER_L",      "L",  "FRONT", 5,  "-Y", "printed master -> composite", "FRONT_FENDER"),
     ("P04", "FRONT_FENDER_R",      "R",  "FRONT", 5,  "+Y", "printed master -> composite", "FRONT_FENDER"),

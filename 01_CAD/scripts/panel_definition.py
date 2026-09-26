@@ -118,6 +118,8 @@ DEF = {
             "off for exhaust and light access", "splits at the centreline and outboard of the bar"),
     "P34": ("dark centre mask carrying the lettering", T_OURS, 8, "off with the fascia",
             "single piece"),
+    "P43": ("front centre mask standing in the mouth; the grille", T_OURS, 8, "off with the fascia",
+            "single piece"),
     "P36": ("plate recess and its lamp; legal requirement", T_OURS, 8, "lamp must be serviceable",
             "single piece"),
     "P22": ("large functional diffuser, few large fins", T_BOLT, 15,

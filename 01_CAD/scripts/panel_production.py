@@ -51,11 +51,17 @@ D = dict(
     # DECIDED. The visible gap at a shut line. Replaced by docs/13 Q16.
 
     # --- the printer
-    bed_mm=(350.0, 350.0, 350.0),
-    # ASSUMED, and the single most consequential guess here. 350 cubed is the common denominator of
-    # the affordable large-format machines a print farm actually owns. split_sensitivity.py already
-    # measured what other beds cost: this is the number docs/13 Q26 replaces, and re-running with
-    # the real one changes nothing but the section count.
+    split="whole",
+    # DECIDED BY THE OWNER on 2026-09-26: "not many small pieces -- real, large, whole panels."
+    # One file per part. The 350 mm grid that stood here from 2026-09-16 was an assumption about
+    # a print farm's bed, and it produced 425 files of which 73 were flakes under 40 mm and 57
+    # under 60; a panel in 20 bonded pieces is a jigsaw, not a panel, and every joint is a place
+    # for the shape to go wrong. The grid is kept as split="grid" for the day a shop's bed is
+    # known (docs/13 Q26) and smaller than the parts; nothing else about the chain changes.
+    bed_mm=(1800.0, 600.0, 1800.0),
+    # REFERENCE, not a decision: the Modix BIG-180X class CLAUDE.md names as the eventual own
+    # machine. In whole mode it only FLAGS which parts would not fit it, sorted-dimension against
+    # sorted-dimension, so the shop can rotate in plane. docs/13 Q26 replaces it.
     bed_margin_mm=10.0,
     # DECIDED. Skirt and first-layer margin kept off the usable envelope.
 
@@ -200,7 +206,11 @@ def gather(pid):
             n = (src.matrix_world.to_3x3() @ f.normal).normalized()
             sx, ay, z = -c.x * 1000, abs(c.y * 1000), c.z * 1000
             ny = -n.y if c.y > 0 else n.y
-            if not_panel(sx, ay, z, n.z, ny):
+            tag = not_panel(sx, ay, z, n.z, ny)
+            if tag and not (tag in ("X_INTAKE", "X_FENDER_SLOT") and panel_of(sx, ay, z) == base):
+                # a pocket's walls are PRINTED with the panel the pocket is cut into: they are
+                # its recess, even though the skin accounting rightly does not count them as
+                # exterior. Without this the fender file had a hole where the vent slot is.
                 continue
             if side is not None and c.y * side <= 0:
                 continue
@@ -288,9 +298,48 @@ def build(pid):
             t = max(t, min(1.0, max(0.0, d) / D["flange_w_mm"]))
         v.co -= v.normal * (drop * t)
     bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.0001)
+    # A PANEL IS ONE CONNECTED SURFACE. Measured on 2026-09-26 when the grid went away and every
+    # part became one file: P21 came out as 23 files, and 22 of them were single triangles at the
+    # undercut seam, 5 to 4600 mm2 each, Z 300..320 -- the region rule hands the boundary slivers
+    # of a bisected face to this panel while everything they touch belongs to the neighbour. P03
+    # carried two lone loft faces of 2 x 10^4 mm2 at the fender slot. None of these is a part; a
+    # print farm would print them and nobody could say where they go. Anything not connected to
+    # the main surface and under a tenth of its area is residue: dropped here and COUNTED, so the
+    # schedule says how much skin is missing from the core rather than shipping it as parts.
+    comps = []
+    seen = set()
+    for f0 in bm.faces:
+        if f0.index in seen:
+            continue
+        stack, fs = [f0], []
+        seen.add(f0.index)
+        while stack:
+            f = stack.pop()
+            fs.append(f)
+            for e in f.edges:
+                for g in e.link_faces:
+                    if g.index not in seen:
+                        seen.add(g.index)
+                        stack.append(g)
+        comps.append(fs)
+    comps.sort(key=lambda fs: -sum(f.calc_area() for f in fs))
+    dropped_n, dropped_mm2 = 0, 0.0
+    if len(comps) > 1:
+        main_a = sum(f.calc_area() for f in comps[0])
+        gone = []
+        for fs in comps[1:]:
+            a = sum(f.calc_area() for f in fs)
+            if a < 0.10 * main_a:
+                gone += fs
+                dropped_n += 1
+                dropped_mm2 += a * 1e6
+        if gone:
+            bmesh.ops.delete(bm, geom=gone, context="FACES")
     bm.to_mesh(me)
     bm.free()
     me.update()
+    ob["dropped_islands"] = dropped_n
+    ob["dropped_mm2"] = round(dropped_mm2)
     if pid in MIRROR_OF:
         mirror_in_place(ob)
     return ob, len(marked)
@@ -497,6 +546,8 @@ def plan_cuts(ob):
     w = [ob.matrix_world @ v.co for v in ob.data.vertices]
     ext = [(min(p[i] for p in w) * 1000, max(p[i] for p in w) * 1000) for i in range(3)]
     size = [hi - lo for lo, hi in ext]
+    if D["split"] == "whole":
+        return {}, size, ext
     # The cell also has to reserve the WALL. Everything that happens to a section after the grid is
     # planned makes it bigger: it runs one tab past its cut, and then thicken() puts a wall on it,
     # which pushes the bbox out by up to one wall on each side. Without that term P21's section 16
@@ -792,8 +843,17 @@ def loose_pieces(ob):
     # so it was thickened OUTWARD and put the assembled width at 1853.6 against the locked 1850.
     # The same rule as the fan rule, on the same number: half the solid's surface is its skin, and
     # a skin under 25 x 25 mm is not a part.
-    crumbs = [o for o in out if o is not ob and sum(p.area for p in o.data.polygons) * 1e6 / 2.0 < CRUMB_AREA_MM2]
+    skin = {o.name: sum(p.area for p in o.data.polygons) * 1e6 / 2.0 for o in out}
+    big = max(skin.values()) if skin else 0.0
+    # ...and in whole mode the same judgement at the part's own scale: a detached fan of a few
+    # faces beside a 1.5 m2 fascia is not a second part, it is a hole in the core the laminate
+    # bridges. Under 2% of the main piece AND under 5000 mm2 it is dropped and its area is counted
+    # into the part's DROPPED_MM2, never shipped as a file of its own.
+    crumbs = [o for o in out if o is not ob and (skin[o.name] < CRUMB_AREA_MM2 or
+              (D["split"] == "whole" and skin[o.name] < 0.02 * big and skin[o.name] < 5000.0))]
     for o in crumbs:
+        ob["dropped_mm2"] = ob.get("dropped_mm2", 0) + round(skin[o.name])
+        ob["dropped_islands"] = ob.get("dropped_islands", 0) + 1
         bpy.data.objects.remove(o, do_unlink=True)
     out = [o for o in out if o not in crumbs]
     if not out:
@@ -801,6 +861,14 @@ def loose_pieces(ob):
     # biggest first, so a section's own numbering runs from its main piece outward
     out.sort(key=lambda o: -len(o.data.vertices))
     return out
+
+
+def has_open_edge(ob):
+    bm = bmesh.new()
+    bm.from_mesh(ob.data)
+    n = any(len(e.link_faces) == 1 for e in bm.edges)
+    bm.free()
+    return n
 
 
 def one_piece(ob):
@@ -895,7 +963,7 @@ def main():
         probe = ob.copy()
         probe.data = ob.data.copy()
         bpy.context.scene.collection.objects.link(probe)
-        if pid not in STAGE03:
+        if pid not in STAGE03 or has_open_edge(probe):
             thicken(probe)
         bm = bmesh.new()
         bm.from_mesh(probe.data)
@@ -936,7 +1004,13 @@ def main():
         made = []
         for j, sec in enumerate(secs, 1):
             face_outward(sec)
-            thicken(sec)
+            # A closed solid is not walled again. stage03 builds its parts as closed solids; a
+            # SECTION of one is open at the cut and needs the wall to close it, but a WHOLE one is
+            # already a body, and solidify on a closed body makes a second shell inside the first:
+            # every stage-03 part exported as two files in whole mode, the second an inverted
+            # inner skin. Walled only if it has an open edge.
+            if not (pid in STAGE03 and not has_open_edge(sec)):
+                thicken(sec)
             for pc, part in enumerate(loose_pieces(sec)):
                 # Orientation is settled PER PIECE, here, because a section holding two pieces can
                 # have a positive signed volume overall while one of them is inverted -- which is
@@ -946,8 +1020,14 @@ def main():
                 place = lay_flat(part)
                 w = [part.matrix_world @ v.co for v in part.data.vertices]
                 ss = [(max(p[i] for p in w) - min(p[i] for p in w)) * 1000 for i in range(3)]
-                fits = all(ss[i] <= D["bed_mm"][i] - 2 * D["bed_margin_mm"] for i in range(3))
-                sfx = f"s{j:02d}" if pc == 0 else f"s{j:02d}{chr(ord('a') + pc)}"
+                # sorted against sorted: the shop can turn a part in plane, so 600 x 1200 fits a
+                # 1200 x 600 bed. lay_flat has already put the smallest dimension vertical.
+                fits = all(a <= b - 2 * D["bed_margin_mm"]
+                           for a, b in zip(sorted(ss), sorted(D["bed_mm"])))
+                if D["split"] == "whole":
+                    sfx = "whole" if pc == 0 else f"whole_{chr(ord('a') + pc)}"
+                else:
+                    sfx = f"s{j:02d}" if pc == 0 else f"s{j:02d}{chr(ord('a') + pc)}"
                 d_ = SHAPE_OUT if pid in TIER_EXTRA else OUT
                 path = os.path.join(d_, f"{pid}_{NAME_OF.get(pid,'PANEL')}_{sfx}.stl")
                 bpy.ops.object.select_all(action="DESELECT")
@@ -959,12 +1039,15 @@ def main():
                 except AttributeError:
                     bpy.ops.export_mesh.stl(filepath=path, use_selection=True, global_scale=1000.0)
                 made.append((sfx, ss, fits, path, one_piece(part), place,
-                             part.get("class_a_up", "unknown")))
+                             part.get("class_a_up", "unknown"),
+                             # in whole mode the section IS the panel object, so count it once
+                             (ob.get("dropped_mm2", 0) if pc == 0 else 0)
+                             + (sec.get("dropped_mm2", 0) if (sec is not ob and pc == 0) else 0)))
         total_m += mass
         total_s += len(made)
         over = [m for m in made if not m[2]]
         split_files = [m for m in made if m[4] > 1]
-        for sfx, ss, fits, path, np_, place, cau in made:
+        for sfx, ss, fits, path, np_, place, cau, dropped in made:
             inv = place.inverted()
             o = inv @ mathutils.Vector((0.0, 0.0, 0.0))
             e = inv.to_euler()
@@ -974,6 +1057,10 @@ def main():
                                  FITS_BED="yes" if fits else "NO",
                                  PIECES_IN_FILE=np_,
                                  CLASS_A_UP=cau,
+                                 # skin that belonged to this region but was not connected to it
+                                 # (seam slivers, lone loft faces, detached fans): NOT in any
+                                 # file. The laminate bridges it; the number says how much.
+                                 DROPPED_MM2=int(dropped),
                                  # where the printed file goes back on the car: rotate by these
                                  # degrees about X, Y, Z, then move the file's origin to this point.
                                  PLACE_RX=round(math.degrees(e.x), 2),
@@ -999,8 +1086,13 @@ def main():
                 bpy.data.objects.remove(o, do_unlink=True)
     n_prod = len({r["PANEL"] for r in SCHEDULE})
     n_shape = len({r["PANEL"] for r in SHAPE_SCHEDULE})
-    print(f"\n   READY TO BOND   {n_prod} parts, {len(SCHEDULE)} sections on a "
-          f"{D['bed_mm'][0]:.0f} mm bed")
+    if D["split"] == "whole":
+        print(f"\n   READY TO BOND   {n_prod} parts, {len(SCHEDULE)} files -- WHOLE PANELS, one file "
+              f"per part; FITS_BED is against the {D['bed_mm'][0]:.0f} x {D['bed_mm'][1]:.0f} x "
+              f"{D['bed_mm'][2]:.0f} reference bed")
+    else:
+        print(f"\n   READY TO BOND   {n_prod} parts, {len(SCHEDULE)} sections on a "
+              f"{D['bed_mm'][0]:.0f} mm bed")
     print(f"   SHAPE ONLY      {n_shape} parts, {len(SHAPE_SCHEDULE)} sections "
           f"(fitting masters, interface still to come from the car)")
     print(f"   ~{total_m:.1f} kg of core across both, at the provisional wall")
@@ -1047,6 +1139,7 @@ def main():
                            "fits_bed": sum(1 for r in SHAPE_SCHEDULE if r["FITS_BED"] == "yes"),
                            "missing": SHAPE_ONLY},
             "core_kg": round(total_m, 1),
+            "dropped_skin_mm2": int(sum(r["DROPPED_MM2"] for r in SCHEDULE + SHAPE_SCHEDULE)),
             "small_sections_under_40mm": sum(1 for r in SCHEDULE + SHAPE_SCHEDULE
                                              if max(r["X_MM"], r["Y_MM"], r["Z_MM"]) < 40)}
     with open(os.path.join(REPO, "03_PRINT", "handoff.json"), "w", encoding="utf-8") as f:

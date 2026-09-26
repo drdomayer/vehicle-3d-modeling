@@ -853,6 +853,14 @@ branches and never let them diverge for more than one session.
   99.7% в 8 mm, покритие 77.0%, 13/425 non-manifold. Отворено: дължина 4376 (3 mm люспи на
   върховете на фасадите, и на HEAD). По око: носът е далеч от ref-09 (уста, DRL, ъглови входове).
 
+- 2026-09-26 (local, 9): **ЦЕЛИ ПАНЕЛИ.** По решение на собственика производството е един файл на
+  част (`split="whole"`), решетката 350 остава като опция за известен плот. **30 части → 30 файла**,
+  медиана 0.00 mm, 99.2% в 8 mm, ширина 1850.0; референтен плот 1800×600×1800 само флагва (прагове
+  1831, калници 829 високи). Оттам излязоха три дефекта на картата: фасадата беше 23 файла от
+  фугови триъгълници, стените на прореза в калника не влизаха във файла, таванът на арката минаваше
+  за кожа — и трите поправени, изхвърлената кожа се БРОИ (`DROPPED_MM2`, 354 cm²). Картинки:
+  `review/rv_panels_*.png` (`render_panels.py`). 5 файла с non-manifold ръбове (прищипване).
+
 - **Текуща база: `02_DESIGN/exterior/STATEV_001_v037.blend`. Откат: v036.**
   Авторитетни източници: геометрия — `statev_master_volumes.py` (v030.blend е регенерируем от него);
   измервания — `check_goal.py` (силует, план, кривина, ръбове) и
@@ -889,9 +897,10 @@ branches and never let them diverge for more than one session.
   existed. The plan changed at v001 and the note did not: the body is ONE parametric
   build and panels are extracted from it by `panel_extract.py`, so a panel is a region
   of the model, not its own file. `check_docs.py` found it.)*
-- `03_PRINT/` — STL/3MF split for the printer + a PDF exploded view per panel:
-  part number, print orientation, material, infill. Ask the printer for build
-  volume before splitting. 3–4 mm walls, tongue-and-groove alignment keys.
+- `03_PRINT/` — one STL per part (WHOLE PANELS since 2026-09-26; `production/` ready to
+  bond, `shape_only/` fitting masters), `placement.json` per folder, generated `README.md`.
+  Splitting to a bed is an option (`split="grid"` in `panel_production.py`), used only once the
+  shop's build volume is known (docs/13 Q26). 3 mm wall, 30 mm bonded flange, class-A face up.
 - `04_ENGINEERING/` — clearance checks, tyre envelope, roof fold path, lamp
   positions.
 - **Преди да цитираш число от доклад — и преди комит — пусни двете проверки.**

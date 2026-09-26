@@ -183,7 +183,15 @@ def write_readme(total, bad):
     L.append("")
     L.append("## Two tiers, two folders")
     L.append("")
-    L.append(f"| folder | parts | sections | one piece | fits bed | what it is |")
+    whole = D.get("split") == "whole"
+    unit = "files" if whole else "sections"
+    if whole:
+        L.append("**WHOLE PANELS.** One file per part, decided by the owner on 2026-09-26. The bed "
+                 "below is a large-format REFERENCE (Modix BIG-180X class), used only to flag "
+                 "which parts would not fit it; nothing is cut to it. Tell us your real build "
+                 "volume (docs/13 Q26) and the same chain cuts every part to it.")
+        L.append("")
+    L.append(f"| folder | parts | {unit} | one piece | fits bed | what it is |")
     L.append(f"|---|---|---|---|---|---|")
     L.append(f"| `production/` | {len(rb['parts'])} | {rb['sections']} | {rb['one_piece']} | "
              f"{rb['fits_bed']} | cores whose outer shape is final; mounting interface still "
@@ -202,7 +210,9 @@ def write_readme(total, bad):
     L.append(f"| assumption | value | replaced by |")
     L.append(f"|---|---|---|")
     L.append(f"| build volume | {D['bed_mm'][0]:.0f} × {D['bed_mm'][1]:.0f} × {D['bed_mm'][2]:.0f} "
-             f"mm, {D['bed_margin_mm']:.0f} mm margin | Q26 — **changes every cut in this folder** |")
+             f"mm, {D['bed_margin_mm']:.0f} mm margin | Q26 — "
+             + ("**reference only in whole-panel mode; a smaller bed means cutting**" if whole
+                else "**changes every cut in this folder**") + " |")
     L.append(f"| wall | {D['wall_mm']:.1f} mm | Q30 |")
     L.append(f"| material density | {D['density_g_cm3']} g/cm³ (generic PLA, unmeasured) | Q37 |")
     L.append(f"| bonding flange | {D['flange_w_mm']:.0f} mm + {D['bond_line_mm']:.0f} mm bond line "
@@ -231,10 +241,16 @@ def write_readme(total, bad):
     L.append("")
     L.append("## Known problems, stated rather than hidden")
     L.append("")
-    L.append(f"- **{h['small_sections_under_40mm']} sections are under 40 mm** in their largest "
-             f"dimension. A 3D grid over a thin curved shell leaves corner fragments; they are "
-             f"real geometry but not handleable parts. A fix is known to be needed and is not "
-             f"done. Expect to lose or discard some.")
+    if whole:
+        L.append(f"- **{h.get('dropped_skin_mm2', 0) / 100.0:.0f} cm² of skin is in no file**: seam "
+                 f"slivers and lone faces the region rule handed to a panel without connecting "
+                 f"them to it, dropped and counted per file in `DROPPED_MM2`. The laminate "
+                 f"bridges these; none is a part.")
+    else:
+        L.append(f"- **{h['small_sections_under_40mm']} sections are under 40 mm** in their largest "
+                 f"dimension. A 3D grid over a thin curved shell leaves corner fragments; they are "
+                 f"real geometry but not handleable parts. A fix is known to be needed and is not "
+                 f"done. Expect to lose or discard some.")
     L.append("- The files are the **core** only. Laminate, filler and paint go on top and none of "
              "their thicknesses exist as data yet.")
     ov = os.path.join(REPO, "04_ENGINEERING", "reports", "overhang.csv")

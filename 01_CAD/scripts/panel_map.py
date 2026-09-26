@@ -112,11 +112,23 @@ def not_panel(sx, ay, z, nz, ny):
             if min(abs(sx - CABIN["x0"]), abs(sx - CABIN["x1"])) < CAP_TOL and abs(nz) < 0.35:
                 return "X_CABIN_END"        # the cut's front or rear wall, normal along X
     for nm, x0, x1, y0, y1, z0, z1 in POCKETS:
-        if x0 <= sx <= x1 and y0 <= ay <= y1 and z0 <= z <= z1 and (abs(ny) > 0.4 or abs(nz) > 0.7):
+        # EVERY face inside a pocket box is a pocket wall: the outer skin there is what the cut
+        # removed. Until 2026-09-26 the test asked for a Y or Z normal, so the two END walls of
+        # the fender slot (normal along X, 21 745 and 16 585 mm2) passed as skin and reached P03
+        # as two lone faces connected to nothing -- and the same walls were then missing from
+        # the panel's print file, because panel_production drops what this rejects. The walls
+        # are not exterior skin (this table), but they ARE the panel's geometry to print; the
+        # production gather keeps a pocket's walls with the panel whose region the pocket is in.
+        if x0 <= sx <= x1 and y0 <= ay <= y1 and z0 <= z <= z1:
             return nm
     for ax, r, cz in ARCH_CUTS:
         d = ((sx - ax) ** 2 + (z - cz) ** 2) ** 0.5
-        if abs(d - r) < CAP_TOL and abs(nz) < 0.9:
+        # "abs(nz) < 0.9" spared the near-horizontal facets at the TOP of the cylinder, meant to
+        # protect the skin over the arch lip. Measured 2026-09-26: the spared faces were the wheel
+        # well's ceiling -- 14 162 mm2 facets at Z 675..701 with their normals pointing DOWN
+        # (nz -0.92..-1.0), which no exterior face does -- and they reached P15 as a detached
+        # 273 x 346 mm shelf. Skin over the lip faces UP; only that is spared.
+        if abs(d - r) < CAP_TOL and nz < 0.9:
             return "X_ARCH_WALL"            # on the cylinder itself: the wheel well, not the skin
         # and the disc that closes the cylinder's inboard end. The arch cutter is a cylinder of
         # finite depth, so it leaves a flat wall at the inner end of the wheel well as well as the

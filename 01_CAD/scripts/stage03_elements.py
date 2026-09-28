@@ -615,6 +615,63 @@ def main():
     print("  diffuser fins: four 16 mm blades standing in the rising floor, bottoms at Z 125")
     print("    -> P44 / P45 inner at Y +-150, P46 / P47 outer at Y +-330")
 
+    # ---- 9. THE DRL GROOVE, 2026-09-28. The DRL blade had been a curve in 04_LIGHTING since
+    # 2026-09-14 and nothing was ever cut for it -- the front's strongest signature in ref-09, a
+    # continuous thin line of light across the nose, existed as an envelope only. The Hella
+    # LEDayFlex strip mounts in a channel, so the housing IS a groove in the fascia: a tube of
+    # radius 8 swept along DRL_PATH, its axis 4 mm inside the skin (so the groove is ~12 deep for
+    # the 14 x 12 element), cut from the body. Height from DRL_Z (skeleton): 420 at the centre,
+    # 490 at the corner, above the mouth and under the projector slot. No separate part: the
+    # groove's walls print with P01, exactly as the mouth's do.
+    DRL_PATH, DRL_Z = _sk["DRL_PATH"], _sk["DRL_Z"]
+    tz_ = _sk["table_z"]
+    for sgn in (1, -1):
+        pts = []
+        for spec_x, ty in DRL_PATH:
+            z = tz_(DRL_Z, abs(ty))
+            target = mathutils.Vector((-mm(spec_x), mm(sgn * ty), mm(z)))
+            best = None
+            for o in body_objects():
+                inv = o.matrix_world.inverted()
+                for origin_off in ((-1.5, 0.0, 0.0), (0.0, sgn * 1.5, 0.0), (-1.0, sgn * 1.0, 0.0)):
+                    origin = target + mathutils.Vector(origin_off)
+                    d = (target - origin).normalized()
+                    h, loc, n, i = o.ray_cast(inv @ origin, (inv.to_3x3() @ d).normalized())
+                    if h:
+                        w = o.matrix_world @ loc
+                        nw = (o.matrix_world.to_3x3() @ n).normalized()
+                        dist = (w - target).length
+                        if best is None or dist < best[0]:
+                            best = (dist, w, nw)
+            if best is None:
+                continue
+            _, w, nw = best
+            pts.append(w - nw * 0.004)
+        if len(pts) < 3:
+            continue
+        cu = bpy.data.curves.new(f"CUT_DRL_{'L' if sgn > 0 else 'R'}", "CURVE")
+        cu.dimensions = "3D"
+        sp = cu.splines.new("POLY")
+        sp.points.add(len(pts) - 1)
+        for p, v in zip(sp.points, pts):
+            p.co = (v.x, v.y, v.z, 1.0)
+        cu.bevel_depth = 0.008
+        cu.bevel_resolution = 4
+        cu.use_fill_caps = True
+        co = bpy.data.objects.new(cu.name, cu)
+        coll.objects.link(co)
+        bpy.context.view_layer.objects.active = co
+        co.select_set(True)
+        bpy.ops.object.convert(target="MESH")
+        cm = bpy.context.view_layer.objects.active
+        bm = bmesh.new()
+        bm.from_mesh(cm.data)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        bm.to_mesh(cm.data)
+        bm.free()
+        cuts.append(cm)
+    print("  DRL groove: a radius-8 tube along DRL_PATH, axis 4 mm inside the skin, Z 420 centre .. 490 corner, cut from the fascia")
+
     # cut them all out of the body
     for c in cuts:
         for o in body_objects():

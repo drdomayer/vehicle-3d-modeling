@@ -555,6 +555,13 @@ def box(name, coll, centre_mm, size_mm, color, note="", status="spec", spec_x=No
 # fender, instead of being a straight bar hanging in space.
 DRL_PATH = [(-888, 120), (-878, 260), (-862, 400), (-838, 520), (-805, 610),
             (-762, 680), (-710, 730), (-650, 775), (-585, 810)]
+# 2026-09-28: the height is a TABLE by |Y|, not z_at_half_width(). The solve read the SECTIONS
+# (pre-loft data the body has left far behind) and gave 350 at the centre, 450 across, then
+# 400 / 552 / 443 toward the corner -- a zig-zag, and the centre point sat INSIDE the central
+# mouth (Z 200..385, built 2026-09-26). ref-09's line droops to the centre in a shallow V just
+# above the mouth and rises to the corner under the projector slot (Z 505..625). Position lamps
+# need >= 350; the centre is 420.
+DRL_Z = [(0, 420), (400, 440), (600, 465), (800, 490)]     # (|Y|, Z)
 DRL_INSET = 15          # mm inboard of the surface so the blade sits in a recess
 DRL_SECTION = (14, 12)  # height x depth of the lit element
 
@@ -581,6 +588,16 @@ def section_profile(spec_x):
                     base.append((z, ya + t * (yb - ya)))
                 break
     return [(z, y + widening(spec_x, z)) for z, y in base]
+
+
+def table_z(table, x):
+    """Linear interpolation on a [(x, value)] table, clamped at the ends."""
+    if x <= table[0][0]:
+        return table[0][1]
+    for (x0, v0), (x1, v1) in zip(table, table[1:]):
+        if x0 <= x <= x1:
+            return v0 + (v1 - v0) * (x - x0) / (x1 - x0)
+    return table[-1][1]
 
 
 def z_at_half_width(spec_x, target_y):
@@ -809,7 +826,7 @@ def build():
     for suffix, sgn in (("_L", 1), ("_R", -1)):
         pts, zs = [], []
         for spec_x, ty in DRL_PATH:
-            z = z_at_half_width(spec_x, ty)
+            z = table_z(DRL_Z, abs(ty)) if "table_z" in globals() else DRL_Z[0][1]
             y = min(ty, max(v for _, v in section_profile(spec_x)) - 2) - DRL_INSET
             zs.append(z)
             pts.append((mm(sx(spec_x)), mm(sgn * y), mm(z)))

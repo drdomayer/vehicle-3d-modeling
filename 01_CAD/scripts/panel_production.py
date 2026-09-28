@@ -512,7 +512,11 @@ def split_pinch(ob):
             # P21 on 2026-09-26, this is the whole of the 23 flakes that survived the crumb rule.
             pts = [x.co for g in fan for x in g.verts]
             fspan = max(max(c[i] for c in pts) - min(c[i] for c in pts) for i in range(3)) * 1000.0
-            if fspan < MIN_SECTION_MM:
+            # ...in GRID mode. In WHOLE mode (2026-09-28) the fan is detached regardless: the
+            # loose-piece crumb rule then drops it (under 2% of the part and under 5000 mm2) and
+            # COUNTS it in DROPPED_MM2, so the notch is on record and the file is manifold. A
+            # pinch kept for the sake of 30 mm of skin cost P21 31 non-manifold edges.
+            if fspan < MIN_SECTION_MM and D["split"] != "whole":
                 continue
             nv = bm.verts.new(v.co)
             for g in fan:
@@ -874,6 +878,34 @@ def loose_pieces(ob):
     return out
 
 
+def tidy_for_export(ob):
+    """Triangulate ourselves, and drop the triangles the exporter would have doubled.
+
+    Measured 2026-09-28 on P21: the walled mesh in Blender has no duplicate face and only 3 edges
+    that merge to more than two faces by position, yet the .stl print_qc reads has 34, and 31 of
+    those carry two COINCIDENT triangles. The mesh carries ngons of up to 48 vertices -- boolean
+    pocket floors and the wall's rim -- some of them touching themselves at a vertex position, and
+    the STL exporter's tessellation of such an ngon lays two identical triangles down. Triangulate
+    here with the beauty method, then remove any triangle that is degenerate or a positional
+    duplicate of another, so the file is what the mesh is."""
+    bm = bmesh.new()
+    bm.from_mesh(ob.data)
+    bmesh.ops.triangulate(bm, faces=bm.faces[:], quad_method="BEAUTY", ngon_method="BEAUTY")
+    seen, gone = set(), []
+    for f in bm.faces:
+        k = frozenset(tuple(round(c * 1e6) for c in v.co) for v in f.verts)
+        if len(k) < 3 or f.calc_area() < 1e-12 or k in seen:
+            gone.append(f)
+        else:
+            seen.add(k)
+    if gone:
+        bmesh.ops.delete(bm, geom=gone, context="FACES_ONLY")
+    bm.to_mesh(ob.data)
+    bm.free()
+    ob.data.update()
+    return len(gone)
+
+
 def has_open_edge(ob):
     bm = bmesh.new()
     bm.from_mesh(ob.data)
@@ -1029,6 +1061,7 @@ def main():
                 # section as a whole had passed. A slicer given that prints the complement.
                 face_outward(part)
                 place = lay_flat(part)
+                tidy_for_export(part)
                 w = [part.matrix_world @ v.co for v in part.data.vertices]
                 ss = [(max(p[i] for p in w) - min(p[i] for p in w)) * 1000 for i in range(3)]
                 # sorted against sorted: the shop can turn a part in plane, so 600 x 1200 fits a

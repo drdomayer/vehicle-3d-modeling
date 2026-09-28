@@ -193,7 +193,10 @@ DONOR_CLAMP = [  # (x0, x1, z0, z1)
     # from 2050 to 2780 anyway, and a zone running to 2500/2600 reached -- through the +-100 mm
     # X-smoothing -- into the rear undercut's edge (xa 2560) and softened it 69.8 -> 40.9 degrees
     (250.0, 2200.0, 125.0, 330.0),
-    (440.0, 2500.0, 330.0, 800.0),
+    # 360, so the ramp is complete by the shut at 440: with the zone starting AT the shut the
+    # channel floor at spec X 440 measured 797 -- 47 mm inside the OEM door -- because w = 0
+    # there. DOOR_OUT reaches to 340 anyway, and the end view is re-measured by check_goal.
+    (360.0, 2500.0, 330.0, 800.0),
 ]
 
 # THE SIDE, REBUILT INSIDE THE DONOR, 2026-09-28. The door's upper skin is pushed out to
@@ -208,13 +211,21 @@ DOOR_OUT_HW = 918.0
 # fade 14, not 40: the lower edge of the pushed-out door IS the side lip now (docs/16 G0), and a
 # 40 mm ramp measured 15 degrees -- "the light does not break". 14 mm over 40+ mm of step is a
 # real break, and both heights are anchored so the resample cannot smear it.
-DOOR_OUT = dict(x0=440.0, x1=1635.0, ramp=80.0, z0=570.0, z1=760.0, fade=14.0)
+# x0 340 / x1 1720, not the shut lines 440 / 1635 (2026-09-28): with the ramps starting AT the
+# shut, the door's leading edge was mid-ramp -- 880 at spec X 440 against 912 at 500 (Z 600),
+# a 30-80 mm change in the 60 mm behind the fender's trailing edge, which reads as a step
+# between fender and door. The fender is a replaced part with no donor behind it, so it carries
+# the same section for its last 100 mm and the shut is flush; the quarter likewise for 85 mm.
+DOOR_OUT = dict(x0=340.0, x1=1720.0, ramp=80.0, z0=570.0, z1=760.0, fade=14.0)
 ROCKER_BLADE_HW = 918.0
-ROCKER_BLADE = dict(x0=400.0, x1=1700.0, ramp=80.0, z0=125.0, z1=330.0, fade=30.0)
+# 340..2040, arch to arch: the blade ended at 1700 and the rocker behind it dropped 918 -> 874
+# across the rear shut (Z 250, spec X 1620 -> 1680), a notch in the side. One blade between the
+# arches is what the reference shows and what P07 (spec X 292..2122) is.
+ROCKER_BLADE = dict(x0=340.0, x1=2040.0, ramp=80.0, z0=125.0, z1=330.0, fade=30.0)
 # aft value 200, not 250: A/B on 2026-09-28 with the aft value as the only difference gave the
 # rear undercut edge 44.1 degrees at 250 (250 + 30 sits against the undercut's approach anchor)
 # and 69.4 at 200 -- the same 69.8 it read before the blade existed.
-ROCKER_BLADE_ANCHOR = [(-1000, 330), (1700, 330), (1900, 200), (3500, 200)]
+ROCKER_BLADE_ANCHOR = [(-1000, 330), (2040, 330), (2240, 200), (3500, 200)]
 
 
 def side_floors(spec_x, z, y):

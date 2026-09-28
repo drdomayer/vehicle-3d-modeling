@@ -9,7 +9,7 @@
 | folder | parts | files | one piece | fits bed | what it is |
 |---|---|---|---|---|---|
 | `production/` | 29 | 29 | 29 | 27 | cores whose outer shape is final; mounting interface still to come from the donor scan |
-| `shape_only/` | 7 | 7 | 7 | 7 | shape masters for fitting — **not** parts to bond; the inner face or the trim edge depends on the car |
+| `shape_only/` | 7 | 7 | 7 | 5 | shape masters for fitting — **not** parts to bond; the inner face or the trim edge depends on the car |
 
 Every file is one printable solid, laid on its flattest face, sitting on Z = 0, in **millimetres**. Print it as it comes. `placement.json` in each folder carries the matrix that puts each file back on the car; `04_ENGINEERING/reports/print_schedule.csv` carries the same as degrees and millimetres.
 
@@ -33,7 +33,7 @@ Estimated core mass across both tiers at these assumptions: **~55.8 kg**.
 
 Files with something to say (all non-manifold edges, a handful each; most slicers repair these, but that is not a guarantee):
 
-- `P21_REAR_FASCIA_whole.stl` — 8 open edge(s); 4 non-manifold edge(s)
+- `P21_REAR_FASCIA_whole.stl` — 8 open edge(s); 5 non-manifold edge(s)
 - `P22_DIFFUSER_whole.stl` — 1 non-manifold edge(s)
 
 ## Known problems, stated rather than hidden

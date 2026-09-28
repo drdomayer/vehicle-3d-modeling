@@ -7,9 +7,9 @@ EDGE TEST — docs/16's CONTINUITY classes, as dihedral angles on the built mesh
   and a crease where the map says G2 is the same defect inverted).
 
   line                                         cls    n    mesh   design    lost  verdict
-  DOOR_UPPER -> DOOR_CHANNEL (the side lip)    G0     9    68.9     72.4     3.5  ok
+  DOOR_UPPER -> DOOR_CHANNEL (the side lip)    G0    11    66.7     72.4     5.6  ok
   REAR_FASCIA -> DIFFUSER (undercut edge)      G0     4    69.8     59.9    -9.8  ok
-  DOOR_UPPER -> ROCKER (sill line)             G1     9     0.9     53.6    52.7  out of band — RECORDED exception
+  DOOR_UPPER -> ROCKER (sill line)             G1    12     7.8     52.8    45.0  out of band — RECORDED exception
   REAR_HAUNCH_TOP -> REAR_HAUNCH_SIDE          G1     7    14.6     15.4     0.8  ok
   FRONT_FENDER_TOP -> FRONT_FENDER_SIDE (crest) G1     9    60.9     64.0     3.0  out of band — RECORDED exception
 
@@ -25,9 +25,9 @@ EDGE TEST — docs/16's CONTINUITY classes, as dihedral angles on the built mesh
   transition                             cls             crease  break made by                               
   BUTTRESS -> REAR_DECK                  G1     no line defined  nothing                                     
   DOOR_CHANNEL -> SIDE_INTAKE_MOUTH      G1     no line defined  opening INTAKE_BLADE_L                      
-  DOOR_UPPER -> DOOR_CHANNEL             G0         68.9 deg ok  nothing                                     
+  DOOR_UPPER -> DOOR_CHANNEL             G0         66.7 deg ok  nothing                                     
   DOOR_UPPER -> REAR_HAUNCH_TOP          G2     no line defined  seam DOOR_SHUT_REAR (0.00 mm off skin)      
-  DOOR_UPPER -> ROCKER                   G1           0.9 deg !  seam ROCKER_to_UPPER_BODY (0.00 mm off skin)
+  DOOR_UPPER -> ROCKER                   G1           7.8 deg !  seam ROCKER_to_UPPER_BODY (0.00 mm off skin)
   ENGINE_COVER -> REAR_FASCIA            G1     no line defined  seam REAR_FASCIA_to_DECK (0.00 mm off skin) 
   FRONT_FENDER_SIDE -> DOOR_UPPER        G0     no line defined  seam FRONT_FENDER_to_DOOR (0.00 mm off skin)
   FRONT_FENDER_TOP -> FRONT_FENDER_SIDE  G1          60.9 deg !  nothing                                     

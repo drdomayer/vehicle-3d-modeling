@@ -160,6 +160,12 @@ SHAPE_ONLY = {
     # run: the built surface ends at spec X ~385 where the cabin cutter starts to bite, 35 mm
     # short of the donor cowl at 420. That gap IS the donor's scuttle; where the hood's rear
     # edge really lands is the scan's answer, like the fenders' door line. Outer form ours.
+    # 2026-09-28: the side-intake surround joins, on the same footing as the haunch overlay --
+    # its outer form is ours, what governs it is the real opening behind it, which is the scan's.
+    "P11": "outer form ours (the intake surround, spec X 1780..2300 above the rocker); the real "
+           "opening behind it and the duct route are the donor's. Fit and bond surface come from "
+           "the scan, as for P15.",
+    "P12": "mirror of P11, same note",
     "P02": "outer form ours between the fender crests (|Y| < 380). Rear edge: the file ends at "
            "spec X ~385, 35 mm short of the donor cowl (420) -- no allowance can be carried across "
            "the cabin cut, so the real rear edge, the hinges and the frunk aperture come from "

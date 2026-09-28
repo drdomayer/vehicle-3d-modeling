@@ -1,5 +1,5 @@
 {
- "when": 1790599489.544959,
+ "when": 1790602409.783895,
  "decisions": {
   "wall_mm": 3.0,
   "density_g_cm3": 1.24,
@@ -59,12 +59,14 @@
    "P04",
    "P09",
    "P10",
+   "P11",
+   "P12",
    "P15",
    "P16"
   ],
-  "sections": 7,
-  "one_piece": 7,
-  "fits_bed": 5,
+  "sections": 9,
+  "one_piece": 9,
+  "fits_bed": 7,
   "missing": {
    "P03": "outer form ours; the inner face is the donor's fender line. Carries a 30 mm TRIM ALLOWANCE past the door shut line (overlaps P09 by 30 mm): the line moves with door_front_x by +-15..30 mm and the scan says where to cut.",
    "P04": "mirror of P03, same note",
@@ -72,10 +74,12 @@
    "P10": "mirror of P09, same note",
    "P15": "outer form ours; overlay on the welded quarter, inner face provisional as P09. Carries a 30 mm TRIM ALLOWANCE past the rear shut line (overlaps P09).",
    "P16": "mirror of P15, same note",
+   "P11": "outer form ours (the intake surround, spec X 1780..2300 above the rocker); the real opening behind it and the duct route are the donor's. Fit and bond surface come from the scan, as for P15.",
+   "P12": "mirror of P11, same note",
    "P02": "outer form ours between the fender crests (|Y| < 380). Rear edge: the file ends at spec X ~385, 35 mm short of the donor cowl (420) -- no allowance can be carried across the cabin cut, so the real rear edge, the hinges and the frunk aperture come from the scan."
   }
  },
- "core_kg": 55.9,
+ "core_kg": 59.2,
  "dropped_skin_mm2": 64398,
  "small_sections_under_40mm": 0
 }

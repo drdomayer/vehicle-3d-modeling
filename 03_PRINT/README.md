@@ -9,7 +9,7 @@
 | folder | parts | files | one piece | fits bed | what it is |
 |---|---|---|---|---|---|
 | `production/` | 29 | 29 | 29 | 27 | cores whose outer shape is final; mounting interface still to come from the donor scan |
-| `shape_only/` | 7 | 7 | 7 | 5 | shape masters for fitting — **not** parts to bond; the inner face or the trim edge depends on the car |
+| `shape_only/` | 9 | 9 | 9 | 7 | shape masters for fitting — **not** parts to bond; the inner face or the trim edge depends on the car |
 
 Every file is one printable solid, laid on its flattest face, sitting on Z = 0, in **millimetres**. Print it as it comes. `placement.json` in each folder carries the matrix that puts each file back on the car; `04_ENGINEERING/reports/print_schedule.csv` carries the same as degrees and millimetres.
 
@@ -25,17 +25,19 @@ Every file is one printable solid, laid on its flattest face, sitting on Z = 0, 
 | joint tab | 20 mm past each cut, dropped inward by wall + bond | fit test |
 | orientation | smallest dimension vertical | Q32 / Q33 |
 
-Estimated core mass across both tiers at these assumptions: **~55.9 kg**.
+Estimated core mass across both tiers at these assumptions: **~59.2 kg**.
 
 ## Quality of the files, as a slicer sees them
 
-`print_qc.py` reads every file back: closed, manifold, consistently wound, positive volume. Last run: **33 of 36 clean**, 3 with a defect.
+`print_qc.py` reads every file back: closed, manifold, consistently wound, positive volume. Last run: **33 of 38 clean**, 5 with a defect.
 
 Files with something to say (all non-manifold edges, a handful each; most slicers repair these, but that is not a guarantee):
 
 - `P01_FRONT_FASCIA_whole.stl` — 2 open edge(s); 1 non-manifold edge(s)
 - `P21_REAR_FASCIA_whole.stl` — 8 open edge(s); 5 non-manifold edge(s)
 - `P22_DIFFUSER_whole.stl` — 1 non-manifold edge(s)
+- `P11_SIDE_INTAKE_L_whole.stl` — 2 open edge(s); 1 non-manifold edge(s)
+- `P12_SIDE_INTAKE_R_whole.stl` — 2 open edge(s); 1 non-manifold edge(s)
 
 ## Known problems, stated rather than hidden
 
@@ -56,4 +58,6 @@ Files with something to say (all non-manifold edges, a handful each; most slicer
 - **P10** — mirror of P09, same note
 - **P15** — outer form ours; overlay on the welded quarter, inner face provisional as P09. Carries a 30 mm TRIM ALLOWANCE past the rear shut line (overlaps P09).
 - **P16** — mirror of P15, same note
+- **P11** — outer form ours (the intake surround, spec X 1780..2300 above the rocker); the real opening behind it and the duct route are the donor's. Fit and bond surface come from the scan, as for P15.
+- **P12** — mirror of P11, same note
 - **P02** — outer form ours between the fender crests (|Y| < 380). Rear edge: the file ends at spec X ~385, 35 mm short of the donor cowl (420) -- no allowance can be carried across the cabin cut, so the real rear edge, the hinges and the frunk aperture come from the scan.

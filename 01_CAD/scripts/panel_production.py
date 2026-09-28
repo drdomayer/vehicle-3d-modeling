@@ -217,7 +217,8 @@ def gather(pid):
             sx, ay, z = -c.x * 1000, abs(c.y * 1000), c.z * 1000
             ny = -n.y if c.y > 0 else n.y
             tag = not_panel(sx, ay, z, n.z, ny)
-            if tag and not (tag in ("X_INTAKE", "X_FENDER_SLOT", "X_MOUTH") and panel_of(sx, ay, z) == base):
+            if tag and not (tag in ("X_INTAKE", "X_FENDER_SLOT", "X_MOUTH", "X_ROCKER_CHANNEL")
+                            and panel_of(sx, ay, z) == base):
                 # a pocket's walls are PRINTED with the panel the pocket is cut into: they are
                 # its recess, even though the skin accounting rightly does not count them as
                 # exterior. Without this the fender file had a hole where the vent slot is.

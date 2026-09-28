@@ -110,6 +110,11 @@ def main():
                 if any(math.hypot(x - ax, z - tod / 2.0) < radius + 6.0
                        for ax, radius, open_w, tod, twid in ARCHES.values()):
                     continue
+                # nor the cabin cutter's own walls: -162 mm at spec X 1760 / Z 640 was the corner
+                # of the aperture's rear wall at Y 700, inside the cut, not skin.
+                cb = _pm["CABIN"]
+                if cb["x0"] - 12 <= x <= cb["x1"] + 12 and abs(y) <= cb["y"] + 12 and z >= cb["z"] - 12:
+                    continue
                 d = dhw(x, z)
                 if d is None:
                     continue

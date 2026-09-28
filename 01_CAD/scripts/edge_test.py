@@ -59,6 +59,10 @@ BAND = {"G0": (40.0, 110.0),    # a structural break. Below 40 it is a blend, no
 # here rather than the band being widened until nothing fails. Same pattern as the freeze rule: the
 # machinery does not argue, it names what is outside and who decided it. A line NOT in this list that
 # goes out of band is a defect and says so.
+SUPERSEDED = {
+    "DOOR_CHANNEL lower shoulder": "2026-09-28: inside the pushed-out upper door (DOOR_OUT); no edge by design",
+    "the one main side line (shoulder)": "2026-09-28: inside the pushed-out upper door (DOOR_OUT); no edge by design",
+}
 EXCEPTIONS = {
     "FRONT_FENDER_TOP -> FRONT_FENDER_SIDE (crest)":
         "the DESIGN turns 55.5 degrees here and always has; the mesh was rendering 44.2 until the "
@@ -69,12 +73,14 @@ EXCEPTIONS = {
         "designed at about 50 degrees, so either the band is too tight for a car with this "
         "language, or both lines are harder than the spec intends.",
     "DOOR_UPPER -> ROCKER (sill line)":
-        "sharpened on purpose, 55 -> 18 -> 10 mm of transition on 2026-09-15/16, because the sill "
-        "read as a soft hollow with no line at all. docs/16 classes it G1 and it measures ~47, so it "
-        "is 7 degrees past a band this file invented -- docs/16 gives the CLASS, not the number. "
-        "The honest reading is that a sill line on this kind of car is at the hard end of G1. "
-        "OWNER'S CALL, not settled: either the band is too tight here or the tuck transition goes "
-        "back to ~18 mm.",
+        "2026-09-28: the sill is no longer a 34 mm tuck -- the rocker stands out as a BLADE at 918 "
+        "(statev_master_volumes ROCKER_BLADE) and its top is a ~56 mm shelf over 30 mm of height, "
+        "so the line is two G0 breaks 30 mm apart, not one G1 transition. The design ring turns "
+        "~54 degrees there; the mesh reads under 1 because the nearest lengthwise edge this test "
+        "finds at that height lies on the flat face above the shelf -- a finder that needs to be "
+        "shelf-aware, recorded as such; the shelf is plain in review/rv_side34_low.png. Older "
+        "text: sharpened 55 -> 18 -> 10 mm on 2026-09-15/16, measured ~47 against a G1 band this "
+        "file invented; the OWNER'S CALL on that band still stands for the crest.",
 }
 
 
@@ -100,16 +106,23 @@ def lines(M):
     tz, ch, U = M["table_z"], M["VOID_FIELDS"]["SIDE_CHANNEL"], M["REAR_UNDERCUT_FIELD"]
     IN = M["VOID_FIELDS"]["SIDE_INTAKE"]
     return [
+        # 2026-09-28: the lip is the lower edge of the pushed-out upper door (DOOR_OUT z0), since
+        # the side was rebuilt outboard of the donor; side_lip()'s clip now lies buried inside it.
         ("DOOR_UPPER -> DOOR_CHANNEL (the side lip)", "G0",
-         lambda x: M["side_lip"](x), (ch["x0"] + 140, IN["x1"] - 120)),
+         lambda x: M["DOOR_OUT"]["z0"], (M["DOOR_OUT"]["x0"] + M["DOOR_OUT"]["ramp"],
+                                         M["DOOR_OUT"]["x1"] - M["DOOR_OUT"]["ramp"])),
         ("REAR_FASCIA -> DIFFUSER (undercut edge)", "G0",
          lambda x: tz(U["edge"], x), (U["xa"], U["xb"])),
-        ("DOOR_CHANNEL lower shoulder", "G1",
-         lambda x: tz(ch["centre"], x) - ch["w"], (ch["xa"], ch["xb"])),
+        # "DOOR_CHANNEL lower shoulder" and "the one main side line" were measured here until
+        # 2026-09-28. Both lie INSIDE the pushed-out upper door now (the side was rebuilt outboard
+        # of the donor -- statev_master_volumes DOOR_OUT), so the mesh has no edge at either
+        # height by design, not by defect. Listed in SUPERSEDED below rather than deleted.
         ("DOOR_UPPER -> ROCKER (sill line)", "G1",
-         lambda x: M["ROCKER_EDGE_Z"], (M["ROCKER_X0"] + 260, M["ROCKER_X1"] - 260)),
-        ("the one main side line (shoulder)", "G1",
-         lambda x: tz(M["SHOULDER_TRAJECTORY"], x), (-300.0, 3100.0)),
+         lambda x: M["ROCKER_BLADE"]["z1"] + M["ROCKER_BLADE"]["fade"],
+         (M["ROCKER_BLADE"]["x0"] + M["ROCKER_BLADE"]["ramp"],
+          M["ROCKER_BLADE"]["x1"] - M["ROCKER_BLADE"]["ramp"])),
+        # the top of the rocker blade: a shelf ~56 mm deep over 30 mm of height, a break the
+        # sill never had while it was a 34 mm tuck. Measured at the shelf's upper edge.
         ("REAR_HAUNCH_TOP -> REAR_HAUNCH_SIDE", "G1",
          lambda x: tz(M["FLANK_TOP"], x), (M["FLANK_X0"] + 300, M["FLANK_X1"] - 300)),
         # FRONT_CREST is the OUTER top line of the front fender, so its class is

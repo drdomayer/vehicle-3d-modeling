@@ -184,7 +184,49 @@ DONOR_CLEAR = 30.0
 # owner's call (docs/14 section I). Until then the geometry is v040 and check_donor_fit carries
 # the conflict as CHECK rows: sill -189 mm, door -125 mm. The zones to switch on:
 #     (250.0, 2600.0, 125.0, 330.0), (440.0, 2600.0, 330.0, 800.0)
-DONOR_CLAMP = []
+# SWITCHED ON 2026-09-28, with the side rebuilt outboard of the donor (DOOR_OUT / ROCKER_BLADE
+# below): CLAUDE.md's own rule for a forced engineering change is the smallest change to the
+# affected surface, recorded -- and hard constraint 3 is not a preference. The owner can veto
+# (docs/14 section I); the alternative is a new door, outside the accepted panel architecture.
+DONOR_CLAMP = [  # (x0, x1, z0, z1)
+    # the sill zone ends at 2200: the rear arch cut removes everything below the rocker line
+    # from 2050 to 2780 anyway, and a zone running to 2500/2600 reached -- through the +-100 mm
+    # X-smoothing -- into the rear undercut's edge (xa 2560) and softened it 69.8 -> 40.9 degrees
+    (250.0, 2200.0, 125.0, 330.0),
+    (440.0, 2500.0, 330.0, 800.0),
+]
+
+# THE SIDE, REBUILT INSIDE THE DONOR, 2026-09-28. The door's upper skin is pushed out to
+# DOOR_OUT_HW over Z 570..760 and the channel is carved into that added thickness with its floor
+# at donor + DONOR_CLEAR (~875): a ~40 mm channel with a real lip, where the clamp alone had left
+# none. Below it the rocker stands out as a BLADE at ROCKER_BLADE_HW from the floor to the sill
+# line, and stage03 cuts the DECIDED ROCKER_CHANNEL undercut into it (Z 195..285, 68 deep, floor
+# ~850 over a sill of ~818). Two stacked negative spaces, both real, both outside the donor. The
+# plan metric against ref-09 loses at the doors and that is recorded, not hidden: the reference's
+# waist (0.88 W = 814) is the one thing in it the donor forbids.
+DOOR_OUT_HW = 918.0
+# fade 14, not 40: the lower edge of the pushed-out door IS the side lip now (docs/16 G0), and a
+# 40 mm ramp measured 15 degrees -- "the light does not break". 14 mm over 40+ mm of step is a
+# real break, and both heights are anchored so the resample cannot smear it.
+DOOR_OUT = dict(x0=440.0, x1=1635.0, ramp=80.0, z0=570.0, z1=760.0, fade=14.0)
+ROCKER_BLADE_HW = 918.0
+ROCKER_BLADE = dict(x0=400.0, x1=1700.0, ramp=80.0, z0=125.0, z1=330.0, fade=30.0)
+# aft value 200, not 250: A/B on 2026-09-28 with the aft value as the only difference gave the
+# rear undercut edge 44.1 degrees at 250 (250 + 30 sits against the undercut's approach anchor)
+# and 69.4 at 200 -- the same 69.8 it read before the blade existed.
+ROCKER_BLADE_ANCHOR = [(-1000, 330), (1700, 330), (1900, 200), (3500, 200)]
+
+
+def side_floors(spec_x, z, y):
+    """The door's upper skin and the rocker blade as FLOORS on the half-width (max, never min)."""
+    for hw, f in ((DOOR_OUT_HW, DOOR_OUT), (ROCKER_BLADE_HW, ROCKER_BLADE)):
+        if f["x0"] <= spec_x <= f["x1"] and f["z0"] - f["fade"] <= z <= f["z1"] + f["fade"]:
+            wx = min(smoothstep(f["x0"], f["x0"] + f["ramp"], spec_x),
+                     1.0 - smoothstep(f["x1"] - f["ramp"], f["x1"], spec_x))
+            wz = min(smoothstep(f["z0"] - f["fade"], f["z0"], z),
+                     1.0 - smoothstep(f["z1"], f["z1"] + f["fade"], z))
+            y = y + (max(y, hw) - y) * wx * wz
+    return y
 DONOR_CLAMP_RAMP = 60.0   # mm over which the clamp fades in at each X end, so it cannot step
 # edge_test.py and others exec this file's source without __file__; fall back to the script dir.
 _SCRIPTS = (os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals()
@@ -450,6 +492,18 @@ def feature_anchors(spec_x):
             c,                      # channel floor
             lip - LIP_TRANS,        # steep approach to the lip
             lip,                    # THE LIP -- docs/16 G0
+            # 2026-09-28: the rebuilt side's own edges -- the lower edge of the pushed-out door
+            # (the new lip) and the top of the rocker blade (the sill step). Constants, so the
+            # count is fixed everywhere; where the feature is absent they land on plain surface.
+            # The blade's two anchors are TABLES that leave the sill height behind the blade
+            # (1700 -> 1900) and sit at 250 aft of it: as constants at 330/360 they landed
+            # within a few millimetres of the rear undercut's edge (Z 322..336 at 2560..2950),
+            # took its samples, and the edge read 40.9 instead of 69.8 degrees. Measured
+            # 2026-09-28; the door's two stay constant, nothing else lives at 556/570 aft.
+            DOOR_OUT["z0"] - DOOR_OUT["fade"],
+            DOOR_OUT["z0"],
+            table_z(ROCKER_BLADE_ANCHOR, spec_x),
+            table_z(ROCKER_BLADE_ANCHOR, spec_x) + ROCKER_BLADE["fade"],
             lz - lt,                # lower edge approach
             lz,                     # the lower body edge: rocker forward, undercut aft
             table_z(SHOULDER_TRAJECTORY, spec_x),   # the one main side line
@@ -1028,6 +1082,7 @@ def ring(spec_x):
         # channel measured nothing through the middle.
         y -= void_field(spec_x, z)
         y = donor_clamp(spec_x, z, y)
+        y = side_floors(spec_x, z, y)
         pts.append((min(MAX_HALF_WIDTH, max(20.0, y)), z))
     half = [(0.0, z_floor)] + pts
     # The door top, carried inboard past the cabin cut. Without this the shelf stopped around

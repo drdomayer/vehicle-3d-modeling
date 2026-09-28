@@ -524,6 +524,19 @@ def main():
     print("  NOT built: P37 / P38 MIRROR_CAP — the skeleton has no mirror envelope at all, so its")
     print("    position is the donor's and inventing it is not an option")
 
+    # ---- 6b. THE ROCKER CHANNEL, 2026-09-28. A DECIDED envelope since 2026-09-14 (deep undercut
+    # along the sill, full door aperture, ref-08) that was never built. Now that the rocker stands
+    # out as a blade (statev_master_volumes ROCKER_BLADE), the undercut is a prism pocket cut in
+    # from the blade's face: Z 195..285, 68 deep, so its floor sits ~850 against a donor sill of
+    # ~818 -- 32 mm of air, inside the rule. Walls vertical, so it reads as a shelf with a lip.
+    for sgn in (1, -1):
+        y_face = surface_y(1000.0, 240.0) or 918.0
+        st = [(470.0, 195.0, 285.0), (1000.0, 195.0, 285.0), (1610.0, 195.0, 285.0)]
+        c = prism(f"CUT_ROCKER_CHANNEL_{'L' if sgn > 0 else 'R'}", coll, st,
+                  sgn * (y_face + 60.0), sgn * (y_face - 68.0))
+        cuts.append(c)
+    print(f"  rocker channel: undercut along the sill, spec X 470..1610, Z 195..285, 68 mm in from Y {y_face:.0f}")
+
     # ---- 7. THE CENTRAL MOUTH, 2026-09-26. docs/14 locks "a large central opening to the
     # radiators" and the body never had one: what statev_master_volumes called NOSE_MOUTH eats in
     # from the SIDE and was two corner bites. Read off ref-09's front view: a trapezoid right under

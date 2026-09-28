@@ -75,10 +75,11 @@ EXCEPTIONS = {
     "DOOR_UPPER -> ROCKER (sill line)":
         "2026-09-28: the sill is no longer a 34 mm tuck -- the rocker stands out as a BLADE at 918 "
         "(statev_master_volumes ROCKER_BLADE) and its top is a ~56 mm shelf over 30 mm of height, "
-        "so the line is two G0 breaks 30 mm apart, not one G1 transition. The design ring turns "
-        "~54 degrees there; the mesh reads under 1 because the nearest lengthwise edge this test "
-        "finds at that height lies on the flat face above the shelf -- a finder that needs to be "
-        "shelf-aware, recorded as such; the shelf is plain in review/rv_side34_low.png. Older "
+        "so the line is two G0 breaks 30 mm apart, not one G1 transition. Measured at the shelf's "
+        "lower crease: 65.5 degrees on 13 stations (the finder read 0.9 until its radial filter "
+        "was made per-face on 2026-09-28 -- the shelf's up-facing face was being thrown away). "
+        "docs/16 classes DOOR_UPPER -> ROCKER as G1 and the built sill is a G0 shelf: that is the "
+        "rebuilt side of docs/14 section I, not a defect of the mesh. Older "
         "text: sharpened 55 -> 18 -> 10 mm on 2026-09-15/16, measured ~47 against a G1 band this "
         "file invented; the OWNER'S CALL on that band still stands for the crest.",
 }
@@ -118,7 +119,7 @@ def lines(M):
         # of the donor -- statev_master_volumes DOOR_OUT), so the mesh has no edge at either
         # height by design, not by defect. Listed in SUPERSEDED below rather than deleted.
         ("DOOR_UPPER -> ROCKER (sill line)", "G1",
-         lambda x: M["ROCKER_BLADE"]["z1"] + M["ROCKER_BLADE"]["fade"],
+         lambda x: M["ROCKER_BLADE"]["z1"],
          (M["ROCKER_BLADE"]["x0"] + M["ROCKER_BLADE"]["ramp"],
           M["ROCKER_BLADE"]["x1"] - M["ROCKER_BLADE"]["ramp"])),
         # the top of the rocker blade: a shelf ~56 mm deep over 30 mm of height, a break the
@@ -262,8 +263,14 @@ def edges_index(bm):
         # inboard, its radial dot came out at 0.05, and the whole crest vanished from this test
         # (0.5 degrees measured against 67.8 in the profile). A filter built for arch walls was
         # rejecting the hood.
-        both_up = all(f.normal.normalized().z > 0.30 for f in e.link_faces)
-        if not both_up and min(f.normal.normalized().dot(r) for f in e.link_faces) < 0.20:
+        # 2026-09-28: judged PER FACE, not per pair. The rocker blade's top is a shelf whose face
+        # points up and out (normal (0, 0.41, 0.91), radial dot 0.17); paired with the vertical
+        # door face it failed "both up" and then failed the radial test, so both creases of the
+        # shelf (65.7 and 65.0 degrees, measured by hand at spec X 1000) were thrown away and the
+        # sill line read 0.9. A face that points UP is skin whatever its radial dot; a cut wall
+        # never does -- it points along its cut, or into the wheel well.
+        if any(f.normal.normalized().dot(r) < 0.20 and f.normal.normalized().z <= 0.30
+               for f in e.link_faces):
             continue
 
         sx, z = -m.x * 1000.0, m.z * 1000.0

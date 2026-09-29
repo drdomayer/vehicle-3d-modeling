@@ -33,7 +33,7 @@ EDGE TEST — docs/16's CONTINUITY classes, as dihedral angles on the built mesh
   FRONT_FENDER_TOP -> FRONT_FENDER_SIDE  G1          60.9 deg !  nothing                                     
   HOOD -> FRONT_FENDER_TOP               G2     no line defined  seam HOOD_to_FRONT_BODY (0.00 mm off skin)  
   HOOD -> HEADLIGHT_SURROUND             G1     no line defined  opening HEADLIGHT_SURROUND_L                
-  NOSE -> FRONT_LOWER_INTAKE             G0     no line defined  opening NOSE_MOUTH                          
+  NOSE -> FRONT_LOWER_INTAKE             G0     no line defined  opening FRONT_MASK                          
   NOSE -> HOOD                           G1     no line defined  nothing                                     
   REAR_DECK -> ENGINE_COVER              G1     no line defined  seam ENGINE_COVER_to_DECK (0.00 mm off skin)
   REAR_FASCIA -> DIFFUSER                G0         69.8 deg ok  seam DIFFUSER_to_FASCIA (0.00 mm off skin)  

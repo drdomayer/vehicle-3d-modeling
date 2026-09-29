@@ -137,6 +137,7 @@ REAR_UNDERCUT_FIELD = dict(depth=108.0, x0=2260.0, xa=2560.0, xb=2950.0, x1=3400
 # isolation on 2026-09-26 -- the same table with 5 at both ends cuts cleanly.
 NOSE_MOUTH = [(-900, 5, 190, 330), (-850, 60, 185, 400), (-770, 110, 180, 460),
               (-700, 100, 200, 480), (-640, 5, 215, 470)]
+NOSE_BITES = False    # v048: superseded by the stage-03 corner pocket (see the boolean block)
 
 # THE DIFFUSER FLOOR, 2026-09-26. Measured from below on v038: the underside is the flat floor at
 # Z 120 all the way to the tail -- there was no diffuser, only a panel called one (P22) and an
@@ -357,7 +358,10 @@ FRONT_CREST = dict(
     # y moved OUTBOARD again on 2026-09-26, +40, after the front-zone measurement: with the flank a
     # wall at the locked 925 up to Z 700, the reference puts the shoulder 5..11% of the half-width
     # in (y ~850) and the top edge at 14..18% (y ~780); the section had them at 800 and 740.
-    y=[(-950, 240), (-850, 420), (-700, 600), (-500, 730), (-250, 770), (0, 780),
+    # v048: at the tip the crest is the CORNER of the flat mask face, not a ridge 240 mm off the
+    # centreline -- at 240 the face's top edge ran diagonally from (508, 450) to (240, 500) and
+    # the leading edge was a 268 mm roll. 480/600 put the leading edge on the face's own corners.
+    y=[(-950, 480), (-850, 600), (-700, 600), (-500, 730), (-250, 770), (0, 780),
        (300, 765), (430, 740)],
     out=26.0, drop=30.0,
     # The SHOULDER, 2026-09-26, in two points, because one was measured and was not enough.
@@ -1633,7 +1637,13 @@ def build():
     # Only the nose mouth is still cut. A mouth is an opening in the FRONT face of the car and
     # cannot come out of a section profile; the four side voids now can, and do. That takes the
     # boolean count from fifteen to six and removes the whole class of failure with it.
-    cuts = make_cutter("nose_mouth", NOSE_MOUTH, subs["_WORK"]) + cuts
+    # 2026-09-29 (v048): the corner bites are OFF. They cut the corner from the SIDE, so whatever
+    # stage03 put in the corner had no outer wall -- the intake was a notch, not an opening in a
+    # face. The corner intake is now a pocket cut from the FRONT in stage03_elements (CUT_CORNER)
+    # into a nose whose sections are a chamfered box, and the skin outboard of it stays. The table
+    # stays as the record of what was cut from v011 to v047.
+    if NOSE_BITES:
+        cuts = make_cutter("nose_mouth", NOSE_MOUTH, subs["_WORK"]) + cuts
     for c in cuts:
         fix_normals(c, c.name)
     boolean(skin, cuts)

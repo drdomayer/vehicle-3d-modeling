@@ -24,10 +24,11 @@ STATEV 001 v0.1  vs  Porsche 986 donor — conflict report
   bolt-on and thrown away (docs/02), so sitting inside them there is fine — it is clearance.
   Doors keep their shut lines and rear quarters are welded: there the new skin is an overlay
   and must sit OUTSIDE the OEM surface.
-  S00 specX  -950 (repo   950) front tip          STATEV   500 | donor   411 |    +89 | panel removed
-  S01 specX  -850 (repo   850) front mask         STATEV   700 | donor   601 |    +99 | panel removed
-  S02 specX  -700 (repo   700) headlights         STATEV   781 | donor   721 |    +60 | panel removed
-  S03 specX  -500 (repo   500) front fender in    STATEV   841 | donor   806 |    +35 | panel removed
+  S00 specX  -950 (repo   950) front tip          STATEV   496 | donor   411 |    +85 | panel removed
+  S01 specX  -850 (repo   850) front mask         STATEV   655 | donor   601 |    +54 | panel removed
+  S01b specX  -780 (repo   780) nose corner        STATEV   767 | donor   672 |    +95 | panel removed
+  S02 specX  -700 (repo   700) headlights         STATEV   819 | donor   721 |    +97 | panel removed
+  S03 specX  -500 (repo   500) front fender in    STATEV   871 | donor   806 |    +65 | panel removed
   S04 specX  -250 (repo   250) ahead of arch      STATEV   911 | donor   846 |    +65 | panel removed
   S05 specX     0 (repo     0) FRONT AXLE         STATEV   950 | donor   850 |   +100 | panel removed
   S06 specX   350 (repo  -350) behind front arch  STATEV   883 | donor   854 |    +29 | panel removed
@@ -42,7 +43,7 @@ STATEV 001 v0.1  vs  Porsche 986 donor — conflict report
 
 [lighting]
   projector cavity 110x110x150 (Hella 90 mm bi-LED class), centre Y +-645, Z 560
-  spans Y 590 … 700 vs body 754 at that height -> +54
+  spans Y 590 … 700 vs body 781 at that height -> +81
   lit-surface lower edge Z 505.0 vs the 500 mm minimum -> OK
   DRL blade runs along the body's widest line; position lamps need >= 350 mm — the blade's own z_range property carries the built value
 

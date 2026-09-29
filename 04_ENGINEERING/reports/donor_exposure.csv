@@ -1,7 +1,7 @@
 PANEL,NAME,AREA_M2,X_MIN,X_MAX,BOUNDED_BY,BOUNDARY_DONOR_DEPENDENT,TRAVEL_MM,TRIM_MM,VERDICT
-P01,FRONT_FASCIA,0.8203,-950,-655,,no,0,15.0,boundary INDEPENDENT of every approx donor value
-P02,HOOD,0.8614,-648,417,cowl_x;door_front_x,yes,15-30,15.0,boundary travels with the estimate: 15-30 mm vs 15 mm trim
-P03,FRONT_FENDER_L,1.8267,-653,433,cowl_x;door_front_x,yes,15-30,15.0,boundary travels with the estimate: 15-30 mm vs 15 mm trim
+P01,FRONT_FASCIA,0.779,-950,-655,,no,0,15.0,boundary INDEPENDENT of every approx donor value
+P02,HOOD,0.8614,-652,417,cowl_x;door_front_x,yes,15-30,15.0,boundary travels with the estimate: 15-30 mm vs 15 mm trim
+P03,FRONT_FENDER_L,1.811,-654,433,cowl_x;door_front_x,yes,15-30,15.0,boundary travels with the estimate: 15-30 mm vs 15 mm trim
 P07,ROCKER_L,0.827,315,2096,,no,0,15.0,boundary INDEPENDENT of every approx donor value
 P09,DOOR_SKIN_L,1.7462,454,1635,door_front_x;door_rear_x,yes,15-30,15.0,boundary travels with the estimate: 15-30 mm vs 15 mm trim
 P11,SIDE_INTAKE_L,0.1578,1790,2288,,no,0,15.0,boundary INDEPENDENT of every approx donor value
@@ -11,5 +11,5 @@ P19,REAR_DECK_L,0.4554,2030,2969,,no,0,15.0,boundary INDEPENDENT of every approx
 P20,ENGINE_COVER,1.1452,2035,3000,,no,0,15.0,boundary INDEPENDENT of every approx donor value
 P21,REAR_FASCIA,1.5274,3001,3420,,no,0,15.0,boundary INDEPENDENT of every approx donor value
 P22,DIFFUSER,0.6107,3009,3389,,no,0,15.0,boundary INDEPENDENT of every approx donor value
-P28,FRONT_SPLITTER_L,0.1866,-950,-656,,no,0,15.0,boundary INDEPENDENT of every approx donor value
+P28,FRONT_SPLITTER_L,0.1814,-950,-661,,no,0,15.0,boundary INDEPENDENT of every approx donor value
 P39,ROCKER_END_L,0.3288,2728,2981,,no,0,15.0,boundary INDEPENDENT of every approx donor value

@@ -606,20 +606,43 @@ def main():
     # rounded bites (NOSE_MOUTH); ref-09's corners are angular boxes with a vertical bar in each.
     # A box pocket gives the bite vertical walls and a flat ceiling under the lamp slot, and a
     # 20 mm blade stands in it. Functional: these are the brake-duct inlets (BRAKE_DUCT_F).
+    # 2026-09-29 (v048): a POCKET, not a notch. The Y 600..820 box ran out through the corner
+    # skin (which sat at 600..740 there), so the corner was cut away sideways and had no outer
+    # wall -- ref-09's corner intake is an opening IN the chamfered corner face, half-width
+    # 578..773 in the front view, with the body's corner edge outboard of it running down to the
+    # splitter. With the nose now a chamfered box (S00..S02: 508 -> 765 across -950..-780) the
+    # corner face carries hw 585..745 between -920 and -790, and an axis-aligned box in X from
+    # ahead of the tip to a floor at -750 opens it 40 mm deep at the outer end and ~170 at the
+    # inner, leaving 20-35 mm of skin outboard. Z 240..480: the same height as the mouth, the top
+    # 25 mm under the lamp slot (505).
+    CORNER = dict(x_floor=-750.0, y_in=585.0, y_out=745.0, z0=240.0, z1=480.0)
     for sgn in (1, -1):
         cuts.append(box(f"CUT_CORNER_{'L' if sgn > 0 else 'R'}", coll,
-                        -900, -700, min(sgn * 600, sgn * 820), max(sgn * 600, sgn * 820), 200, 470))
+                        -1000.0, CORNER["x_floor"], min(sgn * CORNER["y_in"], sgn * CORNER["y_out"]),
+                        max(sgn * CORNER["y_in"], sgn * CORNER["y_out"]), CORNER["z0"], CORNER["z1"]))
     for sgn in (1, -1):
-        # at Y 660, spec X -790..-660: at Y 705 the bite had already taken the face back to -676,
-        # so a bar at -870..-720 stood in the air ahead of the body. At Y 660 the pocket runs from
-        # the face (-861 at Z 450) to the box floor at -700, and the bar embeds 40 mm into it.
+        # the bar stands in the pocket's lateral middle (Y 665), from 10 mm inside the floor to
+        # the face; the chamfer face at Y 665 sits near -845, and the bar's front end is read off
+        # the built skin so it never stands ahead of it.
+        yb = sgn * 665.0
+        xf = None
+        for zt in (300.0, 360.0, 420.0):
+            # probed from AHEAD of the car (repo +X is forward): the origin sits 1.5 m ahead
+            # of the target and the ray runs back into the face. Written the other way round
+            # the ray started inside the car and the bar's front end landed at spec X +342.
+            p, n = surface_hit(mathutils.Vector((mm(1000.0), mm(yb), mm(zt))),
+                               [(1.5, 0.0, 0.0)])
+            if p is not None:
+                xf = -p.x * 1000.0 if xf is None else max(xf, -p.x * 1000.0)
+        x_front = (xf + 6.0) if xf is not None else -830.0
         bl = blade(f"CORNER_BLADE_{'L' if sgn > 0 else 'R'}", coll,
-                   [(-790.0, sgn * 660.0, 210.0, 460.0), (-730.0, sgn * 660.0, 210.0, 460.0),
-                    (-660.0, sgn * 660.0, 210.0, 460.0)], 20.0)
+                   [(x_front, yb, CORNER["z0"] + 10.0, CORNER["z1"] - 10.0),
+                    (CORNER["x_floor"] - 20.0, yb, CORNER["z0"] + 10.0, CORNER["z1"] - 10.0)], 20.0)
         bl["panel_id"] = "P48" if sgn > 0 else "P49"
         bl["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
         made.append(bl)
-    print("  corner intakes: box pockets spec X -900..-700, Y 600..820, Z 200..470, a 20 mm vertical bar in each -> P48 / P49")
+    print(f"  corner intakes: pockets in the chamfer face, Y {CORNER['y_in']:.0f}..{CORNER['y_out']:.0f}, "
+          f"Z {CORNER['z0']:.0f}..{CORNER['z1']:.0f}, floor at {CORNER['x_floor']:.0f}, a 20 mm bar in each -> P48 / P49")
 
     # ---- 7. THE CENTRAL MOUTH, 2026-09-26. docs/14 locks "a large central opening to the
     # radiators" and the body never had one: what statev_master_volumes called NOSE_MOUTH eats in
@@ -645,7 +668,12 @@ def main():
         bm.to_mesh(me)
         bm.free()
         return ob
-    MOUTH = dict(x_face=-1050.0, x_floor=-820.0, hw_lo=450.0, z_lo=200.0, hw_hi=340.0, z_hi=385.0)
+    # 2026-09-29 (v048): the trapezoid was read UPSIDE DOWN on 2026-09-26. Re-read on the front
+    # view enlarged 3x (car 1520 px = 1850 mm; vertical scale from the splitter's underside at
+    # Z 120 to the DRL centre at 500): the mouth is WIDER AT THE TOP -- half-width ~380 at the top
+    # edge, ~320 at the bottom, Z ~220..430, 70 mm of face left under the DRL. The old
+    # 450-bottom / 340-top mouth was the render's shape mirrored about its own mid-height.
+    MOUTH = dict(x_face=-1050.0, x_floor=-820.0, hw_lo=320.0, z_lo=220.0, hw_hi=380.0, z_hi=430.0)
     cuts.append(trap("CUT_MOUTH", MOUTH["x_face"], MOUTH["x_floor"],
                      MOUTH["hw_lo"], MOUTH["z_lo"], MOUTH["hw_hi"], MOUTH["z_hi"]))
     fm = trap("FRONT_MASK", -852.0, -830.0, MOUTH["hw_lo"], MOUTH["z_lo"], MOUTH["hw_hi"], MOUTH["z_hi"])
@@ -659,7 +687,8 @@ def main():
     fm["panel_id"] = "P43"
     fm["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
     made.append(fm)
-    print("  central mouth: trapezoid pocket 900/680 wide x 185 tall to a floor at spec X -820,")
+    print(f"  central mouth: trapezoid pocket {2*MOUTH['hw_hi']:.0f} wide at the top / {2*MOUTH['hw_lo']:.0f} at the "
+          f"bottom x {MOUTH['z_hi']-MOUTH['z_lo']:.0f} tall (Z {MOUTH['z_lo']:.0f}..{MOUTH['z_hi']:.0f}) to a floor at spec X {MOUTH['x_floor']:.0f},")
     print("    a 26 mm frame standing in it -> P43 FRONT_MASK; the corner bites became corner intakes")
 
     # ---- 8. DIFFUSER FINS, 2026-09-26. ref-09's rear detail: a rising floor with four tall fins,
@@ -800,8 +829,16 @@ def main():
                     # tip (-950) inboard of Y ~450, and a ridge 12 mm proud there stood at -962 --
                     # the length read 4382 against 4370. Proud 10 from Y 500 out, where the face
                     # already sits behind -936. Nothing may stand ahead of the tip.
-                    [(-780.0, sgn * 640.0, 520.0), (-830.0, sgn * 570.0, 488.0), (-880.0, sgn * 500.0, 456.0)],
-                    [(-1.5, 0.0, 0.0), (-1.0, sgn * 1.0, 0.0), (0.0, sgn * 1.5, 0.0)], 24.0, 10.0, 14.0)
+                    # v048: over the corner pocket (Y 585..745, top 480) the ridge must clear the
+                    # pocket's ceiling -- its lower edge is 12 under the path, so the path stays
+                    # above 495 there; it comes down to 460 only inboard of the pocket (Y 545),
+                    # and stops at Y 545 where the chamfer face still sits behind -936.
+                    [(-775.0, sgn * 660.0, 525.0), (-830.0, sgn * 600.0, 505.0), (-885.0, sgn * 545.0, 462.0)],
+                    # v048: probed from AHEAD only. With the forward-from-inside and sideways
+                    # probes the nearest hit for the two outer targets was the FLANK (Y 769 /
+                    # 689), so the ridge started on the corner's side, not under the lamp; the
+                    # inside probe itself hits the cabin cut at spec X +285 and never the face.
+                    [(1.5, 0.0, 0.0)], 24.0, 10.0, 14.0)
         if rb is not None:
             rb["panel_id"] = "P50" if sgn > 0 else "P51"
             rb["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"

@@ -57,10 +57,20 @@ SECTIONS = {
     # normalised so size cannot hide shape -- puts our nose 142 mm of half-width narrower than the
     # render at the tip, 121 at 4% of the length and 54 at 9%. The render's nose is blunt in plan;
     # ours came to a point. Nothing in the side elevation could ever have shown this.
-    "S00": (-950, "front tip",        [(120, 260), (250, 430), (350, 500), (450, 440)]),
-    "S01": (-850, "front mask",       [(120, 430), (250, 600), (350, 675), (450, 700), (550, 600)]),
-    "S02": (-700, "headlights",       [(120, 560), (250, 710), (400, 775), (550, 755), (650, 640)]),
-    "S03": (-500, "front fender in",  [(120, 650), (250, 780), (400, 820), (550, 810), (700, 700)]),
+    # NOSE AS A CHAMFERED BOX, 2026-09-29 (v048). ref-09's plan is not an ellipse: a flat tip
+    # face at 0.549 of the max half-width (508 on our car), a CHAMFER to 0.830 (768) within the
+    # first 4% of the length (175 mm, ~56 degrees to the axis), then a gentle taper to 0.922 (853)
+    # at 9%. Ours went 500 -> 700 in the first 100 mm and then rounded on -- wider than the render
+    # at -850 and 37-44 mm narrower at 4-9%, which is exactly what plan_overlay had been reporting.
+    # And the front view is a slab: the mask face is VERTICAL from the splitter to the DRL, so the
+    # lower band (Z 200..500) carries one half-width per station, and the floor is nearly as wide
+    # as the face (the splitter plate is full width under the mask, not a rounded belly).
+    # nose_face() carries the band's width on up to the crest, which is the leading edge.
+    "S00": (-950, "front tip",        [(120, 430), (200, 490), (300, 496), (450, 496)]),
+    "S01": (-850, "front mask",       [(120, 600), (200, 645), (300, 655), (450, 655), (550, 600)]),
+    "S01b": (-780, "nose corner",     [(120, 720), (200, 758), (300, 765), (450, 765), (550, 700)]),
+    "S02": (-700, "headlights",       [(120, 740), (200, 790), (300, 806), (450, 812), (550, 785), (650, 640)]),
+    "S03": (-500, "front fender in",  [(120, 720), (250, 810), (400, 850), (550, 820), (700, 700)]),
     "S04": (-250, "ahead of arch",    [(120, 720), (250, 830), (400, 870), (550, 850), (700, 720)]),
     "S05": (0,    "FRONT AXLE",       [(120, 730), (250, 850), (400, 900), (550, 860), (700, 720)]),
     "S06": (350,  "behind front arch",[(120, 720), (250, 820), (400, 850), (550, 830), (700, 700)]),

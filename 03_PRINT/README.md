@@ -25,15 +25,14 @@ Every file is one printable solid, laid on its flattest face, sitting on Z = 0, 
 | joint tab | 20 mm past each cut, dropped inward by wall + bond | fit test |
 | orientation | smallest dimension vertical | Q32 / Q33 |
 
-Estimated core mass across both tiers at these assumptions: **~79.4 kg**.
+Estimated core mass across both tiers at these assumptions: **~78.8 kg**.
 
 ## Quality of the files, as a slicer sees them
 
-`print_qc.py` reads every file back: closed, manifold, consistently wound, positive volume. Last run: **48 of 50 clean**, 2 with a defect.
+`print_qc.py` reads every file back: closed, manifold, consistently wound, positive volume. Last run: **49 of 50 clean**, 1 with a defect.
 
 Files with something to say (all non-manifold edges, a handful each; most slicers repair these, but that is not a guarantee):
 
-- `P01_FRONT_FASCIA_whole.stl` — 8 open edge(s); 4 non-manifold edge(s)
 - `P21_REAR_FASCIA_whole.stl` — 4 open edge(s); 2 non-manifold edge(s)
 
 ## Known problems, stated rather than hidden

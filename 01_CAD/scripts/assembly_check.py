@@ -38,6 +38,7 @@ import random
 import bmesh
 import bpy
 import mathutils
+import mathutils.geometry
 from mathutils.bvhtree import BVHTree
 
 REPO = "/Users/miroslavstatev/vehicle-3d-modeling"
@@ -214,8 +215,25 @@ def main():
     tree = BVHTree.FromBMesh(ab)
     random.seed(7)
     # sample the master surface by area, so a big panel is not under-represented
-    faces = skin
-    areas = [f.calc_area() for f in faces]
+    # TRIANGULATED FIRST, 2026-09-29. The sampler used to pick a point inside the triangle
+    # (v0, v1, v2) of whichever face it drew, weighted by the WHOLE face's area. On a triangle
+    # that is the face; on an n-gon it is one corner of it, and on a concave n-gon -- the tip
+    # face of the nose is a 1210 cm2 ring around the mouth opening after the boolean -- that
+    # triangle can span the HOLE. Ear-clipped per face, area per triangle; the owner stays the
+    # parent face. Measured on v048: 84.7% -> 84.2%, so the old sampler was flattering, not
+    # the cause of the 86.2 -> 84 drop. That drop is arithmetic: the nose went from a rounded
+    # belly to a flat chamfered box and its skin AREA fell ~0.17 m2 (P01 0.82 -> 0.78, the
+    # corner pockets took skin out), while the unproduced regions (deck, engine cover) did not
+    # change -- so the produced SHARE fell with nothing missing. Checked face by face: the front
+    # volume's uncovered area went 4.19 -> 3.19 m2 between v047 and v048.
+    faces, tris = [], []
+    for f in skin:
+        vs = [v.co.copy() for v in f.verts]
+        idx = [(0, 1, 2)] if len(vs) == 3 else mathutils.geometry.tessellate_polygon([vs])
+        for i, j, k in idx:
+            tris.append((vs[i], vs[j], vs[k]))
+            faces.append(f)
+    areas = [mathutils.geometry.area_tri(*t) for t in tris]
     total = sum(areas)
     cum, acc = [], 0.0
     for a in areas:
@@ -233,11 +251,11 @@ def main():
             else:
                 hi = mid
         f = faces[lo]
-        vs = [v.co for v in f.verts]
+        vs = tris[lo]
         a, b = random.random(), random.random()
         if a + b > 1.0:
             a, b = 1 - a, 1 - b
-        p = vs[0] + (vs[1] - vs[0]) * a + (vs[min(2, len(vs) - 1)] - vs[0]) * b
+        p = vs[0] + (vs[1] - vs[0]) * a + (vs[2] - vs[0]) * b
         hit = tree.find_nearest(p)
         d.append((hit[0] - p).length * 1000.0 if hit[0] is not None else 9999.0)
         owner.append(pof(f) if pof else "?")

@@ -168,7 +168,9 @@ LINE_OF = {
 # about the mouth of an intake would be reporting a missing feature that is not missing. Each entry
 # names the object or table in the build that makes the hole, so the claim can be checked.
 OPENING_OF = {
-    ("NOSE", "FRONT_LOWER_INTAKE"): ("NOSE_MOUTH", "boolean in statev_master_volumes"),
+    # v048: the side bites (NOSE_MOUTH) are off; the openings in the nose are the central mouth
+    # and the corner pockets, both cut by stage03_elements.
+    ("NOSE", "FRONT_LOWER_INTAKE"): ("FRONT_MASK", "mouth and corner pockets cut by stage03_elements"),
     ("HOOD", "HEADLIGHT_SURROUND"): ("HEADLIGHT_SURROUND_L", "slot cut by stage03_elements"),
     ("DOOR_CHANNEL", "SIDE_INTAKE_MOUTH"): ("INTAKE_BLADE_L", "mouth cut by stage03_elements"),
 }

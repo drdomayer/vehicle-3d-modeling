@@ -373,7 +373,39 @@ FRONT_CREST = dict(
     # the valley between fender and hood: y position and how far below the crest it sits
     vy=[(-950, 120), (-850, 240), (-700, 380), (-500, 520), (-250, 580), (0, 600),
         (300, 590), (430, 560)],
-    valley_drop=50.0)
+    # valley_drop is a TABLE by spec X since 2026-09-29: at the nose tip the valley (y 120, 50 mm
+    # below a crest at y 240) put an 80 mm bump across 120 mm of width right on the leading edge --
+    # the two "eyes" in every front view. ref-09's hood is flat across the nose; the fender crests
+    # rise out of it from about spec X -500 back. So the valley is nothing until -700 and full
+    # from -500.
+    valley_drop=[(-950, 0.0), (-700, 0.0), (-500, 50.0), (430, 50.0)])
+
+# THE NOSE FACE, 2026-09-29. Measured from the front on v045: the face is vertical at spec X
+# -950 from the splitter up to Z ~500, then ROLLS into the hood over 500..560, and the DRL sat at
+# 420 -- 80-100 mm of blank vertical face above the light, then a soft roll. ref-05's side outline
+# puts the nose top at 557-560 (we match it to 3 mm) and ref-09 puts the DRL on the leading edge
+# with the mask face flat beneath it. So: the face is held vertical up to the crest height with a
+# slight lean, the crest IS the leading edge (anchored), and the DRL moves up to it (DRL_Z).
+NOSE_FACE_X0, NOSE_FACE_X1 = -965.0, -700.0     # full at the tip, gone by -700
+NOSE_FACE_LEAN = 0.05                           # mm of tuck per mm of height above the reference band
+
+
+def nose_face(spec_x, pts, fz):
+    """Hold the nose face vertical (with a slight lean) from Z 400 up to the crest height fz."""
+    if spec_x > NOSE_FACE_X1 or fz is None:
+        return pts
+    w = 1.0 - smoothstep(NOSE_FACE_X1 - 60.0, NOSE_FACE_X1, spec_x)
+    band = [y for y, z in pts if 250.0 <= z <= 400.0]
+    if not band:
+        return pts
+    y_face = max(band)
+    out = []
+    for y, z in pts:
+        if 400.0 < z <= fz:
+            target = y_face - (z - 400.0) * NOSE_FACE_LEAN
+            y = y + (max(y, target) - y) * w
+        out.append((min(MAX_HALF_WIDTH, y), z))
+    return out
 
 BUTTRESS = dict(x0=1740, x1=3200, y=620, w=300, height=152)   # starts at the hoop plane,
                                                               # outboard of the cabin cut
@@ -1095,6 +1127,10 @@ def ring(spec_x):
         y = donor_clamp(spec_x, z, y)
         y = side_floors(spec_x, z, y)
         pts.append((min(MAX_HALF_WIDTH, max(20.0, y)), z))
+    # the nose face: vertical up to the crest, which is the leading edge
+    _fc = FRONT_CREST
+    if _fc["z"][0][0] <= spec_x <= _fc["z"][-1][0]:
+        pts = nose_face(spec_x, pts, table_z(_fc["z"], spec_x))
     half = [(0.0, z_floor)] + pts
     # The door top, carried inboard past the cabin cut. Without this the shelf stopped around
     # Y 810 and the aperture edge at Y 700 sat on the ramp up to the crown, so what you measured
@@ -1121,7 +1157,11 @@ def ring(spec_x):
         fdrop = min(fc["drop"], 0.6 * (fz - pts[-1][1]))
         # the wall top and the plateau first, each only if there is room for it
         top_y, top_z = pts[-1]
-        if "sh_in" in fc:
+        # The wall-top / plateau construction belongs to the fender over the axle. At the nose
+        # (spec X < -600) the crest is the leading edge of a flat face and those two points put
+        # steps into it -- the crumpled band at Z 440..530 across the whole front view on
+        # 2026-09-29. Ahead of -600 the face runs straight up to the crest (nose_face()).
+        if "sh_in" in fc and spec_x > -600.0:
             sy, sz = top_y - fc["sh_in"], fz - fc["sh_drop"]
             if sz > top_z + 8 and sy > fy + fc["out"] + 20:
                 half.append((sy, sz))
@@ -1135,8 +1175,9 @@ def ring(spec_x):
         # section's own top; the crown then rises from it to the centreline
         if "vy" in fc:
             vy = table_z(fc["vy"], spec_x)
-            vz = fz - fc["valley_drop"]
-            if vy < fy - 20 and vz > pts[-1][1] + 6:
+            vd = table_z(fc["valley_drop"], spec_x) if isinstance(fc["valley_drop"], list) else fc["valley_drop"]
+            vz = fz - vd
+            if vd >= 6.0 and vy < fy - 20 and vz > pts[-1][1] + 6:
                 half.append((vy, vz))
     if b_top is not None and b_top > pts[-1][1] + 8:
         y_crest = b["y"] + b["w"] * BUTTRESS_TOP_FRAC / 2

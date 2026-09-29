@@ -149,8 +149,12 @@ DOOR_CHAR_LINE_Z = {"front": 420, "middle": 500, "rear": 520}
 # y_centre None -> mirrored pair is built at ±|y|
 BOXES = [
     # --- lighting
-    ("PROJECTOR",   "04_LIGHTING", -600,  560,  570,  150,  110,  110, "DECIDED",
-     "cavity for ONE real Hella 90 mm bi-LED module (low+high): 110 dia x ~150 deep incl. heatsink. "
+    ("PROJECTOR",   "04_LIGHTING", -600,  645,  560,  150,  110,  110, "DECIDED",
+     "MOVED 2026-09-29 to the CORNER, Y 590..700 / Z 505..615: ref-09 puts the lamp at the corner "
+     "under the end of the DRL line, and the slot at Y 400..690 on the fender top read as a window "
+     "on the bonnet. Measured on the built body at spec X -600: top 640..684 over Y 640..720 (cavity "
+     "top 615 + skin), side half-width ~800 at Z 550 (cavity to 700 + shell). Lit lower edge 515. "
+     "Older text: cavity for ONE real Hella 90 mm bi-LED module (low+high): 110 dia x ~150 deep incl. heatsink. "
      "Lit-surface lower edge 515 mm, above the 500 mm legal minimum and only 15 mm clear of it, so "
      "the module cannot be dropped. MOVED 2026-09-15 from specX -700 to -600. Measured on the BUILT "
      "surface, the body top inside the module's own Y band 505..615 is 583.5 at specX -700 while the "
@@ -158,7 +162,7 @@ BOXES = [
      "where the same measurement reads 652.2. The note this replaces claimed a half-width of 680 at "
      "S02 Z 570; the built body gives 652 there, because that check was taken from the section "
      "control data rather than from the surface the sections produce."),
-    ("PROJECTOR_2", "04_LIGHTING", -600,  420,  570,  150,  110,  110, "OPTIONAL",
+    ("PROJECTOR_2", "04_LIGHTING", -600,  500,  560,  150,  110,  110, "OPTIONAL",
      "room for a second module if low and high are split across two units; delete if one bi-LED is "
      "used. Moved with PROJECTOR, for the same reason"),
     ("TAIL_BAR",    "04_LIGHTING", 3200,    0,  612,   45, 1440,   38, "LOCKED",
@@ -559,15 +563,21 @@ def box(name, coll, centre_mm, size_mm, color, note="", status="spec", spec_x=No
 # DRL / position blade: (spec_x, target_half_width). Z is solved so the point lands ON the body's
 # upper shoulder at that width — the blade follows the widest line of the nose and kicks into the
 # fender, instead of being a straight bar hanging in space.
+# 2026-09-29: ends at (-762, 680), inside the corner lamp slot (Y 590..700, Z 505..625), so the
+# line of light runs INTO the lamp as in ref-09. The three points beyond it ran on up the fender
+# flank to Y 810, 95 mm past a lamp that was then on the fender top.
 DRL_PATH = [(-888, 120), (-878, 260), (-862, 400), (-838, 520), (-805, 610),
-            (-762, 680), (-710, 730), (-650, 775), (-585, 810)]
+            (-762, 680)]
 # 2026-09-28: the height is a TABLE by |Y|, not z_at_half_width(). The solve read the SECTIONS
 # (pre-loft data the body has left far behind) and gave 350 at the centre, 450 across, then
 # 400 / 552 / 443 toward the corner -- a zig-zag, and the centre point sat INSIDE the central
 # mouth (Z 200..385, built 2026-09-26). ref-09's line droops to the centre in a shallow V just
 # above the mouth and rises to the corner under the projector slot (Z 505..625). Position lamps
 # need >= 350; the centre is 420.
-DRL_Z = [(0, 420), (400, 440), (600, 465), (800, 490)]     # (|Y|, Z)
+# 2026-09-29: up to the leading edge. Measured on v045 the face was vertical to Z ~500 with the
+# DRL at 420 -- the light 80-100 mm below the edge, and a blank wall above it. ref-09 lays the
+# line ON the edge, rising to the corner where it enters the lamp.
+DRL_Z = [(0, 500), (400, 505), (600, 530), (800, 560)]     # (|Y|, Z)
 DRL_INSET = 15          # mm inboard of the surface so the blade sits in a recess
 DRL_SECTION = (14, 12)  # height x depth of the lit element
 

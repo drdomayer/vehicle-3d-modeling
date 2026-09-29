@@ -100,7 +100,7 @@ FLANGE_AT = {
 }
 PANELS = ["P01", "P28", "P41", "P07", "P08", "P39", "P40", "P21", "P22",
           "P05", "P06", "P13", "P14", "P29", "P30", "P34", "P35", "P36", "P43",
-          "P44", "P45", "P46", "P47",     # P17 / P18 are SHAPE ONLY (not listed here on purpose)
+          "P44", "P45", "P46", "P47", "P48", "P49",   # P17 / P18 are SHAPE ONLY, not listed here
           "P24", "P25", "P31", "P32",
           # 2026-09-21: the tail blade's housings. They were BLOCKED for having no geometry, not
           # for waiting on the car -- docs/14 locks the lamp as a thin wide blade with sharp L
@@ -182,7 +182,7 @@ SHAPE_ONLY = {
 # Stage 03 elements are built by stage03_elements.py as closed solids in their own right -- a blade
 # already HAS its thickness -- so they skip both the map and the wall and go straight to sectioning.
 STAGE03 = {"P05", "P06", "P13", "P14", "P29", "P30", "P34", "P35", "P36", "P43",
-           "P44", "P45", "P46", "P47", "P17", "P18",
+           "P44", "P45", "P46", "P47", "P17", "P18", "P48", "P49",
            "P24", "P25", "P31", "P32", "P26", "P27"}
 SCHEDULE = []
 PLACEMENT = {}   # printed file -> the 4x4 that puts it back on the car
@@ -230,7 +230,7 @@ def gather(pid):
             sx, ay, z = -c.x * 1000, abs(c.y * 1000), c.z * 1000
             ny = -n.y if c.y > 0 else n.y
             tag = not_panel(sx, ay, z, n.z, ny)
-            if tag and not (tag in ("X_INTAKE", "X_FENDER_SLOT", "X_MOUTH", "X_ROCKER_CHANNEL")
+            if tag and not (tag in ("X_INTAKE", "X_FENDER_SLOT", "X_MOUTH", "X_ROCKER_CHANNEL", "X_CORNER")
                             and panel_of(sx, ay, z) == base):
                 # a pocket's walls are PRINTED with the panel the pocket is cut into: they are
                 # its recess, even though the skin accounting rightly does not count them as

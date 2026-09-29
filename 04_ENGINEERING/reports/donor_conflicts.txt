@@ -41,9 +41,9 @@ STATEV 001 v0.1  vs  Porsche 986 donor — conflict report
   S13b specX  3320 (repo -3320) tail knee          STATEV   640 | donor   303 |   +337 | panel removed
 
 [lighting]
-  projector cavity 110x110x150 (Hella 90 mm bi-LED class), centre Y +-560, Z 570
-  spans Y 505 … 615 vs body 742 at that height -> +127
-  lit-surface lower edge Z 515.0 vs the 500 mm minimum -> OK
+  projector cavity 110x110x150 (Hella 90 mm bi-LED class), centre Y +-645, Z 560
+  spans Y 590 … 700 vs body 754 at that height -> +54
+  lit-surface lower edge Z 505.0 vs the 500 mm minimum -> OK
   DRL blade runs along the body's widest line; position lamps need >= 350 mm — the blade's own z_range property carries the built value
 
 [door skin]

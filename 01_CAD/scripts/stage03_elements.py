@@ -399,12 +399,17 @@ def main():
     # ---- 5. the headlamp as a blade, not a cavity. A slot across the nose with a thin frame in it,
     # so what shows is a line of light behind a frame -- which is what "thin light blades" means and
     # the only road-legal way to get it, since the E-marked module itself may never be modified.
+    # 2026-09-29: at the CORNER (PROJECTOR moved, see statev_skeleton): the slot is cut in from
+    # the corner face (which sits at spec X ~-800 at Y 650 / Z 550) back to the housing front,
+    # and the frame stands just inside the face. The DRL line ends inside this slot.
     for sgn in (1, -1):
         cuts.append(box(f"CUT_LAMP_{'L' if sgn > 0 else 'R'}", coll,
-                        -700, -540, sgn * 400, sgn * 690, 505, 625))
+                        -900, -620, min(sgn * 590, sgn * 700), max(sgn * 590, sgn * 700), 505, 625))
     for sgn in (1, -1):
+        # -760..-732, not -790..-762: the corner face recedes from -803 at Y 600 to -774 at Y 700
+        # (Z 550), and at -790 the frame's outer end stood 16 mm ahead of the skin. Measured.
         ob = frame(f"HEADLIGHT_SURROUND_{'L' if sgn > 0 else 'R'}", coll,
-                   -676, -648, min(sgn * 406, sgn * 684), max(sgn * 406, sgn * 684), 509, 621, 18.0)
+                   -760, -732, min(sgn * 596, sgn * 694), max(sgn * 596, sgn * 694), 511, 619, 18.0)
         ob["panel_id"] = "P29" if sgn > 0 else "P30"
         ob["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
         made.append(ob)
@@ -417,8 +422,8 @@ def main():
     # the front where the P29 frame is.
     for sgn in (1, -1):
         h = shell(f"HEADLIGHT_HOUSING_{'L' if sgn > 0 else 'R'}", coll,
-                  -681, -519, min(sgn * 499, sgn * 621), max(sgn * 499, sgn * 621),
-                  509, 631, 5.0, "front")
+                  -686, -514, min(sgn * 584, sgn * 706), max(sgn * 584, sgn * 706),
+                  499, 621, 5.0, "front")
         h["panel_id"] = "P24" if sgn > 0 else "P25"
         h["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
         made.append(h)
@@ -536,6 +541,25 @@ def main():
                   sgn * (y_face + 60.0), sgn * (y_face - 68.0))
         cuts.append(c)
     print(f"  rocker channel: undercut along the sill, spec X 470..1610, Z 195..285, 68 mm in from Y {y_face:.0f}")
+
+    # ---- 6c. THE CORNER INTAKES AS BOXES, 2026-09-29. statev_master_volumes carves them as
+    # rounded bites (NOSE_MOUTH); ref-09's corners are angular boxes with a vertical bar in each.
+    # A box pocket gives the bite vertical walls and a flat ceiling under the lamp slot, and a
+    # 20 mm blade stands in it. Functional: these are the brake-duct inlets (BRAKE_DUCT_F).
+    for sgn in (1, -1):
+        cuts.append(box(f"CUT_CORNER_{'L' if sgn > 0 else 'R'}", coll,
+                        -900, -700, min(sgn * 600, sgn * 820), max(sgn * 600, sgn * 820), 200, 470))
+    for sgn in (1, -1):
+        # at Y 660, spec X -790..-660: at Y 705 the bite had already taken the face back to -676,
+        # so a bar at -870..-720 stood in the air ahead of the body. At Y 660 the pocket runs from
+        # the face (-861 at Z 450) to the box floor at -700, and the bar embeds 40 mm into it.
+        bl = blade(f"CORNER_BLADE_{'L' if sgn > 0 else 'R'}", coll,
+                   [(-790.0, sgn * 660.0, 210.0, 460.0), (-730.0, sgn * 660.0, 210.0, 460.0),
+                    (-660.0, sgn * 660.0, 210.0, 460.0)], 20.0)
+        bl["panel_id"] = "P48" if sgn > 0 else "P49"
+        bl["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
+        made.append(bl)
+    print("  corner intakes: box pockets spec X -900..-700, Y 600..820, Z 200..470, a 20 mm vertical bar in each -> P48 / P49")
 
     # ---- 7. THE CENTRAL MOUTH, 2026-09-26. docs/14 locks "a large central opening to the
     # radiators" and the body never had one: what statev_master_volumes called NOSE_MOUTH eats in

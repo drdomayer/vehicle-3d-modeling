@@ -1,5 +1,5 @@
 {
- "when": 1790670933.214159,
+ "when": 1790671475.7786949,
  "decisions": {
   "wall_mm": 3.0,
   "density_g_cm3": 1.24,
@@ -88,6 +88,6 @@
   }
  },
  "core_kg": 79.4,
- "dropped_skin_mm2": 99851,
+ "dropped_skin_mm2": 64513,
  "small_sections_under_40mm": 0
 }

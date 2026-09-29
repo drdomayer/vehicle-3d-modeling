@@ -38,7 +38,7 @@ Files with something to say (all non-manifold edges, a handful each; most slicer
 
 ## Known problems, stated rather than hidden
 
-- **999 cm² of skin is in no file**: seam slivers and lone faces the region rule handed to a panel without connecting them to it, dropped and counted per file in `DROPPED_MM2`. The laminate bridges these; none is a part.
+- **645 cm² of skin is in no file**: seam slivers and lone faces the region rule handed to a panel without connecting them to it, dropped and counted per file in `DROPPED_MM2`. The laminate bridges these; none is a part.
 - The files are the **core** only. Laminate, filler and paint go on top and none of their thicknesses exist as data yet.
 - Orientation is *lay flattest, class-A face up* — never chosen against an overhang limit (Q32). `04_ENGINEERING/reports/overhang.csv` says, per file, how much area hangs past 45° and 60° as laid and turned over, so the shop's limit turns into a count rather than a question.
 - Nothing here touches the donor car. Every mounting point, hinge, hole and flange that lands on the Porsche is deliberately absent until the car is scanned.

@@ -806,7 +806,9 @@ def main():
             rb["panel_id"] = "P50" if sgn > 0 else "P51"
             rb["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
             made.append(rb)
-    cuts.append(box("CUT_LIP_RECESS", coll, -1000.0, -910.0, -620.0, 620.0, 150.0, 200.0))
+    # top at 194, not 200: at 200 the recess's ceiling coincided with the mouth's floor over
+    # |Y| < 450 and the boolean left a 40 x 438 x 3 strip and 8 open edges in P01's file.
+    cuts.append(box("CUT_LIP_RECESS", coll, -1000.0, -910.0, -620.0, 620.0, 150.0, 194.0))
     print("  strakes: skin-following ridges from the lamp ends to the mouth's corners -> P50 / P51;")
     print("    splitter lip: the face recessed 40 mm over Z 150..200 so the lip stands proud inside the locked length")
 

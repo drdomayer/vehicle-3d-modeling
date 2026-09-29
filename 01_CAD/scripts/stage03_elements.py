@@ -519,6 +519,37 @@ def main():
                         TE["z0"], TE["z1"]))
     print(f"  tail blade: a slot {TB['z1']-TB['z0']:.0f} mm tall across the rear at spec X "
           f"{TB['x0']:.0f}, with L ends wrapping forward to {TE['x0']:.0f}")
+    # ---- 5b. THE TAIL CORNER POCKETS, 2026-09-29 (v049). ref-09's rear view: the flat tail
+    # panel ends at half-width ~810 and OUTBOARD of it, under each L-end of the light bar, is a
+    # dark vertical opening (hw ~700..810, from the diffuser top to just under the lamp) with the
+    # body's corner standing outboard of it as a blade down to the diffuser. The same construction
+    # as the nose corners in v048: a box cut from BEHIND into the boxed tail (S13/S13b), stopping
+    # at a floor so the corner keeps its outer skin. Z stops 18 mm under the tail-end housing.
+    # Measured after the first cut (Y 690..800): the boxed tail's skin at 3200 sits at hw ~765
+    # and at 3250 at ~685, so a box to 800 had no outer wall anywhere and the corner was a notch
+    # open to the side, exactly the v047 nose corner. ref-09 shows the corner open to the side too
+    # (the tall dark slot at the rear corner of its side view), with the BLADE outboard of it as
+    # its own element standing proud of the skin -- which is what the render's corner is, not a
+    # wall. So: the pocket keeps Y 690..760 (a 5..10 mm lip at 3200, none behind it), and the
+    # blade is a separate part, P52 / P53 TAIL_CORNER_BLADE, standing at Y +-850 from the haunch
+    # skin (hw ~835 at 3080) back to 3230, Z 150..600, 30 mm thick, flaring nothing: the skin
+    # behind 3100 is inboard of it, so the blade is in the air with the pocket between it and
+    # the tail panel, as in the reference.
+    TC = dict(x_floor=3180.0, y_in=690.0, y_out=760.0, z0=340.0, z1=575.0)
+    for sgn in (1, -1):
+        cuts.append(box(f"CUT_TAIL_CORNER_{'L' if sgn > 0 else 'R'}", coll,
+                        TC["x_floor"], 3500.0, min(sgn * TC["y_in"], sgn * TC["y_out"]),
+                        max(sgn * TC["y_in"], sgn * TC["y_out"]), TC["z0"], TC["z1"]))
+    for sgn in (1, -1):
+        bl = blade(f"TAIL_CORNER_BLADE_{'L' if sgn > 0 else 'R'}", coll,
+                   [(3060.0, sgn * 850.0, 150.0, 600.0), (3150.0, sgn * 850.0, 150.0, 600.0),
+                    (3230.0, sgn * 840.0, 190.0, 560.0)], 30.0)
+        bl["panel_id"] = "P52" if sgn > 0 else "P53"
+        bl["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
+        made.append(bl)
+    print(f"  tail corner pockets: cut from behind to a floor at {TC['x_floor']:.0f}, Y {TC['y_in']:.0f}.."
+          f"{TC['y_out']:.0f}, Z {TC['z0']:.0f}..{TC['z1']:.0f}, open to the side;")
+    print("    tail corner blades: 30 mm fins at Y +-850, spec X 3060..3230, Z 150..600 -> P52 / P53")
 
     for sgn in (1, -1):
         L = sgn > 0

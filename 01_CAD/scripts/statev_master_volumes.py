@@ -1541,6 +1541,14 @@ def build():
 
     # Faceting comes from the control data, not from shading. Smooth each ring point ALONG X
     # before building, so the fix is in the geometry rather than a smooth modifier over a bad shape.
+    # TRIED AND REFUTED 2026-09-29: one FIXED sample allocation for every station (so index k is
+    # the same feature ring to ring). The first glossy render showed reflections broken into
+    # ripples about one station long across the door and the haunch, and the per-station shuffle
+    # of samples (60 of 90 steps) looked like the cause. It is not: with the allocation fixed the
+    # surface probe read the same 3.968 mm to the third decimal, and the ripples vanish under a
+    # Catmull-Clark x2 of the same mesh -- they are the SHADING of a 60-sample, 40 mm-station
+    # quad mesh, which the printed files never carry (smooth_for_print). Judge gloss on the
+    # files (glossy_renders.py, GLOSSY_SOURCE = "files"), not on this loft.
     raw = [ring(x) for x in stations]
     npts = len(raw[0])
     smooth_rings = []

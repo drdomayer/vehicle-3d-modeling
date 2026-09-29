@@ -38,7 +38,7 @@ STATEV 001 v0.1  vs  Porsche 986 donor — conflict report
   S10 specX  2000 (repo -2000) rear haunch start  STATEV   925 | donor   875 |    +50 | OVERLAY
   S11 specX  2415 (repo -2415) REAR AXLE          STATEV   925 | donor   887 |    +38 | OVERLAY
   S12 specX  2800 (repo -2800) behind rear wheel  STATEV   900 | donor   847 |    +53 | OVERLAY
-  S13 specX  3200 (repo -3200) rear fascia        STATEV   820 | donor   680 |   +140 | panel removed
+  S13 specX  3200 (repo -3200) rear fascia        STATEV   822 | donor   680 |   +142 | panel removed
   S13b specX  3320 (repo -3320) tail knee          STATEV   640 | donor   303 |   +337 | panel removed
 
 [lighting]

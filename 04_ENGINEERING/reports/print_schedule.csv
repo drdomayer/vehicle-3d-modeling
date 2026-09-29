@@ -6,10 +6,10 @@ P07,ROCKER_L,s01,933.4,208.0,173.5,yes,1,yes,0,-90.0,-0.0,-0.0,0.0,747.5,-0.0,,0
 P07,ROCKER_L,s02,913.4,205.2,169.3,yes,1,yes,0,-90.0,-0.0,-0.0,0.0,748.7,-0.0,,03_PRINT/production/P07_ROCKER_L_s02.stl
 P08,ROCKER_R,s01,933.4,208.0,173.5,yes,1,yes,0,90.0,-0.0,0.0,0.0,-747.5,-0.0,,03_PRINT/production/P08_ROCKER_R_s01.stl
 P08,ROCKER_R,s02,913.4,205.2,169.3,yes,1,yes,0,90.0,-0.0,0.0,0.0,-748.7,-0.0,,03_PRINT/production/P08_ROCKER_R_s02.stl
-P39,ROCKER_END_L,whole,319.1,911.9,207.4,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,332.9,,03_PRINT/production/P39_ROCKER_END_L_whole.stl
-P40,ROCKER_END_R,whole,319.1,911.9,207.4,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,332.9,,03_PRINT/production/P40_ROCKER_END_R_whole.stl
-P21,REAR_FASCIA,whole,606.3,1729.1,424.8,yes,1,yes,64259,0.0,-90.0,0.0,-2998.2,0.0,-0.0,,03_PRINT/production/P21_REAR_FASCIA_whole.stl
-P22,DIFFUSER,whole,391.9,1670.5,176.2,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,331.7,,03_PRINT/production/P22_DIFFUSER_whole.stl
+P39,ROCKER_END_L,whole,349.7,907.6,213.8,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,334.7,,03_PRINT/production/P39_ROCKER_END_L_whole.stl
+P40,ROCKER_END_R,whole,349.7,907.6,213.8,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,334.7,,03_PRINT/production/P40_ROCKER_END_R_whole.stl
+P21,REAR_FASCIA,whole,603.0,1739.2,424.5,yes,1,yes,61570,0.0,-90.0,0.0,-2998.5,0.0,-0.0,,03_PRINT/production/P21_REAR_FASCIA_whole.stl
+P22,DIFFUSER,whole,392.8,1699.7,177.4,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,332.9,,03_PRINT/production/P22_DIFFUSER_whole.stl
 P05,FENDER_CHANNEL_L,whole,380.0,154.0,109.9,yes,1,yes,0,-0.0,-0.0,-0.0,0.0,0.0,712.0,,03_PRINT/production/P05_FENDER_CHANNEL_L_whole.stl
 P06,FENDER_CHANNEL_R,whole,380.0,154.0,109.9,yes,1,yes,0,-0.0,-0.0,-0.0,0.0,0.0,712.0,,03_PRINT/production/P06_FENDER_CHANNEL_R_whole.stl
 P13,INTAKE_BLADE_L,whole,175.0,244.0,44.0,yes,1,yes,0,-90.0,-0.0,-0.0,0.0,856.4,-0.0,,03_PRINT/production/P13_INTAKE_BLADE_L_whole.stl
@@ -28,6 +28,8 @@ P48,CORNER_BLADE_L,whole,67.6,220.0,20.0,yes,1,yes,0,-90.0,-0.0,-0.0,0.0,655.0,-
 P49,CORNER_BLADE_R,whole,67.6,220.0,20.0,yes,1,yes,0,90.0,-0.0,0.0,0.0,-655.0,-0.0,,03_PRINT/production/P49_CORNER_BLADE_R_whole.stl
 P50,STRAKE_L,whole,103.5,135.7,87.2,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,537.5,,03_PRINT/production/P50_STRAKE_L_whole.stl
 P51,STRAKE_R,whole,103.5,135.7,87.2,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,537.5,,03_PRINT/production/P51_STRAKE_R_whole.stl
+P52,TAIL_CORNER_BLADE_L,whole,170.0,450.0,40.0,yes,1,yes,0,-90.0,-0.0,-0.0,0.0,825.0,-0.0,,03_PRINT/production/P52_TAIL_CORNER_BLADE_L_whole.stl
+P53,TAIL_CORNER_BLADE_R,whole,170.0,450.0,40.0,yes,1,yes,0,90.0,-0.0,0.0,0.0,-825.0,-0.0,,03_PRINT/production/P53_TAIL_CORNER_BLADE_R_whole.stl
 P24,HEADLIGHT_HOUSING_L,whole,172.0,122.0,122.0,yes,1,yes,0,-90.0,-0.0,-0.0,0.0,584.0,-0.0,,03_PRINT/production/P24_HEADLIGHT_HOUSING_L_whole.stl
 P25,HEADLIGHT_HOUSING_R,whole,172.0,122.0,122.0,yes,1,yes,0,90.0,-0.0,0.0,0.0,-584.0,-0.0,,03_PRINT/production/P25_HEADLIGHT_HOUSING_R_whole.stl
 P31,INTAKE_DUCT_L,whole,310.0,700.0,270.0,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,700.0,,03_PRINT/production/P31_INTAKE_DUCT_L_whole.stl

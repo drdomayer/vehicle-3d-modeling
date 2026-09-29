@@ -37,7 +37,7 @@ SIDE_OF = {"P03": +1, "P04": -1, "P07": +1, "P08": -1, "P09": +1, "P10": -1,
 MIRROR_OF = {"P04": "P03", "P08": "P07", "P10": "P09", "P12": "P11", "P16": "P15",
              "P18": "P17", "P41": "P28", "P40": "P39", "P42": "P19",
              "P14": "P13", "P06": "P05", "P30": "P29",
-             "P25": "P24", "P32": "P31", "P45": "P44", "P47": "P46", "P49": "P48", "P51": "P50"}
+             "P25": "P24", "P32": "P31", "P45": "P44", "P47": "P46", "P49": "P48", "P51": "P50", "P53": "P52"}
 
 _pm = {"__file__": os.path.join(REPO, "01_CAD/scripts/panel_map.py"), "__name__": "_pm"}
 with open(os.path.join(REPO, "01_CAD/scripts/panel_map.py"), encoding="utf-8") as f:
@@ -126,6 +126,8 @@ INTERFACE_BY_PANEL = {
     "P49": {"front_crash_structure": None, "brake_duct_route": None},   # SCAN
     "P50": {"front_crash_structure": None},   # SCAN
     "P51": {"front_crash_structure": None},   # SCAN
+    "P52": {"rear_crash_structure": None},    # SCAN
+    "P53": {"rear_crash_structure": None},    # SCAN
     "P35": {
         "exhaust_tip_centres":         None,  # SCAN: two central tips, actual centres and diameter
         "exhaust_hanger_positions":    None,  # SCAN

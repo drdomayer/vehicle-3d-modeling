@@ -85,12 +85,18 @@ SECTIONS = {
     # 100% -- its rearmost 175 mm is a NARROW CENTRE ELEMENT over the diffuser, not full-width
     # bodywork. Ours held 0.536 to the very end and finished in a slab. S13 already matches the
     # render at 96% (750 against its 737), so only the tip moves.
-    "S13": (3200, "rear fascia",      [(120, 650), (250, 780), (400, 820), (550, 780), (650, 650), (750, 500)]),
+    # TAIL AS A BOX, 2026-09-29 (v049), the same reading as the nose in v048. ref-09's rear view
+    # (1.705 mm/px on 1850) is a flat VERTICAL tail panel between the corner blades: the side is
+    # a wall from the diffuser top (Z ~330) to the panel's top edge (~630), then a flat-ish top to
+    # the deck. Ours was an ellipse -- widest at Z 400, rolling in above 550 -- and read as a dome
+    # from behind, with the light bar lying on a curve. The deck heights are BLOCKED and untouched;
+    # this only holds the width up to the panel's top edge and turns the corner there.
+    "S13": (3200, "rear fascia",      [(120, 640), (250, 800), (330, 822), (600, 822), (660, 790), (730, 620), (760, 480)]),
     # A station added at 3320 because the first attempt over-narrowed 96% of the length by 84 mm:
     # with only S13 at 3200 and the tip at 3420, the taper started too early. The render holds 0.797
     # of its max half-width at 96% and collapses to 0.131 by 100%, so nearly all of it happens in
     # the last 175 mm. This puts the knee where the render puts it.
-    "S13b": (3320, "tail knee",       [(120, 520), (250, 610), (400, 640), (500, 560), (600, 400)]),
+    "S13b": (3320, "tail knee",       [(120, 520), (250, 615), (330, 640), (520, 640), (580, 580), (620, 420)]),
     "S14": (3420, "rear tip",         [(120, 110), (250, 140), (400, 150), (500, 125), (600, 80)]),
 }
 

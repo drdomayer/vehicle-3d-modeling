@@ -1,5 +1,5 @@
 {
- "when": 1790668961.131179,
+ "when": 1790669329.131459,
  "decisions": {
   "wall_mm": 3.0,
   "density_g_cm3": 1.24,
@@ -62,11 +62,13 @@
    "P11",
    "P12",
    "P15",
-   "P16"
+   "P16",
+   "P17",
+   "P18"
   ],
-  "sections": 15,
-  "one_piece": 15,
-  "fits_bed": 15,
+  "sections": 17,
+  "one_piece": 17,
+  "fits_bed": 17,
   "missing": {
    "P03": "outer form ours; the inner face is the donor's fender line. Carries a 30 mm TRIM ALLOWANCE past the door shut line (overlaps P09 by 30 mm): the line moves with door_front_x by +-15..30 mm and the scan says where to cut.",
    "P04": "mirror of P03, same note",
@@ -76,10 +78,12 @@
    "P16": "mirror of P15, same note",
    "P11": "outer form ours (the intake surround, spec X 1780..2300 above the rocker); the real opening behind it and the duct route are the donor's. Fit and bond surface come from the scan, as for P15.",
    "P12": "mirror of P11, same note",
+   "P17": "SHAPE ONLY in the strongest sense: a 40 mm sail at Y 685..725 on the quarter top, outboard of a roof fold envelope that is itself a guess (06_ROOF, PROVISIONAL). Its foot, the deck between the blades and whether it can exist at all wait on scan S2. Print it to look at the rear, not to bond.",
+   "P18": "mirror of P17, same note",
    "P02": "outer form ours between the fender crests (|Y| < 380). Rear edge: the file ends at spec X ~385, 35 mm short of the donor cowl (420) -- no allowance can be carried across the cabin cut, so the real rear edge, the hinges and the frunk aperture come from the scan."
   }
  },
- "core_kg": 62.6,
+ "core_kg": 78.5,
  "dropped_skin_mm2": 64575,
  "small_sections_under_40mm": 0
 }

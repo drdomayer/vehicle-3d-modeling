@@ -100,7 +100,7 @@ FLANGE_AT = {
 }
 PANELS = ["P01", "P28", "P41", "P07", "P08", "P39", "P40", "P21", "P22",
           "P05", "P06", "P13", "P14", "P29", "P30", "P34", "P35", "P36", "P43",
-          "P44", "P45", "P46", "P47",
+          "P44", "P45", "P46", "P47",     # P17 / P18 are SHAPE ONLY (not listed here on purpose)
           "P24", "P25", "P31", "P32",
           # 2026-09-21: the tail blade's housings. They were BLOCKED for having no geometry, not
           # for waiting on the car -- docs/14 locks the lamp as a thin wide blade with sharp L
@@ -166,6 +166,13 @@ SHAPE_ONLY = {
            "opening behind it and the duct route are the donor's. Fit and bond surface come from "
            "the scan, as for P15.",
     "P12": "mirror of P11, same note",
+    # 2026-09-29: the buttress blades, standing outboard of the GUESSED roof fold envelope. The
+    # rear cannot be judged against the render without them; nothing about them is settled.
+    "P17": "SHAPE ONLY in the strongest sense: a 40 mm sail at Y 685..725 on the quarter top, "
+           "outboard of a roof fold envelope that is itself a guess (06_ROOF, PROVISIONAL). Its "
+           "foot, the deck between the blades and whether it can exist at all wait on scan S2. "
+           "Print it to look at the rear, not to bond.",
+    "P18": "mirror of P17, same note",
     "P02": "outer form ours between the fender crests (|Y| < 380). Rear edge: the file ends at "
            "spec X ~385, 35 mm short of the donor cowl (420) -- no allowance can be carried across "
            "the cabin cut, so the real rear edge, the hinges and the frunk aperture come from "
@@ -175,7 +182,7 @@ SHAPE_ONLY = {
 # Stage 03 elements are built by stage03_elements.py as closed solids in their own right -- a blade
 # already HAS its thickness -- so they skip both the map and the wall and go straight to sectioning.
 STAGE03 = {"P05", "P06", "P13", "P14", "P29", "P30", "P34", "P35", "P36", "P43",
-           "P44", "P45", "P46", "P47",
+           "P44", "P45", "P46", "P47", "P17", "P18",
            "P24", "P25", "P31", "P32", "P26", "P27"}
 SCHEDULE = []
 PLACEMENT = {}   # printed file -> the 4x4 that puts it back on the car

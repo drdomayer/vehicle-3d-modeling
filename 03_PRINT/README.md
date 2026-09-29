@@ -9,7 +9,7 @@
 | folder | parts | files | one piece | fits bed | what it is |
 |---|---|---|---|---|---|
 | `production/` | 29 | 31 | 31 | 31 | cores whose outer shape is final; mounting interface still to come from the donor scan |
-| `shape_only/` | 9 | 15 | 15 | 15 | shape masters for fitting — **not** parts to bond; the inner face or the trim edge depends on the car |
+| `shape_only/` | 11 | 17 | 17 | 17 | shape masters for fitting — **not** parts to bond; the inner face or the trim edge depends on the car |
 
 Every file is one printable solid, laid on its flattest face, sitting on Z = 0, in **millimetres**. Print it as it comes. `placement.json` in each folder carries the matrix that puts each file back on the car; `04_ENGINEERING/reports/print_schedule.csv` carries the same as degrees and millimetres.
 
@@ -25,11 +25,11 @@ Every file is one printable solid, laid on its flattest face, sitting on Z = 0, 
 | joint tab | 20 mm past each cut, dropped inward by wall + bond | fit test |
 | orientation | smallest dimension vertical | Q32 / Q33 |
 
-Estimated core mass across both tiers at these assumptions: **~62.6 kg**.
+Estimated core mass across both tiers at these assumptions: **~78.5 kg**.
 
 ## Quality of the files, as a slicer sees them
 
-`print_qc.py` reads every file back: closed, manifold, consistently wound, positive volume. Last run: **45 of 46 clean**, 1 with a defect.
+`print_qc.py` reads every file back: closed, manifold, consistently wound, positive volume. Last run: **47 of 48 clean**, 1 with a defect.
 
 Files with something to say (all non-manifold edges, a handful each; most slicers repair these, but that is not a guarantee):
 
@@ -56,4 +56,6 @@ Files with something to say (all non-manifold edges, a handful each; most slicer
 - **P16** — mirror of P15, same note
 - **P11** — outer form ours (the intake surround, spec X 1780..2300 above the rocker); the real opening behind it and the duct route are the donor's. Fit and bond surface come from the scan, as for P15.
 - **P12** — mirror of P11, same note
+- **P17** — SHAPE ONLY in the strongest sense: a 40 mm sail at Y 685..725 on the quarter top, outboard of a roof fold envelope that is itself a guess (06_ROOF, PROVISIONAL). Its foot, the deck between the blades and whether it can exist at all wait on scan S2. Print it to look at the rear, not to bond.
+- **P18** — mirror of P17, same note
 - **P02** — outer form ours between the fender crests (|Y| < 380). Rear edge: the file ends at spec X ~385, 35 mm short of the donor cowl (420) -- no allowance can be carried across the cabin cut, so the real rear edge, the hinges and the frunk aperture come from the scan.

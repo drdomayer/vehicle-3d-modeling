@@ -247,6 +247,11 @@ def main():
     # absent. "Are the files that DO exist in the right place" is the engineering question, and it
     # is only askable on the surface those files claim.
     produced = {os.path.basename(n).split("_")[0] for n in placement}
+    # The buttress files are SAILS standing on a region whose skin (the deck between them) is
+    # BLOCKED and has no file: counting that region as "has files" put its 100-200 mm gap into
+    # the pipeline statistic (99th percentile 1.98 -> 100 mm on 2026-09-29). The sails are files;
+    # the region is not covered, and it is counted with the others that wait on scan S2.
+    produced -= {"P17", "P18"}
     near_d = [x for i, x in enumerate(d) if owner[i] in produced]
     far_d = [x for i, x in enumerate(d) if owner[i] not in produced]
     d.sort()

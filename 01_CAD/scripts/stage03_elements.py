@@ -676,6 +676,33 @@ def main():
         cuts.append(cm)
     print("  DRL groove: a radius-7 half-round along DRL_PATH, axis on the skin, Z 420 centre .. 490 corner, cut from the fascia")
 
+    # ---- 10. THE BUTTRESS BLADES, 2026-09-29, as SHAPE-ONLY masters. docs/14 blocks the deck:
+    # its height sits in the volume the soft top folds into, and only scan S2 can say where that
+    # volume is. What is NOT blocked by that is a blade standing OUTBOARD of the fold envelope:
+    # the guessed ROOF_FOLD_ENVELOPE ends at Y 650, and these stand at Y 685..725 on the built
+    # quarter top, spec X 1800..2750, tops from 1120 behind the hoops to the deck at the tail.
+    # The reference's sails, read off ref-09's rear view: tall, thin, just under the hoop tops.
+    # Everything about them that is not the blade -- the deck between them, their feet -- stays
+    # BLOCKED; the blade goes to the shape-only tier with that written on it, so the rear can be
+    # judged against the render as a whole and nothing here is a part to bond before S2.
+    BUT_TOP = [(1800, 1120), (2000, 1120), (2200, 1110), (2415, 1090), (2600, 1040), (2750, 990)]
+    for sgn in (1, -1):
+        st = []
+        for sx, ztop in BUT_TOP:
+            foot = surface_z(sx, sgn * 705.0)
+            if foot is None:
+                continue
+            st.append((float(sx), sgn * 705.0, foot - 14.0, float(ztop)))
+        if len(st) < 3:
+            continue
+        bl = blade(f"BUTTRESS_{'L' if sgn > 0 else 'R'}", coll, st, 40.0)
+        bl["panel_id"] = "P17" if sgn > 0 else "P18"
+        bl["stage"] = ("03 element — SHAPE ONLY: stands outboard of the GUESSED roof fold envelope "
+                       "(Y 650); the deck between the blades and the blade's own foot wait on scan S2")
+        made.append(bl)
+    print("  buttress blades: 40 mm sails at Y +-705, spec X 1800..2750, tops 1120 -> 990, outboard of the")
+    print("    guessed fold envelope -> P17 / P18 as SHAPE ONLY; the deck between them stays BLOCKED")
+
     # cut them all out of the body
     for c in cuts:
         for o in body_objects():

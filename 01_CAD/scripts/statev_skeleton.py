@@ -177,8 +177,11 @@ BOXES = [
      "this when I read the render as a plain bar — the locked intent is blade PLUS sharp L ends. "
      "Explicitly NOT a Lamborghini-style separate triangular lamp; the light stays integrated "
      "into the body."),
-    ("HOOD_VENT",   "02_BODY",     -600,  250,  610,  380,  130,   25, "DECIDED",
-     "pair of hood extractors, in both renders and absent from the written spec. Functional: they are "
+    ("HOOD_VENT",   "02_BODY",     -600,  250,  610,  380,  130,   25, "SUPERSEDED",
+     "SUPERSEDED 2026-09-26: ref-09's hood extractors, read off its top view at 6.5 mm/px, sit at "
+     "Y 380..608 / spec X -400..+40 -- the fender vent slot (P05/P06, X_FENDER_SLOT), which now "
+     "carries the four diagonal louvres. This box records the earlier reading and builds nothing. "
+     "Original note: pair of hood extractors, in both renders and absent from the written spec. Functional: they are "
      "the hot-air exit from the radiator duct, so they must line up with it (RAD_DUCT ends at specX "
      "-680). Size is read off the render proportions - PROVISIONAL until the radiator is scanned."),
     # --- front
@@ -206,7 +209,10 @@ BOXES = [
      "X 1900..2850, Y 850..925, Z 300..850; loft through 5-7 sections, not one sculpted blob"),
     ("REAR_DECK",   "02_BODY",     2575,    0,  750, 1450, 1850,  200, "spec",
      "X 1850..3300, width 1500..1850, Z 650..850; thin skin, must not box in the engine bay"),
-    ("DOOR_VENT",   "03_AERO",      480,  845,  560,   70,   55,  260, "DECIDED",
+    ("DOOR_VENT",   "03_AERO",      480,  845,  560,   70,   55,  260, "DEFERRED",
+     "DEFERRED 2026-09-28: a slot in the OEM door skin cannot vent the wheel well (the door is the "
+     "donor's, with its beam and glass inside), and a slot in the fender's trailing edge needs a duct "
+     "through the inner fender that only the scan can place. Not built, not faked. Original note: "
      "tall narrow slot at the LEADING EDGE of the door, ref-08 side view. Reads as the hot-air exit "
      "from the front wheel well / radiator, so it pairs with FENDER_CHANNEL and HOOD_VENT. Sits just "
      "behind the donor's front shut line (specX 440) - the line is locked, the vent is not on it."),

@@ -106,6 +106,9 @@ PARTS = [
     ("P46", "DIFFUSER_FIN_OUTER_L", "L",  "REAR",  23, "-Z", "direct print", "DIFFUSER"),
     ("P47", "DIFFUSER_FIN_OUTER_R", "R",  "REAR",  23, "-Z", "direct print", "DIFFUSER"),
     ("P35", "EXHAUST_SURROUND",    "-",  "REAR",  23, "-X", "direct print, heat-capable", "REAR_FASCIA"),
+    # P23: the ducktail has been IN the tail profile since v031 and the REAR_SPOILER envelope sits
+    # 125.7 mm inside the body (stage03, 2026-09-21). A register question for the owner: absorb it
+    # into P21/P19 (one line to delete here) or keep a separate lip. Left as is until answered.
     ("P23", "REAR_SPOILER",        "-",  "REAR",  24, "-Z", "direct print or composite", "REAR_SPOILER"),
     ("P24", "HEADLIGHT_HOUSING_L", "L",  "LIGHTS", 25, "+X", "direct print, ASA", "HEADLIGHT"),
     ("P25", "HEADLIGHT_HOUSING_R", "R",  "LIGHTS", 25, "+X", "direct print, ASA", "HEADLIGHT"),

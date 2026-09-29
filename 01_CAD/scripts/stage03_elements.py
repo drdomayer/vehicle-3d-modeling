@@ -569,7 +569,10 @@ def main():
     # skin (hw ~835 at 3080) back to 3230, Z 150..600, 30 mm thick, flaring nothing: the skin
     # behind 3100 is inboard of it, so the blade is in the air with the pocket between it and
     # the tail panel, as in the reference.
-    TC = dict(x_floor=3180.0, y_in=690.0, y_out=760.0, z0=340.0, z1=575.0)
+    # z0 340 -> 352 (v052): at 340 the pocket floor sat 4 mm above the undercut edge (Z ~336 at
+    # 3220) and the boolean left a one-face sliver 10 x 12 mm each side, which panel_extract
+    # counted as P21's second and third piece and the pilot refused to export the fascia.
+    TC = dict(x_floor=3180.0, y_in=690.0, y_out=760.0, z0=352.0, z1=575.0)
     for sgn in (1, -1):
         cuts.append(box(f"CUT_TAIL_CORNER_{'L' if sgn > 0 else 'R'}", coll,
                         TC["x_floor"], 3500.0, min(sgn * TC["y_in"], sgn * TC["y_out"]),

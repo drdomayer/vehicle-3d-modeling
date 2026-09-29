@@ -415,6 +415,52 @@ BUTTRESS = dict(x0=1740, x1=3200, y=620, w=300, height=152)   # starts at the ho
                                                               # outboard of the cabin cut
 
 
+# SMOOTH INTERPOLATION, 2026-09-29 (v052). Every longitudinal table in this file (crest, belt,
+# shoulder, flank top, deck and hood spines, the void centres...) and the blend between the
+# master sections were LINEAR in X: a polyline through the knots, C0 at every knot. The clean
+# glossy render of v051 showed the cost -- waves along the hood and the haunch 300..500 mm
+# long, which is the pitch of the knots, and nothing to do with the mesh. This is the monotone
+# cubic of Fritsch and Carlson (PCHIP): C1 through the knots, no overshoot past any knot, flat
+# at a local extreme, so the design's own numbers stay where they were written and only the
+# straight lines between them become curves. Two points degenerate to the old straight line.
+def _pchip(xs, ys, x):
+    n = len(xs)
+    if n == 1:
+        return ys[0]
+    if x <= xs[0]:
+        return ys[0]
+    if x >= xs[-1]:
+        return ys[-1]
+    if n == 2:
+        f = (x - xs[0]) / (xs[1] - xs[0])
+        return ys[0] + f * (ys[1] - ys[0])
+    h = [xs[i + 1] - xs[i] for i in range(n - 1)]
+    d = [(ys[i + 1] - ys[i]) / h[i] if h[i] else 0.0 for i in range(n - 1)]
+    m = [0.0] * n
+    for i in range(1, n - 1):
+        if d[i - 1] * d[i] <= 0.0:
+            m[i] = 0.0
+        else:
+            w1, w2 = 2 * h[i] + h[i - 1], h[i] + 2 * h[i - 1]
+            m[i] = (w1 + w2) / (w1 / d[i - 1] + w2 / d[i])
+    # one-sided ends (three-point), clipped so the end segment stays monotone
+    for k, (i, j, s0, s1, hh0, hh1) in enumerate(((0, 1, d[0], d[1], h[0], h[1]),
+                                                  (n - 1, n - 2, d[-1], d[-2], h[-1], h[-2]))):
+        mk = ((2 * hh0 + hh1) * s0 - hh0 * s1) / (hh0 + hh1)
+        if mk * s0 <= 0.0:
+            mk = 0.0
+        elif s0 * s1 <= 0.0 and abs(mk) > 3 * abs(s0):
+            mk = 3 * s0
+        m[i] = mk
+    for i in range(n - 1):
+        if xs[i] <= x <= xs[i + 1]:
+            t = (x - xs[i]) / h[i] if h[i] else 0.0
+            t2, t3 = t * t, t * t * t
+            return ((2 * t3 - 3 * t2 + 1) * ys[i] + (t3 - 2 * t2 + t) * h[i] * m[i]
+                    + (-2 * t3 + 3 * t2) * ys[i + 1] + (t3 - t2) * h[i] * m[i + 1])
+    return ys[-1]
+
+
 def section_profile(spec_x):
     items = sorted(((v[0], v[2]) for v in SECTIONS.values()), key=lambda t: t[0])
     xs = [i[0] for i in items]
@@ -426,14 +472,23 @@ def section_profile(spec_x):
         base = None
         for i in range(len(xs) - 1):
             if xs[i] <= spec_x <= xs[i + 1]:
-                t = (spec_x - xs[i]) / (xs[i + 1] - xs[i])
                 a, b = items[i][1], items[i + 1][1]
                 zs = sorted({z for z, _ in a} | {z for z, _ in b})
                 base = []
                 for z in zs:
                     ya, yb = half_width_at(a, z), half_width_at(b, z)
-                    if ya is not None and yb is not None:
-                        base.append((z, ya + t * (yb - ya)))
+                    if ya is None or yb is None:
+                        continue
+                    # the monotone cubic through EVERY section that carries this level, so the
+                    # width at a height is one smooth curve along the car, not a polyline that
+                    # kinks at each master section (v052)
+                    kx, ky = [], []
+                    for x_j, sec in items:
+                        y_j = half_width_at(sec, z)
+                        if y_j is not None:
+                            kx.append(x_j)
+                            ky.append(y_j)
+                    base.append((z, _pchip(kx, ky, spec_x)))
                 break
     return [(z, y + widening(spec_x, z)) for z, y in base]
 
@@ -442,12 +497,7 @@ def spine_z(table, spec_x):
     xs = [t[0] for t in table]
     if not (xs[0] <= spec_x <= xs[-1]):
         return None
-    for i in range(len(table) - 1):
-        (x0, z0), (x1, z1) = table[i], table[i + 1]
-        if x0 <= spec_x <= x1:
-            f = 0.0 if x1 == x0 else (spec_x - x0) / (x1 - x0)
-            return z0 + f * (z1 - z0)
-    return table[-1][1]
+    return _pchip(xs, [t[1] for t in table], spec_x)   # monotone cubic since v052
 
 
 def resample(poly, n):
@@ -824,17 +874,10 @@ DECK_EDGE_DROP = 34.0    # mm below the crest at that point -> a 70 degree final
 
 
 def table_z(table, spec_x):
-    xs = [t[0] for t in table]
-    if spec_x <= xs[0]:
-        return table[0][1]
-    if spec_x >= xs[-1]:
-        return table[-1][1]
-    for i in range(len(table) - 1):
-        (x0, z0), (x1, z1) = table[i], table[i + 1]
-        if x0 <= spec_x <= x1:
-            f = (spec_x - x0) / (x1 - x0)
-            return z0 + f * (z1 - z0)
-    return table[-1][1]
+    """Value of a (x, value) table at spec_x: the monotone cubic through its knots (v052),
+    clamped to the end values outside them. Every longitudinal line in this file reads through
+    here, so the whole car's character became C1 along X in one change."""
+    return _pchip([t[0] for t in table], [t[1] for t in table], spec_x)
 
 
 def flank(spec_x, z, hw, hw_max):

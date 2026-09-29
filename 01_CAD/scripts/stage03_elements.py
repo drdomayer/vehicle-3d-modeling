@@ -304,6 +304,7 @@ def ribbon(name, coll, targets, toward, width, depth_out, depth_in):
 
 
 SLIVER_MM = 10.0   # a cutter that overlaps a body volume by less than this along X is not applied to it
+PARASITIC = False  # 2026-09-29: the corner bars, strakes and tail corner blades are retired (owner's review)
 
 
 def cut(target, cutter):
@@ -573,7 +574,7 @@ def main():
         cuts.append(box(f"CUT_TAIL_CORNER_{'L' if sgn > 0 else 'R'}", coll,
                         TC["x_floor"], 3500.0, min(sgn * TC["y_in"], sgn * TC["y_out"]),
                         max(sgn * TC["y_in"], sgn * TC["y_out"]), TC["z0"], TC["z1"]))
-    for sgn in (1, -1):
+    for sgn in ((1, -1) if PARASITIC else ()):   # retired 2026-09-29, see the corner bars
         bl = blade(f"TAIL_CORNER_BLADE_{'L' if sgn > 0 else 'R'}", coll,
                    [(3060.0, sgn * 850.0, 150.0, 600.0), (3150.0, sgn * 850.0, 150.0, 600.0),
                     (3230.0, sgn * 840.0, 190.0, 560.0)], 30.0)
@@ -582,7 +583,8 @@ def main():
         made.append(bl)
     print(f"  tail corner pockets: cut from behind to a floor at {TC['x_floor']:.0f}, Y {TC['y_in']:.0f}.."
           f"{TC['y_out']:.0f}, Z {TC['z0']:.0f}..{TC['z1']:.0f}, open to the side;")
-    print("    tail corner blades: 30 mm fins at Y +-850, spec X 3060..3230, Z 150..600 -> P52 / P53")
+    if PARASITIC:
+        print("    tail corner blades: 30 mm fins at Y +-850, spec X 3060..3230, Z 150..600 -> P52 / P53")
 
     for sgn in (1, -1):
         L = sgn > 0
@@ -684,7 +686,11 @@ def main():
         cuts.append(box(f"CUT_CORNER_{'L' if sgn > 0 else 'R'}", coll,
                         -1000.0, CORNER["x_floor"], min(sgn * CORNER["y_in"], sgn * CORNER["y_out"]),
                         max(sgn * CORNER["y_in"], sgn * CORNER["y_out"]), CORNER["z0"], CORNER["z1"]))
-    for sgn in (1, -1):
+    # RETIRED 2026-09-29 (v051), owner's review: "parasitic elements". The bars in the corner
+    # intakes, the cheekbone strakes and the tail corner blades were separate solids stuck on
+    # the skin; in ref-09 the corresponding features are the body's own edges and creases, not
+    # parts. Kept as code behind PARASITIC so the register decision is reversible in one line.
+    for sgn in ((1, -1) if PARASITIC else ()):
         # the bar stands in the pocket's lateral middle (Y 665), from 10 mm inside the floor to
         # the face; the chamfer face at Y 665 sits near -845, and the bar's front end is read off
         # the built skin so it never stands ahead of it.
@@ -887,7 +893,7 @@ def main():
     # is locked at 4370 so nothing may stand ahead of the tip; instead the face is RECESSED 40 mm
     # just above the lip (Z 150..200), which leaves the lip standing 40 mm proud of the face
     # above it -- the same read, inside the locked box. Printed with P01/P28 as pocket walls.
-    for sgn in (1, -1):
+    for sgn in ((1, -1) if PARASITIC else ()):   # retired 2026-09-29, see the corner bars
         rb = ribbon(f"STRAKE_{'L' if sgn > 0 else 'R'}", coll,
                     # ends at Y 500, not at the mouth corner (Y 365): the face is flat at the locked
                     # tip (-950) inboard of Y ~450, and a ridge 12 mm proud there stood at -962 --
@@ -910,8 +916,7 @@ def main():
     # top at 194, not 200: at 200 the recess's ceiling coincided with the mouth's floor over
     # |Y| < 450 and the boolean left a 40 x 438 x 3 strip and 8 open edges in P01's file.
     cuts.append(box("CUT_LIP_RECESS", coll, -1000.0, -910.0, -620.0, 620.0, 150.0, 194.0))
-    print("  strakes: skin-following ridges from the lamp ends to the mouth's corners -> P50 / P51;")
-    print("    splitter lip: the face recessed 40 mm over Z 150..200 so the lip stands proud inside the locked length")
+    print("  splitter lip: the face recessed 40 mm over Z 150..200 so the lip stands proud inside the locked length")
 
     # cut them all out of the body
     for c in cuts:

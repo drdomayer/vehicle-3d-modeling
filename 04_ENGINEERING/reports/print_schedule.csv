@@ -24,12 +24,6 @@ P44,DIFFUSER_FIN_INNER_L,whole,400.0,210.1,16.0,yes,1,yes,0,-90.0,-0.0,-0.0,0.0,
 P45,DIFFUSER_FIN_INNER_R,whole,400.0,210.1,16.0,yes,1,yes,0,90.0,-0.0,0.0,0.0,-142.0,-0.0,,03_PRINT/production/P45_DIFFUSER_FIN_INNER_R_whole.stl
 P46,DIFFUSER_FIN_OUTER_L,whole,300.0,175.8,16.0,yes,1,yes,0,-90.0,-0.0,-0.0,0.0,322.0,-0.0,,03_PRINT/production/P46_DIFFUSER_FIN_OUTER_L_whole.stl
 P47,DIFFUSER_FIN_OUTER_R,whole,300.0,175.8,16.0,yes,1,yes,0,90.0,-0.0,0.0,0.0,-322.0,-0.0,,03_PRINT/production/P47_DIFFUSER_FIN_OUTER_R_whole.stl
-P48,CORNER_BLADE_L,whole,67.9,220.0,20.0,yes,1,yes,0,-90.0,-0.0,-0.0,0.0,655.0,-0.0,,03_PRINT/production/P48_CORNER_BLADE_L_whole.stl
-P49,CORNER_BLADE_R,whole,67.9,220.0,20.0,yes,1,yes,0,90.0,-0.0,0.0,0.0,-655.0,-0.0,,03_PRINT/production/P49_CORNER_BLADE_R_whole.stl
-P50,STRAKE_L,whole,103.9,135.7,87.1,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,537.4,,03_PRINT/production/P50_STRAKE_L_whole.stl
-P51,STRAKE_R,whole,103.9,135.7,87.1,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,537.4,,03_PRINT/production/P51_STRAKE_R_whole.stl
-P52,TAIL_CORNER_BLADE_L,whole,170.0,450.0,40.0,yes,1,yes,0,-90.0,-0.0,-0.0,0.0,825.0,-0.0,,03_PRINT/production/P52_TAIL_CORNER_BLADE_L_whole.stl
-P53,TAIL_CORNER_BLADE_R,whole,170.0,450.0,40.0,yes,1,yes,0,90.0,-0.0,0.0,0.0,-825.0,-0.0,,03_PRINT/production/P53_TAIL_CORNER_BLADE_R_whole.stl
 P24,HEADLIGHT_HOUSING_L,whole,172.0,122.0,122.0,yes,1,yes,0,-90.0,-0.0,-0.0,0.0,584.0,-0.0,,03_PRINT/production/P24_HEADLIGHT_HOUSING_L_whole.stl
 P25,HEADLIGHT_HOUSING_R,whole,172.0,122.0,122.0,yes,1,yes,0,90.0,-0.0,0.0,0.0,-584.0,-0.0,,03_PRINT/production/P25_HEADLIGHT_HOUSING_R_whole.stl
 P31,INTAKE_DUCT_L,whole,310.0,700.0,270.0,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,700.0,,03_PRINT/production/P31_INTAKE_DUCT_L_whole.stl

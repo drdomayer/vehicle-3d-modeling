@@ -57,10 +57,8 @@ PARTS = [
     # 2026-09-26: the central mouth exists for the first time (stage 03); this is the mask in it
     ("P43", "FRONT_MASK",          "-",  "FRONT", 4,  "+X", "direct print", "FRONT_CLAMSHELL"),
     # 2026-09-29: the vertical bars standing in the corner intakes
-    ("P48", "CORNER_BLADE_L",      "L",  "FRONT", 4,  "+X", "direct print", "FRONT_CLAMSHELL"),
-    ("P49", "CORNER_BLADE_R",      "R",  "FRONT", 4,  "+X", "direct print", "FRONT_CLAMSHELL"),
-    ("P50", "STRAKE_L",            "L",  "FRONT", 4,  "+X", "direct print", "FRONT_CLAMSHELL"),
-    ("P51", "STRAKE_R",            "R",  "FRONT", 4,  "+X", "direct print", "FRONT_CLAMSHELL"),
+    # P48..P51 (corner bars, strakes) and P52/P53 (tail corner blades) RETIRED 2026-09-29 -- owner's
+    # review: parasitic. Numbers are not reused.
     ("P02", "HOOD",                "-",  "FRONT", 5,  "-Z", "printed master -> composite", "HOOD"),
     ("P03", "FRONT_FENDER_L",      "L",  "FRONT", 5,  "-Y", "printed master -> composite", "FRONT_FENDER"),
     ("P04", "FRONT_FENDER_R",      "R",  "FRONT", 5,  "+Y", "printed master -> composite", "FRONT_FENDER"),
@@ -115,10 +113,6 @@ PARTS = [
     # 125.7 mm inside the body (stage03, 2026-09-21). A register question for the owner: absorb it
     # into P21/P19 (one line to delete here) or keep a separate lip. Left as is until answered.
     ("P23", "REAR_SPOILER",        "-",  "REAR",  24, "-Z", "direct print or composite", "REAR_SPOILER"),
-    # 2026-09-29 (v049): the tail corner blades, ref-09's outermost rear elements, standing proud
-    # of the boxed tail with the corner pocket between them and the tail panel
-    ("P52", "TAIL_CORNER_BLADE_L",  "L",  "REAR",  20, "-X", "direct print", "REAR_FASCIA"),
-    ("P53", "TAIL_CORNER_BLADE_R",  "R",  "REAR",  20, "-X", "direct print", "REAR_FASCIA"),
     ("P24", "HEADLIGHT_HOUSING_L", "L",  "LIGHTS", 25, "+X", "direct print, ASA", "HEADLIGHT"),
     ("P25", "HEADLIGHT_HOUSING_R", "R",  "LIGHTS", 25, "+X", "direct print, ASA", "HEADLIGHT"),
     ("P26", "TAIL_HOUSING_L",      "L",  "LIGHTS", 26, "-X", "direct print, ASA", "TAIL_LIGHT"),

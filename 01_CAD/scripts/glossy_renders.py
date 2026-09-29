@@ -15,6 +15,7 @@ Same file names every run (rv_glossy_*.png in the review folder; set GLOSSY_SOUR
 before exec to render the printed files instead -- rv_glossy_files_*.png). Nothing in the scene is kept:
 materials, lights, world and camera are created for the render and removed after it.
 """
+import math
 import os
 
 import bpy
@@ -82,12 +83,61 @@ def import_files():
     return out
 
 
+# CLEAN MODE, 2026-09-29 (v051), after the owner's review ("parasitic elements"). The printed
+# files carry 30 mm overlaps (shape-only neighbours), joint tabs, housings, ducts and sails, and
+# a render of all of them together reads as clutter that the car will never show. "clean" renders
+# the BODY volumes with every opening cut, under a temporary Catmull-Clark x2 with creases on the
+# real edges (so the loft's shading ripples go and the creases stay), plus only the elements a
+# person standing next to the car would see. Housings, ducts and the shape-only sails are not
+# hidden from the files, only from this picture.
+CLEAN_SHOW = ("INTAKE_BLADE", "FENDER_CHANNEL", "FRONT_MASK", "REAR_CENTRE_MASK", "PLATE_RECESS",
+              "EXHAUST_SURROUND", "DIFFUSER_FIN", "HEADLIGHT_SURROUND")
+CLEAN_CREASE_DEG = float(globals().get("GLOSSY_CREASE_DEG", 30.0))
+
+
+def clean_bodies():
+    """Body volumes with a temporary subdivision; returns the modifiers to remove afterwards."""
+    import bmesh
+    import math as _m
+    added = []
+    c = bpy.data.collections.get("STATEV_MASTER")
+    if not c:
+        return [], set()
+    names = set()
+    for o in c.all_objects:
+        if o.type != "MESH":
+            continue
+        bm = bmesh.new()
+        bm.from_mesh(o.data)
+        cl = bm.edges.layers.float.get("crease_edge") or bm.edges.layers.float.new("crease_edge")
+        for e in bm.edges:
+            if len(e.link_faces) == 2:
+                a, b = e.link_faces[0].normal, e.link_faces[1].normal
+                e[cl] = 1.0 if (a.length > 0 and b.length > 0
+                                and _m.degrees(a.angle(b)) > CLEAN_CREASE_DEG) else 0.0
+        bm.to_mesh(o.data)
+        bm.free()
+        m = o.modifiers.new("GLOSSY_SUBD", "SUBSURF")
+        m.levels, m.render_levels = 2, 2
+        added.append((o, m))
+        names.add(o.name)
+    s3 = bpy.data.collections.get("STATEV_STAGE03")
+    if s3:
+        for o in s3.all_objects:
+            if o.type == "MESH" and any(k in o.name for k in CLEAN_SHOW):
+                names.add(o.name)
+    return added, names
+
+
 def main():
     sc = bpy.context.scene
     source = globals().get("GLOSSY_SOURCE", "body")
     files = import_files() if source == "files" else []
     body = set(o.name for o in files)
-    if not files:
+    subd = []
+    if source == "clean":
+        subd, body = clean_bodies()
+    if not files and not body:
         for cn in SHOW:
             c = bpy.data.collections.get(cn)
             if c:
@@ -95,14 +145,38 @@ def main():
     if not body:
         print("  nothing to render: build the body first")
         return
-    tag_prefix = "rv_glossy_files_" if files else "rv_glossy_"
-    wheels = set()
-    c = bpy.data.collections.get(WHEELS)
-    if c:
-        wheels.update(o.name for o in c.all_objects if o.type == "MESH")
+    tag_prefix = {"files": "rv_glossy_files_", "clean": "rv_glossy_clean_"}.get(source, "rv_glossy_")
+    # TYRES AND RIMS, 2026-09-29 (v051). The cage's wheel cylinders (48 flat sides, grey) made every
+    # render read as a toy and the owner said so. Four tyres are built for the render only: the
+    # 19" sizes and the donor tracks from the skeleton, rounded shoulders, dark rubber, a bronze
+    # rim inset. Removed after the render like everything else here.
     hidden = [(o, o.hide_render) for o in bpy.data.objects]
     for o, _ in hidden:
-        o.hide_render = o.name not in body and o.name not in wheels
+        o.hide_render = o.name not in body
+    wheels = set()
+    tyres = []
+    for spec_x, od, wdt, half_track in ((0.0, 647.0, 235.0, 732.5), (2415.0, 675.0, 275.0, 764.0)):
+        for sgn in (1, -1):
+            bpy.ops.mesh.primitive_cylinder_add(radius=od / 2000.0, depth=wdt / 1000.0, vertices=96,
+                                                location=(-spec_x / 1000.0, sgn * half_track / 1000.0, od / 2000.0))
+            t = bpy.context.active_object
+            t.name = "GLOSSY_TYRE"
+            t.rotation_euler = (math.radians(90), 0, 0)
+            bv = t.modifiers.new("bevel", "BEVEL")
+            bv.width, bv.segments = 0.028, 6
+            for p in t.data.polygons:
+                p.use_smooth = True
+            bpy.ops.mesh.primitive_cylinder_add(radius=od / 2000.0 - 0.105, depth=wdt / 1000.0 - 0.02, vertices=96,
+                                                location=(-spec_x / 1000.0, sgn * (half_track + 12.0) / 1000.0, od / 2000.0))
+            r = bpy.context.active_object
+            r.name = "GLOSSY_RIM"
+            r.rotation_euler = (math.radians(90), 0, 0)
+            tyres += [t, r]
+    for t in tyres:
+        for c in list(t.users_collection):
+            c.objects.unlink(t)
+        sc.collection.objects.link(t)
+        wheels.add(t.name)
     # materials: paint, and dark rubber for the wheel cylinders
     paint = bpy.data.materials.new("GLOSSY_PAINT")
     p = principled(paint)
@@ -115,12 +189,19 @@ def main():
     r = principled(rubber)
     set_in(r, ("Base Color",), (0.03, 0.03, 0.03, 1.0))
     set_in(r, ("Roughness",), 0.6)
+    bronze = bpy.data.materials.new("GLOSSY_BRONZE")
+    b = principled(bronze)
+    set_in(b, ("Base Color",), (0.42, 0.28, 0.12, 1.0))
+    set_in(b, ("Metallic",), 0.9)
+    set_in(b, ("Roughness",), 0.35)
     saved = {}
-    for n in body | wheels:
+    for n in body:
         o = bpy.data.objects[n]
         saved[n] = [m for m in o.data.materials]
         o.data.materials.clear()
-        o.data.materials.append(paint if n in body else rubber)
+        o.data.materials.append(paint)
+    for t in tyres:
+        t.data.materials.append(rubber if t.name.startswith("GLOSSY_TYRE") else bronze)
     # ground plane, big and light grey, for the bounce and the shadow
     gm = bpy.data.meshes.new("GLOSSY_GROUND")
     gm.from_pydata([(-40, -40, 0), (40, -40, 0), (40, 40, 0), (-40, 40, 0)], [], [(0, 1, 2, 3)])
@@ -187,10 +268,12 @@ def main():
         o.data.materials.clear()
         for m in mats:
             o.data.materials.append(m)
-    for o in files:
+    for o in files + tyres:
         me = o.data
         bpy.data.objects.remove(o, do_unlink=True)
         bpy.data.meshes.remove(me)
+    for o, m in subd:
+        o.modifiers.remove(m)
     for o in made:
         d = o.data
         bpy.data.objects.remove(o, do_unlink=True)
@@ -203,7 +286,7 @@ def main():
     sc.camera = old_cam
     sc.world = old_world
     bpy.data.worlds.remove(world)
-    for m in (paint, rubber, gmat):
+    for m in (paint, rubber, bronze, gmat):
         bpy.data.materials.remove(m)
     sc.render.engine = old_engine
     for o, h in hidden:

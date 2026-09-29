@@ -614,7 +614,34 @@ def plan_cuts(ob):
     ext = [(min(p[i] for p in w) * 1000, max(p[i] for p in w) * 1000) for i in range(3)]
     size = [hi - lo for lo, hi in ext]
     if D["split"] == "whole":
-        return {}, size, ext
+        # WHOLE, BUT NOT LARGER THAN THE PLATE (2026-09-29). A part that cannot fit the reference
+        # bed in any orientation is split along X into the fewest equal pieces whose sorted
+        # dimensions fit the sorted usable bed -- the fender (829 tall, taller than the bed is
+        # deep) becomes two of 578 x 925 x 829, the rocker (1831) two of 916. Everything else
+        # stays one file. The tab joint is the one every section used to carry.
+        usable = sorted(b - 2 * D["bed_margin_mm"] for b in D["bed_mm"])
+        # no wall term: the wall goes INWARD (offset -1), so the outer surface's box is the
+        # part's box. With +2 walls the fender needed 3 cuts and came out in 7 pieces, and the
+        # haunch (579 tall against 580 usable) was split for 6 mm it never occupied.
+        # The axis is chosen too: cutting the fender along X never made its smallest dimension
+        # (the 833 height) smaller until the slices were under 580 long -- three cuts, seven
+        # pieces once the arch opening split each slice. One cut along Y does it. Fewest pieces
+        # wins; on a tie Y (a seam along the top), then X, then Z (a seam across the flank).
+        best = None
+        for axis in (1, 0, 2):
+            for n in range(1, 8):
+                piece = list(size)
+                piece[axis] = size[axis] / n + (D["tab_mm"] if n > 1 else 0.0)
+                if all(a <= b for a, b in zip(sorted(piece), usable)):
+                    if best is None or n < best[0]:
+                        best = (n, axis)
+                    break
+        plan = {}
+        if best and best[0] > 1:
+            n, axis = best
+            step = size[axis] / n
+            plan[axis] = [ext[axis][0] + step * k for k in range(1, n)]
+        return plan, size, ext
     # The cell also has to reserve the WALL. Everything that happens to a section after the grid is
     # planned makes it bigger: it runs one tab past its cut, and then thicken() puts a wall on it,
     # which pushes the bbox out by up to one wall on each side. Without that term P21's section 16
@@ -1120,7 +1147,7 @@ def main():
                 # 1200 x 600 bed. lay_flat has already put the smallest dimension vertical.
                 fits = all(a <= b - 2 * D["bed_margin_mm"]
                            for a, b in zip(sorted(ss), sorted(D["bed_mm"])))
-                if D["split"] == "whole":
+                if D["split"] == "whole" and not plan:
                     sfx = "whole" if pc == 0 else f"whole_{chr(ord('a') + pc)}"
                 else:
                     sfx = f"s{j:02d}" if pc == 0 else f"s{j:02d}{chr(ord('a') + pc)}"

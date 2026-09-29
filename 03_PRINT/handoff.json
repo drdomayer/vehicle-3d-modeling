@@ -1,5 +1,5 @@
 {
- "when": 1790668652.827001,
+ "when": 1790668961.131179,
  "decisions": {
   "wall_mm": 3.0,
   "density_g_cm3": 1.24,
@@ -48,9 +48,9 @@
    "P46",
    "P47"
   ],
-  "sections": 29,
-  "one_piece": 29,
-  "fits_bed": 27
+  "sections": 31,
+  "one_piece": 31,
+  "fits_bed": 31
  },
  "shape_only": {
   "parts": [
@@ -64,9 +64,9 @@
    "P15",
    "P16"
   ],
-  "sections": 9,
-  "one_piece": 9,
-  "fits_bed": 7,
+  "sections": 15,
+  "one_piece": 15,
+  "fits_bed": 15,
   "missing": {
    "P03": "outer form ours; the inner face is the donor's fender line. Carries a 30 mm TRIM ALLOWANCE past the door shut line (overlaps P09 by 30 mm): the line moves with door_front_x by +-15..30 mm and the scan says where to cut.",
    "P04": "mirror of P03, same note",
@@ -80,6 +80,6 @@
   }
  },
  "core_kg": 62.6,
- "dropped_skin_mm2": 64399,
+ "dropped_skin_mm2": 64575,
  "small_sections_under_40mm": 0
 }

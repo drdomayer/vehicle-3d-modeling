@@ -1,5 +1,5 @@
 {
- "when": 1790675745.894451,
+ "when": 1790676623.810928,
  "decisions": {
   "wall_mm": 3.0,
   "density_g_cm3": 1.24,
@@ -72,9 +72,9 @@
    "P17",
    "P18"
   ],
-  "sections": 15,
-  "one_piece": 15,
-  "fits_bed": 15,
+  "sections": 17,
+  "one_piece": 17,
+  "fits_bed": 17,
   "missing": {
    "P03": "outer form ours; the inner face is the donor's fender line. Carries a 30 mm TRIM ALLOWANCE past the door shut line (overlaps P09 by 30 mm): the line moves with door_front_x by +-15..30 mm and the scan says where to cut.",
    "P04": "mirror of P03, same note",
@@ -89,7 +89,7 @@
    "P02": "outer form ours between the fender crests (|Y| < 380). Rear edge: the file ends at spec X ~385, 35 mm short of the donor cowl (420) -- no allowance can be carried across the cabin cut, so the real rear edge, the hinges and the frunk aperture come from the scan."
   }
  },
- "core_kg": 85.2,
- "dropped_skin_mm2": 61806,
+ "core_kg": 82.7,
+ "dropped_skin_mm2": 63185,
  "small_sections_under_40mm": 0
 }

@@ -81,7 +81,7 @@ NOT_PANEL = {
 
 # The Stage 03 pockets, as stage03_elements.py cuts them. Named here so the rejection can be read
 # against its source instead of against four bare numbers.
-POCKETS = [("X_INTAKE", 1940.0, 2180.0, 420.0, 1000.0, 440.0, 710.0),
+POCKETS = [("X_INTAKE", 1910.0, 2180.0, 420.0, 1000.0, 440.0, 710.0),
            ("X_FENDER_SLOT", -250.0, 180.0, 375.0, 560.0, 690.0, 1000.0),
            ("X_MOUTH", -1000.0, -815.0, 0.0, 390.0, 215.0, 435.0),
            ("X_ROCKER_CHANNEL", 470.0, 1610.0, 840.0, 1000.0, 195.0, 285.0),

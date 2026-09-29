@@ -111,6 +111,13 @@ def prism(name, coll, stations, y_out, y_in):
     coll.objects.link(ob)
     bm = bmesh.new()
     bm.from_mesh(me)
+    # NOT triangulated -- tried 2026-09-29 and it made things worse. When the intake's leading
+    # edge was made to lean, the build came out 1998.9 wide: the cutter's own outer face (Y 999)
+    # was left in a body volume. Twisted quads were the first suspect and triangulating them
+    # was the first fix; measured in isolation the triangulated prism FAILS on the rear volume
+    # (max |Y| 999) where the plain one cuts cleanly (925). The real cause is in cut(): the
+    # cutter overlapped the side/rear split plane by 8 mm and the EXACT solver misbehaves on
+    # such a sliver. Left as quads, which is what every clean cut so far has used.
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
     bm.to_mesh(me)
     bm.free()
@@ -296,7 +303,27 @@ def ribbon(name, coll, targets, toward, width, depth_out, depth_in):
     return ob
 
 
+SLIVER_MM = 10.0   # a cutter that overlaps a body volume by less than this along X is not applied to it
+
+
 def cut(target, cutter):
+    # THE SLIVER GUARD, 2026-09-29 (v050). The body is three volumes split on planes (front/side
+    # at ~340, side/rear at ~1933) and every cutter is applied to all three. A cutter that
+    # crosses a split plane by a few millimetres meets that volume as a thin slab against its
+    # end cap, and the EXACT solver's answer to that is undefined: measured, the intake mouth
+    # starting at 1925 against a side volume ending at 1933 came back UNCHANGED in isolation and,
+    # in the full build, came back with the cutter's own outer face (Y 999) welded on -- width
+    # 1998.9 against the locked 1850, and "vertices of skin inside the rear arch". A cut that
+    # would remove less than SLIVER_MM of X is skipped and said so; the neighbouring volume
+    # carries the whole opening.
+    tx = [(target.matrix_world @ v.co).x for v in target.data.vertices]
+    cx = [(cutter.matrix_world @ v.co).x for v in cutter.data.vertices]
+    overlap = (min(max(tx), max(cx)) - max(min(tx), min(cx))) * 1000.0
+    if overlap < SLIVER_MM:
+        if overlap > 0.0:
+            print(f"    {cutter.name} skipped on {target.name}: {overlap:.1f} mm of X overlap is a sliver")
+        n = len(target.data.polygons)
+        return n, n
     m = target.modifiers.new(cutter.name, "BOOLEAN")
     m.operation = "DIFFERENCE"
     m.object = cutter
@@ -324,7 +351,13 @@ def main():
 
     # ---- 1. the side intake as a real mouth. The depth field already puts a valley here; this
     # gives it vertical walls and a sharp lip, which is the difference between a dent and a mouth.
-    st = [(1955, 470, 690), (2010, 452, 700), (2090, 448, 700), (2165, 470, 672)]
+    # 2026-09-29 (v050): the leading edge LEANS BACK at the top, as ref-09's scoop does (its front
+    # edge runs from the bottom-front corner up and back to the top). The mouth cannot move
+    # forward: the donor's own opening is at spec X 1900..2080 (cage side_intake_x) and ahead of
+    # it the OEM quarter is solid under a 30 mm overlay -- the render's scoop begins on the door
+    # because its cabin sits 240 mm further forward than the 986's (docs/14 I). So the bottom-front
+    # corner comes forward to 1925 and the top arrives at 2000.
+    st = [(1925, 455, 500), (1960, 450, 610), (2000, 447, 700), (2090, 445, 700), (2165, 470, 672)]
     y_surf = max(surface_y(s[0], (s[1] + s[2]) / 2) or 0 for s in st)
     for sgn in (1, -1):
         c = prism(f"CUT_INTAKE_{'L' if sgn > 0 else 'R'}", coll,

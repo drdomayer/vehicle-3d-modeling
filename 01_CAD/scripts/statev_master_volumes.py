@@ -1201,6 +1201,20 @@ def ring(spec_x):
         if drop > 6:
             half.append((y_crest + DECK_EDGE_OUT, b_top - drop))   # steep approach into the crest
         half.append((y_crest, b_top))                              # the blade crest
+    # THE HOOD CROWN AS A DOME, NOT A RIDGE, 2026-09-29 (v050). The section ended with one point
+    # on the centreline, so from the valley (or the crest) the surface ran STRAIGHT up to it and
+    # the mirror made a crease down the middle of the hood -- 20 degrees at spec X -500 (90 mm of
+    # rise over 500 mm of half-width), plain in the first glossy render and absent from ref-09,
+    # whose hood centre is a broad soft dome between the two fender crests. Two shoulder points
+    # make the last segment nearly flat: the mirror kink falls to about 4 degrees, the crown
+    # itself (HOOD_SPINE, the side silhouette) does not move. Hood only: behind the cowl the
+    # crown is cut away, and the deck is BLOCKED.
+    if b_top is None and spec_x < CABIN_X0 and half[-1][0] > 150.0:
+        ly, lz = half[-1]
+        d = crown - lz
+        if d > 4.0:
+            half.append((0.50 * ly, crown - 0.30 * d))
+            half.append((0.20 * ly, crown - 0.05 * d))
     half.append((0.0, max(crown, (b_top - 40) if b_top else crown)))
     half = resample_anchored(half, N_HALF, feature_anchors(spec_x))
     return list(half) + [(-y, z) for y, z in reversed(half[1:-1])]

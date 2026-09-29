@@ -59,6 +59,8 @@ PARTS = [
     # 2026-09-29: the vertical bars standing in the corner intakes
     ("P48", "CORNER_BLADE_L",      "L",  "FRONT", 4,  "+X", "direct print", "FRONT_CLAMSHELL"),
     ("P49", "CORNER_BLADE_R",      "R",  "FRONT", 4,  "+X", "direct print", "FRONT_CLAMSHELL"),
+    ("P50", "STRAKE_L",            "L",  "FRONT", 4,  "+X", "direct print", "FRONT_CLAMSHELL"),
+    ("P51", "STRAKE_R",            "R",  "FRONT", 4,  "+X", "direct print", "FRONT_CLAMSHELL"),
     ("P02", "HOOD",                "-",  "FRONT", 5,  "-Z", "printed master -> composite", "HOOD"),
     ("P03", "FRONT_FENDER_L",      "L",  "FRONT", 5,  "-Y", "printed master -> composite", "FRONT_FENDER"),
     ("P04", "FRONT_FENDER_R",      "R",  "FRONT", 5,  "+Y", "printed master -> composite", "FRONT_FENDER"),

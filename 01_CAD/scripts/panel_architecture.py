@@ -159,6 +159,8 @@ ARCH = {
     "P47": ("OURS",  "yes", "our fin in our diffuser floor; nothing of the donor reaches it"),
     "P48": ("OURS",  "yes", "our bar in our corner intake; the duct behind it is BRAKE_DUCT_F"),
     "P49": ("OURS",  "yes", "our bar in our corner intake; the duct behind it is BRAKE_DUCT_F"),
+    "P50": ("OURS",  "yes", "our ridge on our fascia"),
+    "P51": ("OURS",  "yes", "our ridge on our fascia"),
     "P35": ("OURS",  "yes", "our surround around bought tips; sees exhaust heat"),
     "P36": ("OURS",  "yes", "our recess; the plate size is legislated, not donor"),
     "P37": ("DONOR", "yes", "cap over the OEM mirror body — its inner surface must match it"),

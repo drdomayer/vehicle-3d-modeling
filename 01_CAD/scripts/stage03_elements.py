@@ -236,6 +236,66 @@ def duct(name, coll, stations, wall):
     return ob
 
 
+def surface_hit(target, toward):
+    """Nearest skin point and normal to `target` (metres, repo axes), probing from `toward` side."""
+    best = None
+    for o in body_objects():
+        inv = o.matrix_world.inverted()
+        for off in toward:
+            origin = target + mathutils.Vector(off)
+            d = (target - origin).normalized()
+            h, loc, n, i = o.ray_cast(inv @ origin, (inv.to_3x3() @ d).normalized())
+            if h:
+                w = o.matrix_world @ loc
+                nw = (o.matrix_world.to_3x3() @ n).normalized()
+                dist = (w - target).length
+                if best is None or dist < best[0]:
+                    best = (dist, w, nw)
+    return (best[1], best[2]) if best else (None, None)
+
+
+def ribbon(name, coll, targets, toward, width, depth_out, depth_in):
+    """A ridge that FOLLOWS THE SKIN: at each target (spec X, Y, Z) the skin point and normal are
+    read by ray, and a rectangle `width` across the path by (depth_out + depth_in) along the
+    normal is lofted through them. blade() offsets in Y only and slab() extrudes in Z, and on the
+    nose face -- which leans 30-50 mm between Z 400 and 500 -- both stood half buried, half in
+    the air (2026-09-29). This is the element the diagonal strakes needed."""
+    frames = []
+    for sx, y, z in targets:
+        p, n = surface_hit(mathutils.Vector((-mm(sx), mm(y), mm(z))), toward)
+        if p is not None:
+            frames.append((p, n))
+    if len(frames) < 2:
+        return None
+    verts, faces = [], []
+    for i, (p, n) in enumerate(frames):
+        q = frames[min(i + 1, len(frames) - 1)][0] - frames[max(i - 1, 0)][0]
+        d = q.normalized()
+        t = n.cross(d).normalized()          # across the path, in the skin
+        for a in (-width / 2.0, width / 2.0):
+            for b in (-depth_in, depth_out):
+                verts.append(p + t * mm(a) + n * mm(b))
+    k = 4
+    for i in range(len(frames) - 1):
+        a, b = i * k, (i + 1) * k
+        faces += [(a + 0, a + 1, b + 1, b + 0), (a + 2, a + 3, b + 3, b + 2),
+                  (a + 0, a + 2, b + 2, b + 0), (a + 1, a + 3, b + 3, b + 1)]
+    faces += [(0, 1, 3, 2)]
+    last = (len(frames) - 1) * k
+    faces += [(last + 0, last + 2, last + 3, last + 1)]
+    me = bpy.data.meshes.new(name)
+    me.from_pydata(verts, [], faces)
+    me.update()
+    ob = bpy.data.objects.new(name, me)
+    coll.objects.link(ob)
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(me)
+    bm.free()
+    return ob
+
+
 def cut(target, cutter):
     m = target.modifiers.new(cutter.name, "BOOLEAN")
     m.operation = "DIFFERENCE"
@@ -726,6 +786,29 @@ def main():
         made.append(bl)
     print("  buttress blades: 40 mm sails at Y +-705, spec X 1800..2750, tops 1120 -> 990, outboard of the")
     print("    guessed fold envelope -> P17 / P18 as SHAPE ONLY; the deck between them stays BLOCKED")
+
+    # ---- 11. THE STRAKES AND THE SPLITTER LIP, 2026-09-29. ref-09's mask is faceted: from each
+    # lamp's inner end a crease runs down and inward to the mouth's upper corner (the cheekbone),
+    # and under the mouth the splitter lip stands ahead of the face. The cheekbone is a ridge that
+    # follows the skin (ribbon), 24 wide, 12 proud, 12 embedded -> P50 / P51. The lip: the length
+    # is locked at 4370 so nothing may stand ahead of the tip; instead the face is RECESSED 40 mm
+    # just above the lip (Z 150..200), which leaves the lip standing 40 mm proud of the face
+    # above it -- the same read, inside the locked box. Printed with P01/P28 as pocket walls.
+    for sgn in (1, -1):
+        rb = ribbon(f"STRAKE_{'L' if sgn > 0 else 'R'}", coll,
+                    # ends at Y 500, not at the mouth corner (Y 365): the face is flat at the locked
+                    # tip (-950) inboard of Y ~450, and a ridge 12 mm proud there stood at -962 --
+                    # the length read 4382 against 4370. Proud 10 from Y 500 out, where the face
+                    # already sits behind -936. Nothing may stand ahead of the tip.
+                    [(-780.0, sgn * 640.0, 520.0), (-830.0, sgn * 570.0, 488.0), (-880.0, sgn * 500.0, 456.0)],
+                    [(-1.5, 0.0, 0.0), (-1.0, sgn * 1.0, 0.0), (0.0, sgn * 1.5, 0.0)], 24.0, 10.0, 14.0)
+        if rb is not None:
+            rb["panel_id"] = "P50" if sgn > 0 else "P51"
+            rb["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
+            made.append(rb)
+    cuts.append(box("CUT_LIP_RECESS", coll, -1000.0, -910.0, -620.0, 620.0, 150.0, 200.0))
+    print("  strakes: skin-following ridges from the lamp ends to the mouth's corners -> P50 / P51;")
+    print("    splitter lip: the face recessed 40 mm over Z 150..200 so the lip stands proud inside the locked length")
 
     # cut them all out of the body
     for c in cuts:

@@ -1,5 +1,5 @@
 ================================================================================================
-STATEV 001 — panel register.  49 parts, minimum practical count.
+STATEV 001 — panel register.  51 parts, minimum practical count.
 gap 4.0 mm | flange 20-35 mm | overlap 10-20 mm | nominal thickness 2.5 mm
 These are preliminary and change with the composite shop's answers (docs/13).
 ================================================================================================
@@ -11,6 +11,8 @@ P41  FRONT_SPLITTER_R      R     FRONT   4     +Z   RED     printed master -> co
 P43  FRONT_MASK            -     FRONT   4     +X   RED     direct print
 P48  CORNER_BLADE_L        L     FRONT   4     +X   RED     direct print
 P49  CORNER_BLADE_R        R     FRONT   4     +X   RED     direct print
+P50  STRAKE_L              L     FRONT   4     +X   RED     direct print
+P51  STRAKE_R              R     FRONT   4     +X   RED     direct print
 P02  HOOD                  -     FRONT   5     -Z   YELLOW  printed master -> composite
 P03  FRONT_FENDER_L        L     FRONT   5     -Y   YELLOW  printed master -> composite
 P04  FRONT_FENDER_R        R     FRONT   5     +Y   YELLOW  printed master -> composite
@@ -98,4 +100,4 @@ NOT IN THIS REGISTER YET — needs geometry or the shop's answers:
   - the exploded view itself — needs the panels
   - door operation envelope — needs hinge positions from the scan
 
-status of the 49 parts: RED 24, YELLOW 25
+status of the 51 parts: RED 26, YELLOW 25

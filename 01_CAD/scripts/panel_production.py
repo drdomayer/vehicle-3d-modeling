@@ -100,7 +100,7 @@ FLANGE_AT = {
 }
 PANELS = ["P01", "P28", "P41", "P07", "P08", "P39", "P40", "P21", "P22",
           "P05", "P06", "P13", "P14", "P29", "P30", "P34", "P35", "P36", "P43",
-          "P44", "P45", "P46", "P47", "P48", "P49",   # P17 / P18 are SHAPE ONLY, not listed here
+          "P44", "P45", "P46", "P47", "P48", "P49", "P50", "P51",   # P17 / P18 are SHAPE ONLY
           "P24", "P25", "P31", "P32",
           # 2026-09-21: the tail blade's housings. They were BLOCKED for having no geometry, not
           # for waiting on the car -- docs/14 locks the lamp as a thin wide blade with sharp L
@@ -182,7 +182,7 @@ SHAPE_ONLY = {
 # Stage 03 elements are built by stage03_elements.py as closed solids in their own right -- a blade
 # already HAS its thickness -- so they skip both the map and the wall and go straight to sectioning.
 STAGE03 = {"P05", "P06", "P13", "P14", "P29", "P30", "P34", "P35", "P36", "P43",
-           "P44", "P45", "P46", "P47", "P17", "P18", "P48", "P49",
+           "P44", "P45", "P46", "P47", "P17", "P18", "P48", "P49", "P50", "P51",
            "P24", "P25", "P31", "P32", "P26", "P27"}
 SCHEDULE = []
 PLACEMENT = {}   # printed file -> the 4x4 that puts it back on the car
@@ -230,7 +230,7 @@ def gather(pid):
             sx, ay, z = -c.x * 1000, abs(c.y * 1000), c.z * 1000
             ny = -n.y if c.y > 0 else n.y
             tag = not_panel(sx, ay, z, n.z, ny)
-            if tag and not (tag in ("X_INTAKE", "X_FENDER_SLOT", "X_MOUTH", "X_ROCKER_CHANNEL", "X_CORNER")
+            if tag and not (tag in ("X_INTAKE", "X_FENDER_SLOT", "X_MOUTH", "X_ROCKER_CHANNEL", "X_CORNER", "X_LIP")
                             and panel_of(sx, ay, z) == base):
                 # a pocket's walls are PRINTED with the panel the pocket is cut into: they are
                 # its recess, even though the skin accounting rightly does not count them as
@@ -950,8 +950,15 @@ def loose_pieces(ob):
     # faces beside a 1.5 m2 fascia is not a second part, it is a hole in the core the laminate
     # bridges. Under 2% of the main piece AND under 5000 mm2 it is dropped and its area is counted
     # into the part's DROPPED_MM2, never shipped as a file of its own.
+    def sliver(o):
+        # a piece whose box is no thicker than the wall itself is a detached strip of skin (the
+        # floor of the lip recess came out as 40 x 438 x 3 on 2026-09-29), not a part
+        bb = [o.matrix_world @ mathutils.Vector(c) for c in o.bound_box]
+        dims = sorted((max(v[i] for v in bb) - min(v[i] for v in bb)) * 1000.0 for i in range(3))
+        return dims[0] < D["wall_mm"] + 1.0 and skin[o.name] < 0.10 * big
     crumbs = [o for o in out if o is not ob and (skin[o.name] < CRUMB_AREA_MM2 or
-              (D["split"] == "whole" and skin[o.name] < 0.02 * big and skin[o.name] < 5000.0))]
+              (D["split"] == "whole" and skin[o.name] < 0.02 * big and skin[o.name] < 5000.0) or
+              (D["split"] == "whole" and sliver(o)))]
     for o in crumbs:
         ob["dropped_mm2"] = ob.get("dropped_mm2", 0) + round(skin[o.name])
         ob["dropped_islands"] = ob.get("dropped_islands", 0) + 1

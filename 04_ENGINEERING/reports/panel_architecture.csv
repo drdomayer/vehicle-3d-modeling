@@ -5,6 +5,8 @@ P41,FRONT_SPLITTER_R,R,FRONT,4,+Z,printed master -> composite,OURS,C,yes,RED,A2 
 P43,FRONT_MASK,-,FRONT,4,+X,direct print,OURS,C,yes,RED,A2 B1 C3,our mask in the central mouth; what the mouth feeds is a donor question
 P48,CORNER_BLADE_L,L,FRONT,4,+X,direct print,OURS,C,yes,RED,A2 B1 C3,our bar in our corner intake; the duct behind it is BRAKE_DUCT_F
 P49,CORNER_BLADE_R,R,FRONT,4,+X,direct print,OURS,C,yes,RED,A2 B1 C3,our bar in our corner intake; the duct behind it is BRAKE_DUCT_F
+P50,STRAKE_L,L,FRONT,4,+X,direct print,OURS,C,yes,RED,A2 B1 C3,our ridge on our fascia
+P51,STRAKE_R,R,FRONT,4,+X,direct print,OURS,C,yes,RED,A2 B1 C3,our ridge on our fascia
 P02,HOOD,-,FRONT,5,-Z,printed master -> composite,MIXED,C,yes,YELLOW,A1 B2 C3,outer shape ours; rear edge lands on the donor cowl
 P03,FRONT_FENDER_L,L,FRONT,5,-Y,printed master -> composite,DONOR,C,yes,YELLOW,A2 B1 C3,arch opening and the front shut line govern it
 P04,FRONT_FENDER_R,R,FRONT,5,+Y,printed master -> composite,DONOR,C,yes,YELLOW,A2 B1 C3,arch opening and the front shut line govern it

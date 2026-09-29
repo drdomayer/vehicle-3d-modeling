@@ -126,6 +126,8 @@ DEF = {
     "P47": ("outer diffuser fin, right", T_OURS, 8, "off with the diffuser", "single piece"),
     "P48": ("vertical bar in the left corner intake", T_OURS, 8, "off with the fascia", "single piece"),
     "P49": ("vertical bar in the right corner intake", T_OURS, 8, "off with the fascia", "single piece"),
+    "P50": ("cheekbone strake, lamp end to mouth corner, left", T_OURS, 8, "off with the fascia", "single piece"),
+    "P51": ("cheekbone strake, lamp end to mouth corner, right", T_OURS, 8, "off with the fascia", "single piece"),
     "P36": ("plate recess and its lamp; legal requirement", T_OURS, 8, "lamp must be serviceable",
             "single piece"),
     "P22": ("large functional diffuser, few large fins", T_BOLT, 15,

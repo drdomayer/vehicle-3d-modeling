@@ -1,5 +1,5 @@
 {
- "when": 1790670510.0988271,
+ "when": 1790670933.214159,
  "decisions": {
   "wall_mm": 3.0,
   "density_g_cm3": 1.24,
@@ -48,11 +48,13 @@
    "P46",
    "P47",
    "P48",
-   "P49"
+   "P49",
+   "P50",
+   "P51"
   ],
-  "sections": 33,
-  "one_piece": 33,
-  "fits_bed": 33
+  "sections": 35,
+  "one_piece": 35,
+  "fits_bed": 35
  },
  "shape_only": {
   "parts": [
@@ -85,7 +87,7 @@
    "P02": "outer form ours between the fender crests (|Y| < 380). Rear edge: the file ends at spec X ~385, 35 mm short of the donor cowl (420) -- no allowance can be carried across the cabin cut, so the real rear edge, the hinges and the frunk aperture come from the scan."
   }
  },
- "core_kg": 78.9,
- "dropped_skin_mm2": 64487,
+ "core_kg": 79.4,
+ "dropped_skin_mm2": 99851,
  "small_sections_under_40mm": 0
 }

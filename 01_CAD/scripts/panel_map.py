@@ -75,6 +75,7 @@ NOT_PANEL = {
     "X_MOUTH":       "wall of the central mouth; it looks into the duct behind the mask",
     "X_ROCKER_CHANNEL": "wall or floor of the sill undercut; it looks at the road, not the side",
     "X_CORNER":      "wall of the corner intake box; it looks into the brake duct",
+    "X_LIP":         "the recess above the splitter lip; a shadow line, not skin",
 }
 
 # The Stage 03 pockets, as stage03_elements.py cuts them. Named here so the rejection can be read
@@ -83,7 +84,8 @@ POCKETS = [("X_INTAKE", 1940.0, 2180.0, 420.0, 1000.0, 440.0, 710.0),
            ("X_FENDER_SLOT", -250.0, 180.0, 375.0, 560.0, 690.0, 1000.0),
            ("X_MOUTH", -1000.0, -815.0, 0.0, 460.0, 195.0, 390.0),
            ("X_ROCKER_CHANNEL", 470.0, 1610.0, 840.0, 1000.0, 195.0, 285.0),
-           ("X_CORNER", -900.0, -700.0, 600.0, 820.0, 200.0, 470.0)]
+           ("X_CORNER", -900.0, -700.0, 600.0, 820.0, 200.0, 470.0),
+           ("X_LIP", -1000.0, -905.0, 0.0, 625.0, 148.0, 202.0)]
 
 
 # The cabin cutter and the arch cutters, as statev_master_volumes actually builds them. Named here

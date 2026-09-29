@@ -543,8 +543,54 @@ def split_pinch(ob):
     return split
 
 
+SMOOTH_LEVELS = 2       # Catmull-Clark levels on the printed surface; 0 switches it off
+SMOOTH_CREASE_DEG = 25  # a dihedral this hard is a designed edge and is creased, not rounded
+
+
+def smooth_for_print(ob):
+    """Subdivide the panel's SURFACE so the print is smooth where the design is smooth.
+
+    Measured 2026-09-29 on v043: the median dihedral between neighbouring faces of the skin above
+    Z 400 is 3.7-5.9 degrees, with ring spacing of ~38 mm. A core printed from that carries a
+    visible facet every 38 mm, 1-4 mm of sagitta on the tighter radii, and the laminate follows
+    the core. The loft's resolution is a measurement choice (every metric this repo keeps is read
+    off that mesh), so it stays; the PRINT is subdivided instead, here, per panel, before the wall
+    goes on. Edges harder than SMOOTH_CREASE_DEG -- the lip, the crest, the shelf, every pocket
+    wall -- are creased so the designed breaks stay breaks; the panel's outline is kept
+    (PRESERVE_CORNERS), so seams still meet. assembly_check measures the result against the
+    un-subdivided master: the limit surface sits inside the facets by the sagitta, ~1 mm."""
+    if SMOOTH_LEVELS <= 0:
+        return 0
+    bm = bmesh.new()
+    bm.from_mesh(ob.data)
+    bm.normal_update()
+    layer = bm.edges.layers.float.get("crease_edge") or bm.edges.layers.float.new("crease_edge")
+    creased = 0
+    for e in bm.edges:
+        if len(e.link_faces) == 2:
+            try:
+                hard = math.degrees(e.calc_face_angle()) >= SMOOTH_CREASE_DEG
+            except ValueError:
+                hard = False
+        else:
+            hard = True    # boundary: the seam, kept as drawn
+        e[layer] = 1.0 if hard else 0.0
+        creased += hard
+    bm.to_mesh(ob.data)
+    bm.free()
+    m = ob.modifiers.new("smooth", "SUBSURF")
+    m.subdivision_type = "CATMULL_CLARK"
+    m.levels = m.render_levels = SMOOTH_LEVELS
+    m.use_creases = True
+    m.boundary_smooth = "PRESERVE_CORNERS"
+    bpy.context.view_layer.objects.active = ob
+    bpy.ops.object.modifier_apply(modifier=m.name)
+    return creased
+
+
 def thicken(ob):
     split_pinch(ob)
+    smooth_for_print(ob)
     face_outward(ob)
     m = ob.modifiers.new("core", "SOLIDIFY")
     m.thickness, m.offset, m.use_even_offset = D["wall_mm"] / 1000.0, -1.0, False

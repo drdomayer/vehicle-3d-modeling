@@ -646,7 +646,11 @@ def main():
             if best is None:
                 continue
             _, w, nw = best
-            pts.append(w - nw * 0.004)
+            # axis ON the skin (2026-09-29), not 4 mm inside it: with the axis inside, the
+            # channel was wider inside than at its mouth -- an undercut whose lip faces pointed
+            # backward, so solidify built their wall OUTWARD and the fascia file reached 953
+            # against the locked 950. A half-round channel cannot undercut.
+            pts.append(w)
         if len(pts) < 3:
             continue
         cu = bpy.data.curves.new(f"CUT_DRL_{'L' if sgn > 0 else 'R'}", "CURVE")
@@ -655,7 +659,7 @@ def main():
         sp.points.add(len(pts) - 1)
         for p, v in zip(sp.points, pts):
             p.co = (v.x, v.y, v.z, 1.0)
-        cu.bevel_depth = 0.008
+        cu.bevel_depth = 0.007   # 14 wide, 7 deep: the 14 x 12 element sits proud by 5, a line of light
         cu.bevel_resolution = 4
         cu.use_fill_caps = True
         co = bpy.data.objects.new(cu.name, cu)
@@ -670,7 +674,7 @@ def main():
         bm.to_mesh(cm.data)
         bm.free()
         cuts.append(cm)
-    print("  DRL groove: a radius-8 tube along DRL_PATH, axis 4 mm inside the skin, Z 420 centre .. 490 corner, cut from the fascia")
+    print("  DRL groove: a radius-7 half-round along DRL_PATH, axis on the skin, Z 420 centre .. 490 corner, cut from the fascia")
 
     # cut them all out of the body
     for c in cuts:

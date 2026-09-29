@@ -1208,11 +1208,17 @@ def ring(spec_x):
         # (spec X < -600) the crest is the leading edge of a flat face and those two points put
         # steps into it -- the crumpled band at Z 440..530 across the whole front view on
         # 2026-09-29. Ahead of -600 the face runs straight up to the crest (nose_face()).
-        if "sh_in" in fc and spec_x > -600.0:
-            sy, sz = top_y - fc["sh_in"], fz - fc["sh_drop"]
+        # 2026-09-30 (v054): the gate at -600 was a hard switch -- the two points appeared whole at
+        # one station -- and the X-smoothing spread that into a bump over -600..-500 (z(x) at
+        # Y 800 stepped 27/36/30 mm per 25 mm there, against 14..19 either side): the "ear" over
+        # each lamp in the glossy renders. The offsets now ramp in over -700..-450, so the points
+        # grow out of the crest instead of switching on.
+        w_sh = smoothstep(-700.0, -450.0, spec_x) if "sh_in" in fc else 0.0
+        if w_sh > 0.02:
+            sy, sz = top_y - fc["sh_in"] * w_sh, fz - fc["sh_drop"] * w_sh
             if sz > top_z + 8 and sy > fy + fc["out"] + 20:
                 half.append((sy, sz))
-            py, pz = fy + fc["pl_out"], fz - fc["pl_drop"]
+            py, pz = fy + fc["pl_out"] + (top_y - fy - fc["pl_out"]) * (1.0 - w_sh), fz - fc["pl_drop"] * w_sh
             if pz > max(sz, top_z) + 6 and py < half[-1][0] - 10 and py > fy + fc["out"] + 10:
                 half.append((py, pz))
         if fdrop > 6:
@@ -1259,8 +1265,67 @@ def ring(spec_x):
             half.append((0.50 * ly, crown - 0.30 * d))
             half.append((0.20 * ly, crown - 0.05 * d))
     half.append((0.0, max(crown, (b_top - 40) if b_top else crown)))
-    half = resample_anchored(half, N_HALF, feature_anchors(spec_x))
+    anch = feature_anchors(spec_x)
+    half = resample_anchored(half, N_HALF, anch)
+    half = facet(spec_x, half, anch)
     return list(half) + [(-y, z) for y, z in reversed(half[1:-1])]
+
+
+# FACETS BETWEEN THE ANCHORS, 2026-09-30 (v054) -- the parametric form of stage 02. Every station
+# pins a sample on each of the named longitudinal lines (feature_anchors); between two anchors
+# the profile is whatever arc the sections and the fields left, and under a reflection that arc
+# is the balloon docs/16 warns about. ref-09's language is planes meeting at lines. So between
+# consecutive anchors the samples are pulled toward the CHORD by FACET_AMOUNT (0 = the loft as
+# it was, 1 = a ruled strip between the two lines). The anchors themselves do not move, so the
+# silhouette, the plan, the locked width and every line the edge test measures stay where they
+# are; only the surface between the lines changes. Zoned along X because the nose and the tail
+# are boxes already and the deck is BLOCKED. Below FACET_Z_MIN nothing is touched (floor edge).
+# MEASURED 2026-09-30 AND SWITCHED OFF. Three runs on one base: (a) chords between the anchors
+# only -- visible facets on the hood and the door, but the buttress crest is not an anchor and the
+# chord ran under it: rear silhouette 23 -> 56 mm; (b) every local Z extreme kept as a line --
+# renders identical to the loft, surf_x identical to the third decimal; (c) only extremes of 6 mm
+# prominence -- the same. So between its lines the profile is ALREADY nearly straight: the fields
+# made it so over the last two weeks, and what still reads as a dome in the glossy render is the
+# LONGITUDINAL shape -- the buttress rise as a gaussian along X, the crest tables, the plan --
+# which are recorded design decisions, not construction. Left at zero with the code in place so a
+# zone can be faceted deliberately later; not a lever for "it looks soft".
+FACET_AMOUNT = [(-1000, 0.0), (3500, 0.0)]
+FACET_Z_MIN = 150.0
+FACET_PROMINENCE = 6.0   # mm a local Z extreme must stand off its neighbours to count as a line
+
+
+def facet(spec_x, half, anch):
+    a = table_z(FACET_AMOUNT, spec_x)
+    if a <= 0.005 or len(half) < 4:
+        return half
+    zs = [p[1] for p in half]
+    idx = set()
+    for z in anch:
+        k = min(range(len(half)), key=lambda i: abs(zs[i] - z))
+        if zs[k] >= FACET_Z_MIN:
+            idx.add(k)
+    idx.add(len(half) - 1)
+    # every strict local extreme of Z is a line too (the buttress crest, the deck edge, the top of
+    # a chamfer): without this the chord from the flank-top anchor to the crown ran UNDER the
+    # buttress crest and the rear silhouette fell 33 mm on the first run
+    # ...but only a PROMINENT one: with every sample-to-sample wiggle counted the chords ran
+    # between neighbours and the facets did nothing (measured: renders identical to the loft).
+    for i in range(2, len(half) - 2):
+        if (zs[i] > zs[i - 1] and zs[i] > zs[i + 1]) or (zs[i] < zs[i - 1] and zs[i] < zs[i + 1]):
+            if abs(zs[i] - 0.5 * (zs[i - 2] + zs[i + 2])) >= FACET_PROMINENCE:
+                idx.add(i)
+    idx = sorted(i for i in idx if zs[i] >= FACET_Z_MIN)
+    out = list(half)
+    for i, j in zip(idx[:-1], idx[1:]):
+        if j - i < 2:
+            continue
+        (y0, z0), (y1, z1) = half[i], half[j]
+        for k in range(i + 1, j):
+            t = (k - i) / (j - i)
+            cy, cz = y0 + t * (y1 - y0), z0 + t * (z1 - z0)
+            y, z = half[k]
+            out[k] = (y + a * (cy - y), z + a * (cz - z))
+    return out
 
 
 def built_hw(spec_x, z_lo, z_hi):

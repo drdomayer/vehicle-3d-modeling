@@ -90,8 +90,7 @@ def import_files():
 # real edges (so the loft's shading ripples go and the creases stay), plus only the elements a
 # person standing next to the car would see. Housings, ducts and the shape-only sails are not
 # hidden from the files, only from this picture.
-CLEAN_SHOW = ("INTAKE_BLADE", "FENDER_CHANNEL", "FRONT_MASK", "REAR_CENTRE_MASK", "PLATE_RECESS",
-              "EXHAUST_SURROUND", "DIFFUSER_FIN", "HEADLIGHT_SURROUND")
+CLEAN_SHOW = ("INTAKE_BLADE", "FENDER_CHANNEL", "FRONT_MASK", "DIFFUSER_FIN")
 CLEAN_CREASE_DEG = float(globals().get("GLOSSY_CREASE_DEG", 30.0))
 
 

@@ -58,14 +58,13 @@ PARTS = [
     ("P43", "FRONT_MASK",          "-",  "FRONT", 4,  "+X", "direct print", "FRONT_CLAMSHELL"),
     # 2026-09-29: the vertical bars standing in the corner intakes
     # P48..P51 (corner bars, strakes) and P52/P53 (tail corner blades) RETIRED 2026-09-29 -- owner's
-    # review: parasitic. Numbers are not reused.
+    # review: parasitic. P29/P30 (lamp frames), P34 (centre mask), P35 (exhaust surround) and P36
+    # (plate frame) RETIRED 2026-09-30, second pass: "flying elements". Numbers are not reused.
     ("P02", "HOOD",                "-",  "FRONT", 5,  "-Z", "printed master -> composite", "HOOD"),
     ("P03", "FRONT_FENDER_L",      "L",  "FRONT", 5,  "-Y", "printed master -> composite", "FRONT_FENDER"),
     ("P04", "FRONT_FENDER_R",      "R",  "FRONT", 5,  "+Y", "printed master -> composite", "FRONT_FENDER"),
     ("P05", "FENDER_CHANNEL_L",    "L",  "FRONT", 6,  "-Y", "direct print", "FRONT_FENDER"),
     ("P06", "FENDER_CHANNEL_R",    "R",  "FRONT", 6,  "+Y", "direct print", "FRONT_FENDER"),
-    ("P29", "HEADLIGHT_SURROUND_L","L",  "FRONT", 7,  "+X", "printed master -> composite", "HEADLIGHT"),
-    ("P30", "HEADLIGHT_SURROUND_R","R",  "FRONT", 7,  "+X", "printed master -> composite", "HEADLIGHT"),
     ("P07", "ROCKER_L",            "L",  "SIDE",  8,  "-Y", "printed master -> composite", "ROCKER"),
     ("P08", "ROCKER_R",            "R",  "SIDE",  8,  "+Y", "printed master -> composite", "ROCKER"),
     # Split off the rocker on 2026-09-16. The rear wheel opening severs the sill rather than
@@ -100,15 +99,12 @@ PARTS = [
     ("P20", "ENGINE_COVER",        "-",  "REAR",  17, "-Z", "printed master -> composite", "ENGINE_COVER"),
     ("P33", "ENGINE_COVER_LOUVRES","-",  "REAR",  18, "-Z", "direct print", "ENGINE_COVER"),
     ("P21", "REAR_FASCIA",         "-",  "REAR",  19, "-X", "printed master -> composite", "REAR_FASCIA"),
-    ("P34", "REAR_CENTRE_MASK",    "-",  "REAR",  20, "-X", "direct print", "REAR_FASCIA"),
-    ("P36", "PLATE_RECESS",        "-",  "REAR",  21, "-X", "direct print", "REAR_FASCIA"),
     ("P22", "DIFFUSER",            "-",  "REAR",  22, "-X", "printed master -> composite", "DIFFUSER"),
     # 2026-09-26: the diffuser has a rising floor for the first time, and fins standing in it
     ("P44", "DIFFUSER_FIN_INNER_L", "L",  "REAR",  23, "-Z", "direct print", "DIFFUSER"),
     ("P45", "DIFFUSER_FIN_INNER_R", "R",  "REAR",  23, "-Z", "direct print", "DIFFUSER"),
     ("P46", "DIFFUSER_FIN_OUTER_L", "L",  "REAR",  23, "-Z", "direct print", "DIFFUSER"),
     ("P47", "DIFFUSER_FIN_OUTER_R", "R",  "REAR",  23, "-Z", "direct print", "DIFFUSER"),
-    ("P35", "EXHAUST_SURROUND",    "-",  "REAR",  23, "-X", "direct print, heat-capable", "REAR_FASCIA"),
     # P23: the ducktail has been IN the tail profile since v031 and the REAR_SPOILER envelope sits
     # 125.7 mm inside the body (stage03, 2026-09-21). A register question for the owner: absorb it
     # into P21/P19 (one line to delete here) or keep a separate lip. Left as is until answered.

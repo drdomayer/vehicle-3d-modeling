@@ -171,7 +171,7 @@ OPENING_OF = {
     # v048: the side bites (NOSE_MOUTH) are off; the openings in the nose are the central mouth
     # and the corner pockets, both cut by stage03_elements.
     ("NOSE", "FRONT_LOWER_INTAKE"): ("FRONT_MASK", "mouth and corner pockets cut by stage03_elements"),
-    ("HOOD", "HEADLIGHT_SURROUND"): ("HEADLIGHT_SURROUND_L", "slot cut by stage03_elements"),
+    ("HOOD", "HEADLIGHT_SURROUND"): ("HEADLIGHT_HOUSING_L", "slot cut by stage03_elements; the housing shows in it"),
     ("DOOR_CHANNEL", "SIDE_INTAKE_MOUTH"): ("INTAKE_BLADE_L", "mouth cut by stage03_elements"),
 }
 

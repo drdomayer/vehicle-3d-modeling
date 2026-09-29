@@ -99,7 +99,7 @@ FLANGE_AT = {
     "P39": [("x", 3000.0, "above", {"P22"})],    # step 8, before the diffuser at step 22
 }
 PANELS = ["P01", "P28", "P41", "P07", "P08", "P39", "P40", "P21", "P22",
-          "P05", "P06", "P13", "P14", "P29", "P30", "P34", "P35", "P36", "P43",
+          "P05", "P06", "P13", "P14", "P43",
           "P44", "P45", "P46", "P47",   # P17 / P18 are SHAPE ONLY; P48..P53 retired 2026-09-29
           "P24", "P25", "P31", "P32",
           # 2026-09-21: the tail blade's housings. They were BLOCKED for having no geometry, not
@@ -181,7 +181,7 @@ SHAPE_ONLY = {
 
 # Stage 03 elements are built by stage03_elements.py as closed solids in their own right -- a blade
 # already HAS its thickness -- so they skip both the map and the wall and go straight to sectioning.
-STAGE03 = {"P05", "P06", "P13", "P14", "P29", "P30", "P34", "P35", "P36", "P43",
+STAGE03 = {"P05", "P06", "P13", "P14", "P43",
            "P44", "P45", "P46", "P47", "P17", "P18",
            "P24", "P25", "P31", "P32", "P26", "P27"}
 SCHEDULE = []

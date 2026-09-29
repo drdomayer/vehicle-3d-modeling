@@ -458,37 +458,27 @@ def main():
     # NOTHING HERE GOES NEAR THE ROOF. P17, P18, P19, P42, P20, P23 and P33 are ROOF_BLOCKED and
     # stay untouched; the fold envelope is guessed at spec X 1240 to 1760 and everything below is
     # behind 3300.
-    rear_pockets = [("CUT_CENTRE_MASK", 3330, 3425, -300, 300, 395, 595),
-                    ("CUT_PLATE", 3345, 3425, -255, 255, 250, 372),
-                    ("CUT_EXHAUST_L", 3300, 3425, 8, 122, 375, 489),
-                    ("CUT_EXHAUST_R", 3300, 3425, -122, -8, 375, 489)]
-    for nm, a, b_, c, d, e, f_ in rear_pockets:
-        cuts.append(box(nm, coll, a, b_, c, d, e, f_))
-    print(f"  rear: {len(rear_pockets)} pockets — centre mask, plate recess, two exhaust openings")
-
-    for pid, nm, a, b_, c, d, e, f_, w in (
-            ("P34", "REAR_CENTRE_MASK", 3352, 3372, -296, 296, 399, 591, 26.0),
-            ("P36", "PLATE_RECESS", 3366, 3382, -251, 251, 254, 368, 20.0)):
-        ob = frame(nm, coll, a, b_, c, d, e, f_, w)
-        ob["panel_id"] = pid
-        ob["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
-        made.append(ob)
-
-    # The exhaust surround is ONE part in the register, so it is built as one: a bar across both
-    # tips with the two openings taken out of it. Two separate rings would be one part in two
-    # pieces, which the connectivity gate in pilot_panel would refuse -- correctly.
-    es = box("EXHAUST_SURROUND", coll, 3322, 3346, -140, 140, 371, 493)
+    # 2026-09-30 (v053), owner's review, second pass: the centre mask pocket with its frame, the
+    # plate recess frame and the exhaust bar were three nested rectangles hanging in their own
+    # pockets under the light bar. ref-09's tail is a plain panel there with exactly two round
+    # tips in the diffuser centre (docs/14 lock). So: no centre mask (P34 retired); the plate
+    # keeps a SHALLOW recess because a plate has to sit somewhere legal, but no frame part (P36
+    # retired); the exhausts are two ROUND openings on the EXHAUST envelope (spec X 3220, Y +-65,
+    # Z 430, 95 dia) cut straight through the tail, tips bought, no surround part (P35 retired).
+    cuts.append(box("CUT_PLATE", coll, 3395, 3425, -255, 255, 250, 372))
     for sgn in (1, -1):
-        v = box("_es_void", coll, 3316, 3352, sgn * 12, sgn * 118, 383, 481)
-        m = es.modifiers.new("void", "BOOLEAN")
-        m.operation, m.object, m.solver = "DIFFERENCE", v, "EXACT"
-        bpy.context.view_layer.objects.active = es
-        bpy.ops.object.modifier_apply(modifier=m.name)
-        bpy.data.objects.remove(v, do_unlink=True)
-    es["panel_id"] = "P35"
-    es["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
-    made.append(es)
-    print("  rear parts: centre mask P34, plate recess P36, exhaust surround P35 (one bar, two holes)")
+        bpy.ops.mesh.primitive_cylinder_add(radius=mm(52.0), depth=mm(300.0), vertices=48,
+                                            location=(-mm(3300.0), mm(sgn * 65.0), mm(430.0)))
+        cy = bpy.context.active_object
+        cy.name = f"CUT_EXHAUST_{'L' if sgn > 0 else 'R'}"
+        cy.rotation_euler = (0.0, math.radians(90.0), 0.0)
+        for c in list(cy.users_collection):
+            c.objects.unlink(cy)
+        coll.objects.link(cy)
+        bpy.context.view_layer.update()
+        cuts.append(cy)
+    print("  rear: a 30 mm plate recess and two round 104 mm exhaust openings on the EXHAUST envelope;")
+    print("    the centre mask (P34), the plate frame (P36) and the exhaust surround (P35) are retired")
 
     # ---- 5. the headlamp as a blade, not a cavity. A slot across the nose with a thin frame in it,
     # so what shows is a line of light behind a frame -- which is what "thin light blades" means and
@@ -499,7 +489,11 @@ def main():
     for sgn in (1, -1):
         cuts.append(box(f"CUT_LAMP_{'L' if sgn > 0 else 'R'}", coll,
                         -900, -620, min(sgn * 590, sgn * 700), max(sgn * 590, sgn * 700), 505, 625))
-    for sgn in (1, -1):
+    # RETIRED 2026-09-30 (v053), owner's review, second pass ("flying elements"): the 18 mm frame
+    # stood in the lamp slot with air all round it and read as a box floating at the corner. The
+    # slot is the lamp's aperture and stays; the housing (P24/P25) stands behind it and is what
+    # the aperture shows. The frame's code stays behind PARASITIC.
+    for sgn in ((1, -1) if PARASITIC else ()):
         # -760..-732, not -790..-762: the corner face recedes from -803 at Y 600 to -774 at Y 700
         # (Z 550), and at -790 the frame's outer end stood 16 mm ahead of the skin. Measured.
         ob = frame(f"HEADLIGHT_SURROUND_{'L' if sgn > 0 else 'R'}", coll,
@@ -507,7 +501,7 @@ def main():
         ob["panel_id"] = "P29" if sgn > 0 else "P30"
         ob["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
         made.append(ob)
-    print("  headlamp: a slot across the nose with an 18 mm frame in it -> P29 / P30")
+    print("  headlamp: a slot across the nose, the housing's face showing in it (the frame P29/P30 is retired)")
 
 
     # ---- 6. the lamp housing behind the blade. PROJECTOR is a DECIDED envelope at spec X -600,

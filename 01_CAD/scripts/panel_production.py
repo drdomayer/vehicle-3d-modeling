@@ -603,6 +603,27 @@ def thicken(ob):
     m.thickness, m.offset, m.use_even_offset = D["wall_mm"] / 1000.0, -1.0, False
     bpy.context.view_layer.objects.active = ob
     bpy.ops.object.modifier_apply(modifier=m.name)
+    # THE LOCKED HALF-WIDTH IS A WALL, 2026-09-30. Solidify offsets each vertex along its own
+    # normal, and on the lip where a pocket's ceiling meets the skin at a right angle the vertex
+    # normal is the average of the two -- so the wall vertex at that lip moves half outward. P11's
+    # second piece (the intake mouth's walls) carried eleven such vertices at Y 927.8 on the lip at
+    # Z 700, and the assembled car read 1855.6 wide against the locked 1850. Nothing the shop
+    # prints may stand outside +-925: those vertices are set back onto the plane, at most 3 mm,
+    # counted and printed. The cut edge itself is where the panel meets its neighbour, and the
+    # laminate bridges it.
+    lim = 925.0 / 1000.0
+    M, Mi = ob.matrix_world, ob.matrix_world.inverted()
+    n_clamped, worst = 0, 0.0
+    for v in ob.data.vertices:
+        w = M @ v.co
+        if abs(w.y) > lim:
+            worst = max(worst, (abs(w.y) - lim) * 1000.0)
+            w.y = lim if w.y > 0 else -lim
+            v.co = Mi @ w
+            n_clamped += 1
+    if n_clamped and worst > 0.05:   # float noise at exactly 925 is not worth a line
+        print(f"    {ob.name}: {n_clamped} wall vertices stood up to {worst:.1f} mm outside the "
+              f"locked half-width and were set back onto +-925")
     return ob
 
 
@@ -983,11 +1004,16 @@ def tidy_for_export(ob):
     duplicate of another, so the file is what the mesh is."""
     bm = bmesh.new()
     bm.from_mesh(ob.data)
+    # 2026-09-30: P21's file carried one needle -- two vertices 0.0004 mm apart on the tail's
+    # undercut lip, one triangle between them of ~0.001 mm2 -- which print_qc reads as 2 open
+    # edges and 1 non-manifold. Merge anything closer than 0.01 mm first, and drop triangles
+    # under 0.01 mm2: neither is geometry a 0.4 mm nozzle can see.
+    bmesh.ops.remove_doubles(bm, verts=bm.verts[:], dist=1e-5)
     bmesh.ops.triangulate(bm, faces=bm.faces[:], quad_method="BEAUTY", ngon_method="BEAUTY")
     seen, gone = set(), []
     for f in bm.faces:
         k = frozenset(tuple(round(c * 1e6) for c in v.co) for v in f.verts)
-        if len(k) < 3 or f.calc_area() < 1e-12 or k in seen:
+        if len(k) < 3 or f.calc_area() < 1e-8 or k in seen:
             gone.append(f)
         else:
             seen.add(k)

@@ -1005,15 +1005,17 @@ def tidy_for_export(ob):
     bm = bmesh.new()
     bm.from_mesh(ob.data)
     # 2026-09-30: P21's file carried one needle -- two vertices 0.0004 mm apart on the tail's
-    # undercut lip, one triangle between them of ~0.001 mm2 -- which print_qc reads as 2 open
-    # edges and 1 non-manifold. Merge anything closer than 0.01 mm first, and drop triangles
-    # under 0.01 mm2: neither is geometry a 0.4 mm nozzle can see.
-    bmesh.ops.remove_doubles(bm, verts=bm.verts[:], dist=1e-5)
+    # undercut lip -- which print_qc read as 2 open edges and 1 non-manifold. Merging vertices
+    # closer than 0.001 mm collapses it. The first version also dropped triangles under 0.01 mm2
+    # and that OPENED nine files (P01 alone 230 open edges): slivers that small are real
+    # connectors along boolean seams, and a slicer copes with them. Area threshold left at the
+    # degenerate limit.
+    bmesh.ops.remove_doubles(bm, verts=bm.verts[:], dist=1e-6)
     bmesh.ops.triangulate(bm, faces=bm.faces[:], quad_method="BEAUTY", ngon_method="BEAUTY")
     seen, gone = set(), []
     for f in bm.faces:
         k = frozenset(tuple(round(c * 1e6) for c in v.co) for v in f.verts)
-        if len(k) < 3 or f.calc_area() < 1e-8 or k in seen:
+        if len(k) < 3 or f.calc_area() < 1e-12 or k in seen:
             gone.append(f)
         else:
             seen.add(k)

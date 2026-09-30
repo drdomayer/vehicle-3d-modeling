@@ -29,19 +29,11 @@ Estimated core mass across both tiers at these assumptions: **~74.5 kg**.
 
 ## Quality of the files, as a slicer sees them
 
-`print_qc.py` reads every file back: closed, manifold, consistently wound, positive volume. Last run: **32 of 41 clean**, 9 with a defect.
+`print_qc.py` reads every file back: closed, manifold, consistently wound, positive volume. Last run: **40 of 41 clean**, 1 with a defect.
 
 Files with something to say (all non-manifold edges, a handful each; most slicers repair these, but that is not a guarantee):
 
-- `P01_FRONT_FASCIA_whole.stl` — 230 open edge(s)
-- `P05_FENDER_CHANNEL_L_whole.stl` — 3 open edge(s)
-- `P06_FENDER_CHANNEL_R_whole.stl` — 3 open edge(s)
-- `P21_REAR_FASCIA_whole.stl` — 49 open edge(s)
-- `P22_DIFFUSER_whole.stl` — 44 open edge(s)
-- `P09_DOOR_SKIN_L_s01.stl` — 7 open edge(s)
-- `P10_DOOR_SKIN_R_s01.stl` — 7 open edge(s)
-- `P15_REAR_HAUNCH_L_whole.stl` — 4 open edge(s)
-- `P16_REAR_HAUNCH_R_whole.stl` — 4 open edge(s)
+- `P21_REAR_FASCIA_whole.stl` — 2 open edge(s); 1 non-manifold edge(s)
 
 ## Known problems, stated rather than hidden
 

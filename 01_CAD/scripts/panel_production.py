@@ -94,9 +94,12 @@ D = dict(
 # happens to lie within the flange width of that plane -- a Z 300 seam at the nose swept up the
 # rocker along the whole length and gave the front fascia a 4368 mm bounding box.
 FLANGE_AT = {
-    "P01": [("z", 300.0, "below", {"P28"})],     # step 3, before the splitter at step 4
-    "P21": [("z", 330.0, "below", {"P22"})],     # step 19, before the diffuser at step 22
-    "P39": [("x", 2870.0, "above", {"P22"})],    # step 8, before the diffuser at step 22 (v055: 3000 -> 2870, the tunnel start)
+    # The planes are NAMES resolved against panel_map (plane_at), not numbers. v056 moved the
+    # splitter line 300 -> 194 and this table kept 300: P01's flange onto P28 was silently gone,
+    # because no P28 face lies in 270..300 any more, and every file still read clean.
+    "P01": [("z", "splitter_top", "below", {"P28"})],     # step 3, before the splitter at step 4
+    "P21": [("z", "diffuser_top_at", "below", {"P22"})],  # step 19, before the diffuser at step 22
+    "P39": [("x", "DIFFUSER_FRONT", "above", {"P22"})],    # step 8, before the diffuser at step 22 (v055: 3000 -> 2870, the tunnel start)
 }
 PANELS = ["P01", "P28", "P41", "P07", "P08", "P39", "P40", "P21", "P22",
           "P05", "P06", "P13", "P14", "P43",
@@ -220,6 +223,14 @@ with open(os.path.join(REPO, "01_CAD/scripts/pilot_panel.py"), encoding="utf-8")
 SIDE_OF, MIRROR_OF = _pp["SIDE_OF"], _pp["MIRROR_OF"]
 
 
+def plane_at(plane, ay):
+    """A FLANGE_AT plane: a number, a key of panel_map.B, or a panel_map function of |Y|."""
+    if isinstance(plane, str):
+        v = _pm[plane] if plane in _pm else _pm["B"][plane]
+        return v(ay) if callable(v) else v
+    return plane
+
+
 def gather(pid):
     """Panel faces, plus the neighbour's faces within the flange width across an own-line seam.
     Returns (verts, faces, flange_vert_indices)."""
@@ -262,7 +273,8 @@ def gather(pid):
                     if who not in neigh:
                         continue
                     v = sx if axis == "x" else z
-                    d = (v - plane) if into == "above" else (plane - v)
+                    pl = plane_at(plane, ay)
+                    d = (v - pl) if into == "above" else (pl - v)
                     if 0 < d <= D["flange_w_mm"]:
                         is_flange = True
                         break
@@ -340,7 +352,8 @@ def build(pid):
         t = 0.0
         for axis, plane, into, _n in seams:
             val = sx if axis == "x" else z
-            d = (val - plane) if into == "above" else (plane - val)
+            pl = plane_at(plane, abs(v.co.y * 1000))
+            d = (val - pl) if into == "above" else (pl - val)
             t = max(t, min(1.0, max(0.0, d) / D["flange_w_mm"]))
         v.co -= v.normal * (drop * t)
     bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.0001)
@@ -592,6 +605,41 @@ def smooth_for_print(ob):
         return 0
     bm = bmesh.new()
     bm.from_mesh(ob.data)
+    # v057: a boolean leaves a CONCAVE n-gon around every opening (the face that held the hole,
+    # bridged to it). Catmull-Clark puts a new vertex at the n-gon's centroid, and for a ring-like
+    # n-gon that centroid lies INSIDE the hole: measured on P22, the two 104 mm exhaust openings
+    # came out of the print file with vertices at r 38..44 -- irregular polygons ~80 mm across,
+    # partly skinned over. Triangulated first, every new vertex lies on the face it came from.
+    # CONCAVE n-gons only. Measured three ways on v057: every n-gon over 6 sides fixed the
+    # exhausts (r 51.9 against 52) but put spikes 0.4..2.1 m long into P01 at the lamp slot corner
+    # (-750, 700, 558) -- thin triangles out of a CONVEX n-gon there, which the wall then throws
+    # out; dissolving degenerate triangles afterwards changed nothing. Only the n-gons whose
+    # centroid lies outside them kept P01 closed but left the exhausts at r 43.8. Catmull-Clark
+    # is well defined on a convex face, so a convex n-gon stays as it is.
+    def concave(f):
+        n = f.normal
+        vs = [v.co for v in f.verts]
+        k = len(vs)
+        for i in range(k):
+            a_, b_, c_ = vs[i - 1], vs[i], vs[(i + 1) % k]
+            if (b_ - a_).cross(c_ - b_).dot(n) < -1e-12:
+                return True
+        return False
+    def chord_exists(f):
+        # Two NON-adjacent corners of the n-gon already joined by an edge of another face: a
+        # triangulation that picks that diagonal reuses the edge and gives it a third face.
+        # That is what broke P01 (8 edges with three faces at the lamp slot n-gons, 42/48
+        # sides, after smoothing; 0 before) and the wall then threw spikes 0.4..2.1 m long.
+        vs = list(f.verts)
+        k = len(vs)
+        for i in range(k):
+            for j in range(i + 2, k - (1 if i == 0 else 0)):
+                if bm.edges.get((vs[i], vs[j])) is not None:
+                    return True
+        return False
+    big = [f for f in bm.faces if len(f.verts) > 6 and concave(f) and not chord_exists(f)]
+    if big:
+        bmesh.ops.triangulate(bm, faces=big, quad_method="BEAUTY", ngon_method="BEAUTY")
     bm.normal_update()
     layer = bm.edges.layers.float.get("crease_edge") or bm.edges.layers.float.new("crease_edge")
     creased = 0

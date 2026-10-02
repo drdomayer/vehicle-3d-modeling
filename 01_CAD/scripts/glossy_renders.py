@@ -319,9 +319,16 @@ def ctx_objects(sc):
               [P_(x, y, z) for x, y, z in side]
     tags[tube("GLOSSY_CTX_DRL", pts, 0.006).name] = "light white"
     # tail light bar and its L ends (the LOCKED envelopes), lit at the face
+    # v057: lit only OUTBOARD of |Y| 430, a black band between -- ref-09's rear view (1.68 mm/px):
+    # each lamp runs from ~857 in to ~428, and the centre is a dark band carrying the badge. Legal
+    # sense too: the position/stop functions belong near the outer edges (Hella Shapeline modules
+    # in the outer slots); the blade itself stays one slot across the car, as docs/14 locks it.
     for sgn in (1, -1):
-        tags[mesh("GLOSSY_CTX_TAIL", [P_(3212, 0, 600), P_(3212, sgn * 720, 600), P_(3212, sgn * 720, 624),
-                                      P_(3212, 0, 624)], [(0, 1, 2, 3)]).name] = "light red"
+        tags[mesh("GLOSSY_CTX_TAIL", [P_(3212, sgn * 430, 600), P_(3212, sgn * 720, 600),
+                                      P_(3212, sgn * 720, 624), P_(3212, sgn * 430, 624)],
+                  [(0, 1, 2, 3)]).name] = "light red"
+    tags[mesh("GLOSSY_CTX_TAILBAND", [P_(3211, -430, 597), P_(3211, 430, 597), P_(3211, 430, 627),
+                                      P_(3211, -430, 627)], [(0, 1, 2, 3)]).name] = "gloss black"
     return out, tags
 
 

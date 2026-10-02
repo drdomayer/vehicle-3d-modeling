@@ -54,6 +54,16 @@ B = dict(
                               # recess's shadow. (200 was tried first: the 6 mm strip above the
                               # ceiling joined the lip only through the recess walls, which the
                               # skin accounting rejects, and the part extracted as two pieces.)
+    # v057: the DIFFUSER's top edge behind the fascia station. ref-09's rear view puts the black
+    # lower valance at ~37% of the hoop height (lamps ~57%, deck ~68%): on ours, with the lamps at
+    # ~610, that is ~400 -- the painted wall was coming down to Z 330 and read as a pear. Stepped
+    # up around the exhausts (EXHAUST envelope, two pipes at Z 378..482) so they sit inside the
+    # black box, as in the render, instead of straddling a seam. Outboard of diffuser_half the
+    # corner legs stay painted down to the rocker line, as the render's do.
+    diffuser_top    = 410,
+    diffuser_half   = 660,
+    exhaust_box_top = 500,
+    exhaust_box_half= 190,
     rocker_end      = 2415,   # rear axle, PUBLISHED. The rear arch removes everything below the
                               # rocker line between 2050 and 2780, so anything below that line aft
                               # of the axle is the severed corner P39/P40, never the sill.
@@ -208,26 +218,52 @@ def not_panel(sx, ay, z, nz, ny):
 # So the body is cut on these planes before anything is assigned. Then no face straddles a boundary,
 # every face lies wholly inside one panel, and the answer stops depending on tessellation.
 def boundary_planes():
+    """(normal, point, spec_x_from): a plane cuts only faces reaching spec X >= spec_x_from. The
+    v057 diffuser planes are LOCAL to the tail: cut across the whole car they split faces inside
+    the side-intake and nose pockets, and the halves that fell outside a pocket box became loose
+    islands (P01 two pieces, P11/P12 three)."""
     X = [B["nose_end"], B["cowl"], B["door_front"], B["door_rear"], B["hoop"], B["intake_front"],
          B["intake_rear"], B["cover_front"], B["rocker_end"], B["fascia_front"]]
     Z = [B["rocker_top"], B["splitter_top"], 700.0, 900.0]
     Y = [0.0, B["hood_half_width"], B["cover_half_width"], 715.0, CABIN["y"]]
-    out = [((-1.0, 0.0, 0.0), (-v / 1000.0, 0.0, 0.0)) for v in X]     # spec X -> repo x
-    out += [((0.0, 0.0, 1.0), (0.0, 0.0, v / 1000.0)) for v in Z]
-    out += [((0.0, 1.0, 0.0), (0.0, v / 1000.0, 0.0)) for v in Y]
-    out += [((0.0, 1.0, 0.0), (0.0, -v / 1000.0, 0.0)) for v in Y if v > 0]
+    ALL = -1.0e9
+    out = [((-1.0, 0.0, 0.0), (-v / 1000.0, 0.0, 0.0), ALL) for v in X]     # spec X -> repo x
+    out += [((0.0, 0.0, 1.0), (0.0, 0.0, v / 1000.0), ALL) for v in Z]
+    out += [((0.0, 1.0, 0.0), (0.0, v / 1000.0, 0.0), ALL) for v in Y]
+    out += [((0.0, 1.0, 0.0), (0.0, -v / 1000.0, 0.0), ALL) for v in Y if v > 0]
+    tail = B["fascia_front"] - 10.0
+    out += [((0.0, 0.0, 1.0), (0.0, 0.0, v / 1000.0), tail)
+            for v in (B["diffuser_top"], B["exhaust_box_top"])]
+    for v in (B["exhaust_box_half"], B["diffuser_half"]):
+        out += [((0.0, 1.0, 0.0), (0.0, v / 1000.0, 0.0), tail),
+                ((0.0, 1.0, 0.0), (0.0, -v / 1000.0, 0.0), tail)]
     return out
 
 
 def split_on_boundaries(bm):
     """Cut the mesh on every plane panel_of switches on. Splits only; removes nothing."""
-    for no, co in boundary_planes():
-        geom = bm.verts[:] + bm.edges[:] + bm.faces[:]
+    for no, co, x_from in boundary_planes():
+        if x_from > -1.0e8:
+            fs = [f for f in bm.faces if max(-v.co.x * 1000.0 for v in f.verts) >= x_from]
+            es = list({e for f in fs for e in f.edges})
+            vs = list({v for f in fs for v in f.verts})
+            geom = vs + es + fs
+        else:
+            geom = bm.verts[:] + bm.edges[:] + bm.faces[:]
         if not geom:
-            break
+            continue
         bmesh.ops.bisect_plane(bm, geom=geom, plane_no=no, plane_co=co,
                                clear_outer=False, clear_inner=False)
     return bm
+
+
+def diffuser_top_at(ay):
+    """The P21/P22 seam height at this half-width, behind the fascia station (v057)."""
+    if ay < B["exhaust_box_half"]:
+        return B["exhaust_box_top"]
+    if ay < B["diffuser_half"]:
+        return B["diffuser_top"]
+    return B["rocker_top"]
 
 
 def panel_of(sx, ay, z):
@@ -255,6 +291,8 @@ def panel_of(sx, ay, z):
     # ---- REAR
     if sx < B["intake_rear"] and B["rocker_top"] <= z < 700:
         return "P11"                           # side intake surround
+    if sx >= B["fascia_front"] and z < diffuser_top_at(ay):
+        return "P22"                           # v057: the black lower valance and exhaust box
     if z < B["rocker_top"]:
         # v055: the diffuser starts where its tunnel starts (DIFFUSER_FLOOR, 2870), so the tunnel
         # ceiling and the legs are one moulding; with the boundary at 3000 the ceiling between

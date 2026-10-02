@@ -140,9 +140,10 @@ INTERFACE_BY_PANEL = {
 # boundary already exist in panel_map.B; the seam finder used to assume every seam was horizontal,
 # which silently excluded every pair that meets across the car rather than along it.
 SEAM_PAIRS = {
-    ("P21", "P22"): ("z", B["rocker_top"],
-                     "both PROCEED. The boundary is the rocker-line Z in panel_map.B, and neither "
-                     "surface moves with the scan, so the seam line is derivable today."),
+    ("P21", "P22"): ("z", B["diffuser_top"],
+                     "both PROCEED. The boundary is panel_map.diffuser_top_at(): since v057 it is "
+                     "STEPPED (500 over the exhaust box, 410 to |Y| 660, the rocker line outboard) "
+                     "and this finder reads its main 410 run. Neither surface moves with the scan."),
     ("P01", "P28"): ("z", B["splitter_top"],
                      "both PROCEED. panel_map separates them at the splitter line ahead of the "
                      "nose mouth; both surfaces are ours and neither moves with the scan."),

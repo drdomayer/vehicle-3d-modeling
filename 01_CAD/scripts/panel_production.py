@@ -173,6 +173,19 @@ SHAPE_ONLY = {
            "foot, the deck between the blades and whether it can exist at all wait on scan S2. "
            "Print it to look at the rear, not to bond.",
     "P18": "mirror of P17, same note",
+    # 2026-10-02 (v056): THE DECK AND THE ENGINE COVER, on the footing of P17/P18. The assembled
+    # car had a hole behind the hoops -- the surface exists in the body (Z 920..1020) but no file
+    # carried it, because all three are BLOCKED on the roof fold envelope. That reason stands and
+    # is written on every one of them; the files exist so the rear can be judged as a whole.
+    "P19": "SHAPE ONLY in the strongest sense: the deck from the hoop plane to the fascia, around "
+           "the engine cover. Its HEIGHT is the roof question (docs/14, DECK_SPINE BLOCKED): scan S2 "
+           "decides whether it stays, moves with the clamshell or drops. Print to look, not to bond.",
+    "P42": "mirror of P19, same note",
+    "P20": "SHAPE ONLY in the strongest sense: the engine cover with the louvre aperture, spec X "
+           "2000..3000, |Y| < 560. Height as P19 (roof); the hinge, the latch and the real engine "
+           "lid opening are the donor's. Print to look, not to bond.",
+    "P33": "SHAPE ONLY: the louvre crate standing in P20's aperture -- seven transverse slats on "
+           "seven longitudinal ribs, tops 8 mm under the cover's skin. Goes with P20.",
     "P02": "outer form ours between the fender crests (|Y| < 380). Rear edge: the file ends at "
            "spec X ~385, 35 mm short of the donor cowl (420) -- no allowance can be carried across "
            "the cabin cut, so the real rear edge, the hinges and the frunk aperture come from "
@@ -183,7 +196,7 @@ SHAPE_ONLY = {
 # already HAS its thickness -- so they skip both the map and the wall and go straight to sectioning.
 STAGE03 = {"P05", "P06", "P13", "P14", "P43",
            "P44", "P45", "P46", "P47", "P17", "P18",
-           "P24", "P25", "P31", "P32", "P26", "P27"}
+           "P24", "P25", "P31", "P32", "P26", "P27", "P33"}
 SCHEDULE = []
 PLACEMENT = {}   # printed file -> the 4x4 that puts it back on the car
 SHAPE_SCHEDULE = []
@@ -230,8 +243,11 @@ def gather(pid):
             sx, ay, z = -c.x * 1000, abs(c.y * 1000), c.z * 1000
             ny = -n.y if c.y > 0 else n.y
             tag = not_panel(sx, ay, z, n.z, ny)
-            if tag and not (tag in ("X_INTAKE", "X_FENDER_SLOT", "X_MOUTH", "X_ROCKER_CHANNEL", "X_CORNER", "X_LIP", "X_TAIL_CORNER")
-                            and panel_of(sx, ay, z) == base):
+            # X_LOUVRE (v056): the aperture's WALLS print with the cover, as every pocket's do, but
+            # not its floor -- the louvres vent into the engine bay; a floor would make a tray
+            wall_only = tag == "X_LOUVRE" and abs(n.z) > 0.5
+            if tag and not (tag in ("X_INTAKE", "X_FENDER_SLOT", "X_MOUTH", "X_ROCKER_CHANNEL", "X_CORNER", "X_LIP", "X_TAIL_CORNER", "X_LOUVRE")
+                            and not wall_only and panel_of(sx, ay, z) == base):
                 # a pocket's walls are PRINTED with the panel the pocket is cut into: they are
                 # its recess, even though the skin accounting rightly does not count them as
                 # exterior. Without this the fender file had a hole where the vent slot is.

@@ -221,6 +221,14 @@ def clean_bodies():
     return added, names
 
 
+# the pockets whose inside is black on the car (v056); read from panel_map, not retyped
+INTERIOR_BLACK = ("X_MOUTH", "X_CORNER", "X_INTAKE", "X_TAIL_CORNER", "X_LOUVRE", "X_FENDER_SLOT")
+_pmg = {"__name__": "_pm"}
+with open(os.path.join(REPO, "01_CAD", "scripts", "panel_map.py"), encoding="utf-8") as _f:
+    exec(_f.read().split("\ndef main(")[0], _pmg)
+_POCKETS, _in_poly = _pmg["POCKETS"], _pmg["in_poly"]
+
+
 def finish_map():
     """FINISH per part id, from the register's CSV (panel_registry.py --csv)."""
     import csv
@@ -294,10 +302,21 @@ def ctx_objects(sc):
             fs.append((2 * i - 2, 2 * i - 1, 2 * i + 1, 2 * i))
     tags[mesh("GLOSSY_CTX_DECK", vs, fs).name] = "gloss black"
     # DRL along DRL_PATH at DRL_Z, both sides joined on the centreline
-    path = sk["DRL_PATH"]
-    side = [(x, y, tz(sk["DRL_Z"], abs(y))) for x, y in path]
-    pts = [P_(x, -y, z) for x, y, z in reversed(side)] + [P_(path[0][0] - 2, 0, tz(sk["DRL_Z"], 0))] + \
-          [P_(x, y, z) for x, y, z in side]
+    # v056: on the GROOVE's axis (stage03 stores it), not on DRL_PATH as written -- that path's
+    # spec X is 60 mm inside the nose face, so the line was inside the body in every render
+    sc = bpy.context.scene
+    if "statev_drl_axis_L" in sc and "statev_drl_axis_R" in sc:
+        def trip(k):
+            a = list(sc[k])
+            return [tuple(a[i:i + 3]) for i in range(0, len(a), 3)]
+        L_, R_ = trip("statev_drl_axis_L"), trip("statev_drl_axis_R")
+        mid = tuple((L_[0][i] + R_[0][i]) / 2.0 for i in range(3))
+        pts = list(reversed(R_)) + [mid] + L_
+    else:
+        path = sk["DRL_PATH"]
+        side = [(x, y, tz(sk["DRL_Z"], abs(y))) for x, y in path]
+        pts = [P_(x, -y, z) for x, y, z in reversed(side)] + [P_(path[0][0] - 2, 0, tz(sk["DRL_Z"], 0))] + \
+              [P_(x, y, z) for x, y, z in side]
     tags[tube("GLOSSY_CTX_DRL", pts, 0.006).name] = "light white"
     # tail light bar and its L ends (the LOCKED envelopes), lit at the face
     for sgn in (1, -1):
@@ -445,6 +464,27 @@ def _main():
         o.data.materials.clear()
         pid = o.get("panel_id") or (n[len("GLOSSY_FILE_"):][:3] if n.startswith("GLOSSY_FILE_") else None)
         o.data.materials.append(finmats.get(fin.get(pid, "paint"), paint))
+        # v056: an opening's INSIDE is black on the real car (satin black or behind a mesh), not
+        # body colour -- a painted corner intake read as a green dent in every front render
+        if n.startswith("GLOSSY_FILE_") and fin.get(pid, "paint") == "paint":
+            o.data.materials.append(finmats["gloss black"])
+            inv = o.matrix_world
+            for poly in o.data.polygons:
+                c = inv @ poly.center
+                sx, ay, z = -c.x * 1000.0, abs(c.y * 1000.0), c.z * 1000.0
+                for nm, x0, x1, y0, y1, z0, z1, *pl in _POCKETS:
+                    if nm not in INTERIOR_BLACK:
+                        continue
+                    # a WALL lies on the polygon's edge (15 mm: the print smoothing rounds it); a face
+                    # looking along X is skin or the floor and must be strictly inside -- with the
+                    # slack, the fascia's own faces beside the mouth's slanted sides came out black
+                    # as a saw-tooth
+                    nx_ = abs((inv.to_3x3() @ poly.normal).normalized().x)
+                    tol_ = 15.0 if nx_ < 0.5 else 0.0
+                    if x0 <= sx <= x1 and y0 <= ay <= y1 and z0 <= z <= z1 and \
+                            (not pl or _in_poly(ay, z, pl[0], tol_)):
+                        poly.material_index = 1
+                        break
     ctx, ctx_tags = ctx_objects(sc) if globals().get("GLOSSY_CONTEXT", True) else ([], {})
     for o in ctx:
         o.data.materials.append(finmats[ctx_tags[o.name]])
@@ -528,7 +568,11 @@ def _main():
             cd.lens = lens
         cam.location = loc
         dv = mathutils.Vector(target) - mathutils.Vector(loc)
-        cam.rotation_euler = dv.to_track_quat("-Z", "Y").to_euler()
+        q_ = dv.to_track_quat("-Z", "Y")
+        if tag == "top":
+            # ref-09's plan has the nose on the LEFT; rolled 180 so the sheets compare like for like
+            q_ = q_ @ mathutils.Quaternion((0.0, 0.0, 1.0), math.pi)
+        cam.rotation_euler = q_.to_euler()
         sc.render.filepath = os.path.join(OUT, f"{tag_prefix}{tag}.png")
         bpy.ops.render.render(write_still=True)
         print(f"  wrote {sc.render.filepath}")

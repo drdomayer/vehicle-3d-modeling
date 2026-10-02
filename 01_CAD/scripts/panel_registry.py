@@ -128,8 +128,11 @@ FINISH = {
     "P07": "carbon", "P08": "carbon", "P39": "carbon", "P40": "carbon", "P28": "carbon",
     "P41": "carbon", "P22": "carbon", "P44": "carbon", "P45": "carbon", "P46": "carbon",
     "P47": "carbon", "P13": "carbon", "P14": "carbon",
-    "P05": "gloss black", "P06": "gloss black", "P43": "gloss black", "P20": "gloss black",
+    "P05": "gloss black", "P06": "gloss black", "P43": "gloss black",
     "P33": "gloss black",
+    # v056: the cover is BODY COLOUR around a black louvre field (ref-09 top and rear); it was
+    # gloss black, and the assembled car showed a 1.0 x 1.1 m black slab behind the hoops
+    "P20": "paint",
     "P24": "hidden", "P25": "hidden", "P26": "hidden", "P27": "hidden", "P31": "hidden",
     "P32": "hidden",
 }

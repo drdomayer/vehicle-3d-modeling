@@ -171,6 +171,26 @@ def box(name, coll, x0, x1, y0, y1, z0, z1):
     return ob
 
 
+def yz_prism(name, coll, x0, x1, poly):
+    """A convex polygon in Y-Z (spec mm) swept along spec X from x0 to x1. The corner intakes are
+    not rectangles in the front view, and a box cannot lean an edge."""
+    n = len(poly)
+    v = [(-mm(x), mm(y), mm(z)) for x in (x0, x1) for (y, z) in poly]
+    f = [tuple(range(n)), tuple(range(2 * n - 1, n - 1, -1))]
+    f += [(i, (i + 1) % n, n + (i + 1) % n, n + i) for i in range(n)]
+    me = bpy.data.meshes.new(name)
+    me.from_pydata(v, [], f)
+    me.update()
+    ob = bpy.data.objects.new(name, me)
+    coll.objects.link(ob)
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(me)
+    bm.free()
+    return ob
+
+
 def frame(name, coll, x0, x1, y0, y1, z0, z1, wall):
     """A rectangular surround: the outer box with the inner one taken out of it, so what is left is
     a thin frame standing in the pocket. This is the 'thin light blade' read -- the lamp sits behind
@@ -746,10 +766,16 @@ def main():
     # inner, leaving 20-35 mm of skin outboard. Z 240..480: the same height as the mouth, the top
     # 25 mm under the lamp slot (505).
     CORNER = dict(x_floor=-750.0, y_in=585.0, y_out=745.0, z0=240.0, z1=480.0)
+    # 2026-10-02 (v056): the inner edge LEANS. Measured on ref-09's front view (dark runs per row,
+    # 1.814 mm/px across the 1850 body): the corner intake is widest at its top, Y ~440..776 under
+    # the lamp, and its inner edge moves outboard going down, to Y ~590 at the bottom. Between it
+    # and the mouth that leaves a painted wedge pointing UP -- the V the front is read by. The
+    # outer edge stays at 745: at 770 the box ran out through the side of the chamfered corner
+    # (v048). Same floor, same heights; panel_map tests the same quad (X_CORNER).
+    CORNER_POLY = [(450.0, 480.0), (745.0, 480.0), (745.0, 240.0), (590.0, 240.0)]
     for sgn in (1, -1):
-        cuts.append(box(f"CUT_CORNER_{'L' if sgn > 0 else 'R'}", coll,
-                        -1000.0, CORNER["x_floor"], min(sgn * CORNER["y_in"], sgn * CORNER["y_out"]),
-                        max(sgn * CORNER["y_in"], sgn * CORNER["y_out"]), CORNER["z0"], CORNER["z1"]))
+        cuts.append(yz_prism(f"CUT_CORNER_{'L' if sgn > 0 else 'R'}", coll, -1000.0, CORNER["x_floor"],
+                             [(sgn * y, z) for (y, z) in CORNER_POLY]))
     # RETIRED 2026-09-29 (v051), owner's review: "parasitic elements". The bars in the corner
     # intakes, the cheekbone strakes and the tail corner blades were separate solids stuck on
     # the skin; in ref-09 the corresponding features are the body's own edges and creases, not
@@ -775,8 +801,8 @@ def main():
         bl["panel_id"] = "P48" if sgn > 0 else "P49"
         bl["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
         made.append(bl)
-    print(f"  corner intakes: pockets in the chamfer face, Y {CORNER['y_in']:.0f}..{CORNER['y_out']:.0f}, "
-          f"Z {CORNER['z0']:.0f}..{CORNER['z1']:.0f}, floor at {CORNER['x_floor']:.0f}, a 20 mm bar in each -> P48 / P49")
+    print(f"  corner intakes: quad pockets in the chamfer face, Y 450..745 at the top / 590..745 at the "
+          f"bottom, Z {CORNER['z0']:.0f}..{CORNER['z1']:.0f}, floor at {CORNER['x_floor']:.0f}")
 
     # ---- 7. THE CENTRAL MOUTH, 2026-09-26. docs/14 locks "a large central opening to the
     # radiators" and the body never had one: what statev_master_volumes called NOSE_MOUTH eats in
@@ -902,6 +928,10 @@ def main():
             pts.append(w)
         if len(pts) < 3:
             continue
+        # the groove's axis, kept for the picture (glossy_renders): the render's light line used to
+        # follow DRL_PATH as written, whose spec X (-888 at the centre) is 60 mm INSIDE the nose
+        # face at -950 -- the front's signature line was in every render and visible in none
+        bpy.context.scene[f"statev_drl_axis_{'L' if sgn > 0 else 'R'}"] = [c for v in pts for c in (v.x, v.y, v.z)]
         cu = bpy.data.curves.new(f"CUT_DRL_{'L' if sgn > 0 else 'R'}", "CURVE")
         cu.dimensions = "3D"
         sp = cu.splines.new("POLY")
@@ -951,6 +981,91 @@ def main():
         made.append(bl)
     print("  buttress blades: 40 mm sails at Y +-705, spec X 1800..2750, tops 1120 -> 990, outboard of the")
     print("    guessed fold envelope -> P17 / P18 as SHAPE ONLY; the deck between them stays BLOCKED")
+
+    # ---- 10b. THE ENGINE-COVER LOUVRES, 2026-10-02 (v056). The owner: "the rear cover is very
+    # different". It was not different, it was ABSENT: the deck and the cover are BLOCKED on the
+    # roof (DECK_SPINE), no file carried them, and the assembled car had a hole behind the hoops.
+    # ref-09's top view (6.51 mm/px, car 25..696 px = 4370 mm): a black louvre field spec X
+    # ~2207..2891, centred, half-width ~384, between the haunches; its rear view shows the same
+    # field as stacked horizontal bars -- transverse slats stepping down with the falling cover --
+    # and the top view shows longitudinal lines, so the honest read of both is a CRATE. Built as
+    # an aperture (a pocket whose walls print with P20 and whose floor does not: the louvres
+    # vent the engine bay, AIRFLOW "engine_cooling") and a one-piece crate standing in it, tops
+    # 8 mm under the skin. The deck's HEIGHT is not touched: everything here is under the
+    # surface that already exists, and all of it is SHAPE ONLY on the roof question.
+    LOUVRE = dict(x0=2210.0, x1=2890.0, hw=385.0, depth=95.0, crate=60.0, under=8.0, t=6.0)
+    lx = [LOUVRE["x0"] + k * 56.67 for k in range(13)]
+    lst = []
+    for sx in lx:
+        zs = [surface_z(sx, y) for y in (0.0, 190.0, LOUVRE["hw"])]
+        zs = [z for z in zs if z is not None]
+        if not zs:
+            continue
+        lst.append((sx, min(zs) - LOUVRE["depth"], max(zs) + 150.0))
+    if len(lst) >= 3:
+        cuts.append(prism("CUT_LOUVRE", coll, lst, LOUVRE["hw"], -LOUVRE["hw"]))
+
+        def top_at(sx, ys):
+            zs = [surface_z(sx, y) for y in ys]
+            zs = [z for z in zs if z is not None]
+            return (min(zs) - LOUVRE["under"]) if zs else None
+        ribs_y = [0.0, 125.0, -125.0, 250.0, -250.0, 378.0, -378.0]
+        x_in0, x_in1 = LOUVRE["x0"] + 4.0, LOUVRE["x1"] - 4.0
+        # the crate's floor line: one bottom per station, under the LOWEST top at that station, so
+        # every element reaches it and the union is one connected part
+        bot = {}
+        for sx in lx:
+            t = top_at(sx, (0.0, 125.0, 250.0, 378.0))
+            if t is not None:
+                bot[sx] = t - LOUVRE["crate"]
+        def bot_at(sx):
+            ks = sorted(bot)
+            if sx <= ks[0]:
+                return bot[ks[0]]
+            for a, b in zip(ks, ks[1:]):
+                if a <= sx <= b:
+                    return bot[a] + (bot[b] - bot[a]) * (sx - a) / (b - a)
+            return bot[ks[-1]]
+        crate = None
+        parts = []
+        for y in ribs_y:
+            st = []
+            for sx in [x_in0] + lx[1:-1] + [x_in1]:
+                t = top_at(sx, (abs(y),))
+                if t is not None:
+                    st.append((sx, y, bot_at(sx) - 4.0, t))
+            if len(st) >= 3:
+                parts.append(blade(f"_rib_{y:.0f}", coll, st, LOUVRE["t"]))
+        # the slats sit 22 mm BELOW the rib tops: from above the ribs are the lines (ref-09's plan
+        # shows longitudinal lines), from behind the slats step down with the cover (its rear
+        # view shows stacked bars). At one height the plan read as a chessboard (v056 first pass).
+        n_sl = 7
+        for k in range(1, n_sl + 1):
+            sx = LOUVRE["x0"] + k * (LOUVRE["x1"] - LOUVRE["x0"]) / (n_sl + 1)
+            t = top_at(sx, (0.0, 125.0, 250.0, 378.0))
+            if t is not None:
+                parts.append(slab(f"_slat_{k}", (sx, -378.0), (sx, 378.0), bot_at(sx), t - 22.0, LOUVRE["t"]))
+        for sx in (x_in0 + 3.0, x_in1 - 3.0):
+            t = top_at(sx, (0.0, 125.0, 250.0, 378.0))
+            if t is not None:
+                parts.append(slab(f"_end_{sx:.0f}", (sx, -381.0), (sx, 381.0), bot_at(sx) - 4.0, t, LOUVRE["t"]))
+        if parts:
+            crate = parts[0]
+            for p_ in parts[1:]:
+                m = crate.modifiers.new("u", "BOOLEAN")
+                m.operation, m.object, m.solver = "UNION", p_, "EXACT"
+                bpy.context.view_layer.objects.active = crate
+                bpy.ops.object.modifier_apply(modifier=m.name)
+                bpy.data.objects.remove(p_, do_unlink=True)
+            crate.name = "ENGINE_LOUVRES"
+            crate.data.name = "ENGINE_LOUVRES"
+            crate["panel_id"] = "P33"
+            crate["stage"] = ("03 element — SHAPE ONLY: stands in the engine cover's aperture; the "
+                              "cover's height waits on scan S2 (roof fold envelope)")
+            made.append(crate)
+        print(f"  engine-cover louvres: aperture spec X {LOUVRE['x0']:.0f}..{LOUVRE['x1']:.0f}, |Y| < "
+              f"{LOUVRE['hw']:.0f}, {LOUVRE['depth']:.0f} deep; a crate of {n_sl} transverse slats on "
+              f"{len(ribs_y)} ribs, tops {LOUVRE['under']:.0f} under the skin -> P33 (SHAPE ONLY)")
 
     # ---- 11. THE STRAKES AND THE SPLITTER LIP, 2026-09-29. ref-09's mask is faceted: from each
     # lamp's inner end a crease runs down and inward to the mouth's upper corner (the cheekbone),

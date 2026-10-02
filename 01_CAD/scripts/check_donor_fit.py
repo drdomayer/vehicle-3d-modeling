@@ -102,7 +102,7 @@ def main():
                 if not (x0 <= x <= x1 and z0 <= z <= z1):
                     continue
                 if any(px0 <= x <= px1 and py0 <= abs(y) <= py1 and pz0 <= z <= pz1
-                       for _, px0, px1, py0, py1, pz0, pz1 in pockets):
+                       for _, px0, px1, py0, py1, pz0, pz1, *_poly in pockets):
                     continue
                 # nor the arch cylinders' own walls and end caps: the first run reported -303 mm
                 # at spec X 2294 / Z 682 from a vertex ON the rear arch cylinder (d = 365) at the

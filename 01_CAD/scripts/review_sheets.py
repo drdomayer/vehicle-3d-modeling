@@ -63,6 +63,19 @@ def main():
             y += s.height + 10
         idx.save(os.path.join(out, "sheet_all.png"))
         print(f"  wrote {os.path.join(out, 'sheet_all.png')}")
+    # the two hero angles side by side (final mode only). Composed HERE since 2026-10-02 (v056):
+    # the first hero.png was put together by hand and was left showing the previous car after
+    # the renders under it had changed
+    hp = [os.path.join(R, f"rv_glossy_{mode}_hero_{k}.png") for k in ("front", "rear")]
+    if all(os.path.exists(p_) for p_ in hp):
+        ims = [Image.open(p_).convert("RGB") for p_ in hp]
+        h = 540
+        ims = [i.resize((int(i.width * h / i.height), h)) for i in ims]
+        hero = Image.new("RGB", (sum(i.width for i in ims) + 20, h), (255, 255, 255))
+        hero.paste(ims[0], (0, 0))
+        hero.paste(ims[1], (ims[0].width + 20, 0))
+        hero.save(os.path.join(out, "hero.png"))
+        print(f"  wrote {os.path.join(out, 'hero.png')}")
 
 
 if __name__ == "__main__":

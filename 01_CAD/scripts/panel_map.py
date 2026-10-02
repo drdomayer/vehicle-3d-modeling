@@ -45,7 +45,15 @@ B = dict(
     cover_half_width= 560,    # ENGINE_COVER_to_DECK seam path, outer end
     intake_front    = 1780,   # SIDE_INTAKE field x0 in statev_master_volumes
     intake_rear     = 2300,   # SIDE_INTAKE field x1
-    splitter_top    = 300,    # our splitter, below the nose mouth floor (NOSE_MOUTH z_lo 200-215)
+    splitter_top    = 194,    # the splitter LIP and its recess (CUT_LIP_RECESS, Z 150..194).
+                              # 300 until 2026-10-02 (v056): with the mouth's floor now at 220
+                              # the whole nose under Z 300 printed as carbon -- a 180 mm grey band
+                              # across the front where ref-09 has a thin black lip. At 194 --
+                              # ON the recess's ceiling -- the part is the lip and the recess's
+                              # floor and back wall, an L profile, with the seam hidden in the
+                              # recess's shadow. (200 was tried first: the 6 mm strip above the
+                              # ceiling joined the lip only through the recess walls, which the
+                              # skin accounting rejects, and the part extracted as two pieces.)
     rocker_end      = 2415,   # rear axle, PUBLISHED. The rear arch removes everything below the
                               # rocker line between 2050 and 2780, so anything below that line aft
                               # of the axle is the severed corner P39/P40, never the sill.
@@ -77,6 +85,7 @@ NOT_PANEL = {
     "X_CORNER":      "wall of the corner intake box; it looks into the brake duct",
     "X_LIP":         "the recess above the splitter lip; a shadow line, not skin",
     "X_TAIL_CORNER": "wall of the tail corner pocket under the light bar's L end",
+    "X_LOUVRE":      "wall or floor of the engine-cover louvre aperture; it looks into the engine bay",
 }
 
 DIFFUSER_FRONT = 2870.0   # DIFFUSER_FLOOR's first station in statev_master_volumes: the tunnel's start
@@ -86,9 +95,19 @@ DIFFUSER_FRONT = 2870.0   # DIFFUSER_FLOOR's first station in statev_master_volu
 # against its source instead of against four bare numbers.
 POCKETS = [("X_INTAKE", 1910.0, 2180.0, 420.0, 1000.0, 440.0, 710.0),
            ("X_FENDER_SLOT", -250.0, 180.0, 375.0, 560.0, 690.0, 1000.0),
-           ("X_MOUTH", -1000.0, -815.0, 0.0, 390.0, 215.0, 435.0),
+           # v056: the TRAPEZOID (stage03 MOUTH: hw 320 at Z 220, 380 at Z 430), not its box. The
+           # box claimed the fascia's own skin beside the lower corners as mouth wall -- in the
+           # render, as black triangles at both bottom corners of the mouth.
+           ("X_MOUTH", -1000.0, -815.0, 0.0, 390.0, 215.0, 435.0,
+            [(0.0, 220.0), (320.0, 220.0), (380.0, 430.0), (0.0, 430.0)]),
            ("X_ROCKER_CHANNEL", 470.0, 1610.0, 840.0, 1000.0, 195.0, 285.0),
-           ("X_CORNER", -1000.0, -745.0, 580.0, 750.0, 235.0, 485.0),
+           # v056: the corner intake is a QUAD in Y-Z, not a box (stage03 CORNER_POLY): its inner
+           # edge leans out from Y 450 at the top to 590 at the bottom. The box test would throw
+           # away the painted wedge between it and the mouth, so the polygon decides.
+           ("X_CORNER", -1000.0, -745.0, 445.0, 750.0, 235.0, 485.0,
+            [(450.0, 480.0), (745.0, 480.0), (745.0, 240.0), (590.0, 240.0)]),
+           # v056: the engine-cover louvre field (stage03 LOUVRE), read off ref-09's top view
+           ("X_LOUVRE", 2207.0, 2893.0, 0.0, 388.0, 700.0, 1100.0),
            ("X_LIP", -1000.0, -905.0, 0.0, 625.0, 148.0, 196.0),
            ("X_TAIL_CORNER", 3175.0, 3500.0, 685.0, 765.0, 347.0, 580.0)]
 
@@ -98,6 +117,28 @@ POCKETS = [("X_INTAKE", 1910.0, 2180.0, 420.0, 1000.0, 440.0, 710.0),
 CABIN = dict(x0=420.0, x1=1760.0, y=700.0, z=640.0)      # cowl_x .. hoop_x, |Y| < 700, Z 640 up
 ARCH_CUTS = ((0.0, 350.0, 323.5), (2415.0, 365.0, 337.5))  # spec X, radius, centre Z (tod/2)
 CAP_TOL = 12.0   # a boolean leaves its cap ON the cut plane; this is slack, not a search radius
+
+
+POLY_TOL = 5.0   # a wall face lies ON the polygon's edge; this is slack, not a search radius
+
+
+def in_poly(u, v, poly, tol):
+    """Inside the convex polygon (u, v), or within tol of one of its edges."""
+    inside, n = True, len(poly)
+    sgn = None
+    for i in range(n):
+        (a, b), (c, d) = poly[i], poly[(i + 1) % n]
+        cr = (c - a) * (v - b) - (d - b) * (u - a)
+        L = ((c - a) ** 2 + (d - b) ** 2) ** 0.5
+        if abs(cr) / L <= tol:
+            continue          # on this edge, within the slack
+        s = cr > 0
+        if sgn is None:
+            sgn = s
+        elif s != sgn:
+            inside = False
+            break
+    return inside
 
 
 def not_panel(sx, ay, z, nz, ny):
@@ -124,7 +165,7 @@ def not_panel(sx, ay, z, nz, ny):
         if z > CABIN["z"] - CAP_TOL:
             if min(abs(sx - CABIN["x0"]), abs(sx - CABIN["x1"])) < CAP_TOL and abs(nz) < 0.35:
                 return "X_CABIN_END"        # the cut's front or rear wall, normal along X
-    for nm, x0, x1, y0, y1, z0, z1 in POCKETS:
+    for nm, x0, x1, y0, y1, z0, z1, *poly in POCKETS:
         # EVERY face inside a pocket box is a pocket wall: the outer skin there is what the cut
         # removed. Until 2026-09-26 the test asked for a Y or Z normal, so the two END walls of
         # the fender slot (normal along X, 21 745 and 16 585 mm2) passed as skin and reached P03
@@ -133,6 +174,8 @@ def not_panel(sx, ay, z, nz, ny):
         # are not exterior skin (this table), but they ARE the panel's geometry to print; the
         # production gather keeps a pocket's walls with the panel whose region the pocket is in.
         if x0 <= sx <= x1 and y0 <= ay <= y1 and z0 <= z <= z1:
+            if poly and not in_poly(ay, z, poly[0], POLY_TOL):
+                continue
             return nm
     for ax, r, cz in ARCH_CUTS:
         d = ((sx - ax) ** 2 + (z - cz) ** 2) ** 0.5
@@ -165,7 +208,7 @@ def not_panel(sx, ay, z, nz, ny):
 # So the body is cut on these planes before anything is assigned. Then no face straddles a boundary,
 # every face lies wholly inside one panel, and the answer stops depending on tessellation.
 def boundary_planes():
-    X = [B["nose_end"], B["cowl"], B["door_front"], B["door_rear"], B["intake_front"],
+    X = [B["nose_end"], B["cowl"], B["door_front"], B["door_rear"], B["hoop"], B["intake_front"],
          B["intake_rear"], B["cover_front"], B["rocker_end"], B["fascia_front"]]
     Z = [B["rocker_top"], B["splitter_top"], 700.0, 900.0]
     Y = [0.0, B["hood_half_width"], B["cover_half_width"], 715.0, CABIN["y"]]
@@ -206,6 +249,8 @@ def panel_of(sx, ay, z):
     if sx < B["intake_front"]:
         if z < B["rocker_top"]:
             return "P07"
+        if sx >= B["hoop"] and ay < B["cover_half_width"] and z > 700:
+            return "P19"                       # v056: the deck behind the hoops, not the haunch
         return "P15"                           # haunch begins at the rear shut line
     # ---- REAR
     if sx < B["intake_rear"] and B["rocker_top"] <= z < 700:
@@ -223,8 +268,11 @@ def panel_of(sx, ay, z):
         return "P20"                           # engine cover
     if sx >= B["cover_front"] and z > 900:
         return "P19"                           # rear deck, outboard of the cover
-    if sx < B["cover_front"] and z > 900:
-        return "P17"                           # buttress, between hoop plane and cover
+    if sx < B["cover_front"] and (z > 900 or (ay < B["cover_half_width"] and z > 700)):
+        # v056: the DECK between the hoop plane and the cover. Called P17 until today, but P17
+        # became the stage-03 buttress blade on 2026-09-29 and extraction let the blade replace
+        # this region -- so the strip of deck behind the hoops was in no file at all.
+        return "P19"
     return "P15"                               # rear haunch, everything else
 
 

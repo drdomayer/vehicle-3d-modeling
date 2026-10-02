@@ -96,7 +96,7 @@ D = dict(
 FLANGE_AT = {
     "P01": [("z", 300.0, "below", {"P28"})],     # step 3, before the splitter at step 4
     "P21": [("z", 330.0, "below", {"P22"})],     # step 19, before the diffuser at step 22
-    "P39": [("x", 3000.0, "above", {"P22"})],    # step 8, before the diffuser at step 22
+    "P39": [("x", 2870.0, "above", {"P22"})],    # step 8, before the diffuser at step 22 (v055: 3000 -> 2870, the tunnel start)
 }
 PANELS = ["P01", "P28", "P41", "P07", "P08", "P39", "P40", "P21", "P22",
           "P05", "P06", "P13", "P14", "P43",
@@ -288,6 +288,12 @@ def build(pid):
                 cp = src.copy()
                 cp.data = src.data.copy()
                 cp.name = f"PROD_{pid}_{NAME_OF.get(pid, 'PANEL')}"
+                # a copy inherits the source's visibility, and the STL exporter skips an object
+                # hidden from render while still reporting success: nine Stage-03 files were
+                # written EMPTY on 2026-10-02 that way. The production copy is always visible.
+                cp.hide_render = False
+                cp.hide_viewport = False
+                cp.hide_set(False)
                 bpy.context.scene.collection.objects.link(cp)
                 return cp, 0
         return None
@@ -992,6 +998,9 @@ def loose_pieces(ob):
     return out
 
 
+FLAP_MAX_MM2 = 25.0
+
+
 def tidy_for_export(ob):
     """Triangulate ourselves, and drop the triangles the exporter would have doubled.
 
@@ -1021,10 +1030,32 @@ def tidy_for_export(ob):
             seen.add(k)
     if gone:
         bmesh.ops.delete(bm, geom=gone, context="FACES_ONLY")
+    # FLAPS, 2026-10-02: a lone triangle hinged on an edge of the surface -- that edge carries three
+    # faces, the flap's other two edges carry one -- is what print_qc reads as "2 open, 1 non-
+    # manifold". Measured on P21 (tail-lamp slot corner, sides 0.6 / 1.2 / 1.3 mm) and P22 (tail
+    # tip at the fascia seam, 0.9 / 1.2 / 2.1 mm). Removed only when under FLAP_MAX_MM2: nothing a
+    # 0.4 mm nozzle draws, and never a real surface.
+    flaps = 0
+    for _ in range(4):
+        doomed = set()
+        for e in bm.edges:
+            if len(e.link_faces) <= 2:
+                continue
+            for f in e.link_faces:
+                if f.calc_area() * 1e6 < FLAP_MAX_MM2 and any(
+                        len(e2.link_faces) == 1 for e2 in f.edges if e2 is not e):
+                    doomed.add(f)
+        if not doomed:
+            break
+        bmesh.ops.delete(bm, geom=list(doomed), context="FACES_ONLY")
+        flaps += len(doomed)
+    loose = [v for v in bm.verts if not v.link_faces]
+    if loose:
+        bmesh.ops.delete(bm, geom=loose, context="VERTS")
     bm.to_mesh(ob.data)
     bm.free()
     ob.data.update()
-    return len(gone)
+    return len(gone) + flaps
 
 
 def has_open_edge(ob):
@@ -1203,6 +1234,10 @@ def main():
                                           global_scale=1000.0)
                 except AttributeError:
                     bpy.ops.export_mesh.stl(filepath=path, use_selection=True, global_scale=1000.0)
+                # an 84-byte STL is a header and no triangles; the exporter reports success anyway
+                if os.path.getsize(path) <= 84:
+                    print(f"    ERROR {os.path.basename(path)} was written EMPTY -- the part was not "
+                          f"exportable (hidden?); this file must not go to the shop")
                 made.append((sfx, ss, fits, path, one_piece(part), place,
                              part.get("class_a_up", "unknown"),
                              # in whole mode the section IS the panel object, so count it once

@@ -1,12 +1,12 @@
 {
   "mean_mm": 16.0,
-  "front_mm": 4.0,
-  "rear_mm": 23.0,
-  "plan_pct": 3.9,
-  "endview_front": 0.032,
-  "endview_rear": 0.076,
+  "front_mm": 3.0,
+  "rear_mm": 22.0,
+  "plan_pct": 4.1,
+  "endview_front": 0.033,
+  "endview_rear": 0.08,
   "edge_defects": 0.0,
-  "surf_x_mm": 3.847,
-  "surf_z_mm": 7.57,
-  "curvature": 0.3277
+  "surf_x_mm": 3.995,
+  "surf_z_mm": 7.311,
+  "curvature": 0.3225
 }

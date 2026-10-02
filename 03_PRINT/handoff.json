@@ -1,5 +1,5 @@
 {
- "when": 1790762913.551179,
+ "when": 1790961821.793747,
  "decisions": {
   "wall_mm": 3.0,
   "density_g_cm3": 1.24,
@@ -78,7 +78,7 @@
    "P02": "outer form ours between the fender crests (|Y| < 380). Rear edge: the file ends at spec X ~385, 35 mm short of the donor cowl (420) -- no allowance can be carried across the cabin cut, so the real rear edge, the hinges and the frunk aperture come from the scan."
   }
  },
- "core_kg": 74.5,
- "dropped_skin_mm2": 87585,
+ "core_kg": 72.8,
+ "dropped_skin_mm2": 85088,
  "small_sections_under_40mm": 0
 }

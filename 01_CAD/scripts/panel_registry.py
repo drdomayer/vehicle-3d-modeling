@@ -115,6 +115,25 @@ PARTS = [
     ("P27", "TAIL_HOUSING_R",      "R",  "LIGHTS", 26, "-X", "direct print, ASA", "TAIL_LIGHT"),
 ]
 
+# FINISH, 2026-10-02 -- what the shop applies after lamination, read off ref-09 and the poster:
+# the body in dark metallic green; the sill blade, the splitter, the diffuser and its fins and the
+# intake blade in visible carbon; vents, the mask and the louvres in gloss black; housings and
+# ducts hidden. It is a production input (which parts get a clear-coated carbon weave instead of
+# filler and paint) and glossy_renders.py uses it, so the review shows the car as specified.
+FINISH = {
+    "P01": "paint", "P02": "paint", "P03": "paint", "P04": "paint", "P09": "paint",
+    "P10": "paint", "P11": "paint", "P12": "paint", "P15": "paint", "P16": "paint",
+    "P17": "paint", "P18": "paint", "P19": "paint", "P42": "paint", "P21": "paint",
+    "P23": "paint", "P37": "paint", "P38": "paint",
+    "P07": "carbon", "P08": "carbon", "P39": "carbon", "P40": "carbon", "P28": "carbon",
+    "P41": "carbon", "P22": "carbon", "P44": "carbon", "P45": "carbon", "P46": "carbon",
+    "P47": "carbon", "P13": "carbon", "P14": "carbon",
+    "P05": "gloss black", "P06": "gloss black", "P43": "gloss black", "P20": "gloss black",
+    "P33": "gloss black",
+    "P24": "hidden", "P25": "hidden", "P26": "hidden", "P27": "hidden", "P31": "hidden",
+    "P32": "hidden",
+}
+
 ASSEMBLY_ORDER = [
     (1,  "donor hardpoints verified against the scan"),
     (2,  "mounting brackets and bonded tabs on the donor"),
@@ -190,13 +209,17 @@ def main(argv):
             w.writerow(["ID", "NAME", "SIDE", "DESIGN_GROUP", "ASSEMBLY_STEP", "INSTALL_VECTOR",
                         "MANUFACTURING_METHOD", "MATERIAL", "NOMINAL_THICKNESS_MM", "PANEL_GAP_MM",
                         "FLANGE_WIDTH_MM", "OVERLAP_MM", "STATUS", "LENGTH", "WIDTH", "HEIGHT",
-                        "VOLUME", "ESTIMATED_MASS", "MOUNT_COUNT", "PRINT_SPLIT_COUNT"])
+                        "VOLUME", "ESTIMATED_MASS", "MOUNT_COUNT", "PRINT_SPLIT_COUNT", "FINISH"])
             for pid, obj, side, grp, step, vec, method, key in PARTS:
                 mat = "ASA" if "ASA" in method else ("GRP composite" if "composite" in method else "PETG")
                 w.writerow([pid, obj, side, grp, step, vec, method, mat, NOMINAL_THICKNESS_MM,
                             PANEL_GAP_MM, f"{FLANGE_WIDTH_MM[0]}-{FLANGE_WIDTH_MM[1]}",
                             f"{OVERLAP_MM[0]}-{OVERLAP_MM[1]}", PANEL_STATUS.get(key, "?"),
-                            *["NEEDS_GEOMETRY"] * 5, "NEEDS_BUILD_VOLUME"])
+                            # six measured columns (LENGTH .. MOUNT_COUNT); it was five until
+                            # 2026-10-02, so MOUNT_COUNT read NEEDS_BUILD_VOLUME and every column
+                            # after it was one to the left
+                            *["NEEDS_GEOMETRY"] * 6, "NEEDS_BUILD_VOLUME",
+                            FINISH.get(pid, "?")])
         print(f"\nwrote {out}")
     return 0
 

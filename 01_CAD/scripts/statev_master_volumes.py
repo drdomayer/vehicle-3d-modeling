@@ -147,6 +147,7 @@ NOSE_BITES = False    # v048: superseded by the stage-03 corner pocket (see the 
 # that meets the undercut edge (Z ~330 at the tail, the P21/P22 seam) instead of a flat slab.
 # Side silhouette: unaffected by construction -- silhouette_overlay compares the TOP line only.
 DIFFUSER_FLOOR = [(2870, 120), (3000, 150), (3145, 215), (3300, 290), (3420, 330)]
+DIFFUSER_LEGS = _sk["DIFFUSER_LEGS"]
 
 # THE DONOR CLEARANCE, 2026-09-26. CLAUDE.md hard constraint 3: 15-20 mm of air to every OEM
 # structure until the car is scanned. Measured today with rays against BLOCK_986_approx along the
@@ -1050,11 +1051,18 @@ def ring(spec_x):
         keep = [(z, y) for z, y in prof if z <= deck - 40]
         if len(keep) >= 3:
             prof = keep
+    tunnel = None
     if DIFFUSER_FLOOR[0][0] <= spec_x <= DIFFUSER_FLOOR[-1][0]:
         fz = table_z(DIFFUSER_FLOOR, spec_x)
         if fz > prof[0][0] + 1.0:
-            hw_f = half_width_at(prof, fz)
-            prof = [(fz, hw_f)] + [(z, y) for z, y in prof if z > fz]
+            # v055: the legs keep the section down to the leg line; the tunnel between them is
+            # cut into the floor polyline below (see DIFFUSER_LEGS in the skeleton)
+            zl = max(prof[0][0], table_z(DIFFUSER_LEGS["leg_z"], spec_x))
+            cut = min(fz, zl)
+            hw_c = half_width_at(prof, cut)
+            prof = [(cut, hw_c)] + [(z, y) for z, y in prof if z > cut]
+            if cut < fz - 5.0:
+                tunnel = fz
     z_floor = prof[0][0]
     z_top, hw_top = prof[-1]
     # Crown handover. HOOD_SPINE ends at the cowl (specX 420, Z 970) and DECK_SPINE starts at the
@@ -1179,6 +1187,15 @@ def ring(spec_x):
     if _fc["z"][0][0] <= spec_x <= _fc["z"][-1][0]:
         pts = nose_face(spec_x, pts, table_z(_fc["z"], spec_x))
     half = [(0.0, z_floor)] + pts
+    if tunnel is not None:
+        L_ = DIFFUSER_LEGS
+        tw = max(L_["tunnel_min"], min(L_["tunnel_hw"], pts[0][0] - L_["leg_w"]))
+        if pts[0][0] - tw >= L_["leg_w"] - 1.0:
+            # centre -> tunnel ceiling -> tunnel wall down to the leg bottom -> the leg -> the side
+            half = [(0.0, tunnel), (tw, tunnel), (tw + 15.0, z_floor)] + pts
+        else:
+            # the tail has narrowed past the legs: the whole floor rises, as before v055
+            half = [(0.0, tunnel)] + [(y, z) for y, z in pts if z >= tunnel]
     # The door top, carried inboard past the cabin cut. Without this the shelf stopped around
     # Y 810 and the aperture edge at Y 700 sat on the ramp up to the crown, so what you measured
     # as the beltline was not the door top at all.

@@ -185,10 +185,16 @@ def frame(name, coll, x0, x1, y0, y1, z0, z1, wall):
     return outer
 
 
-def shell(name, coll, x0, x1, y0, y1, z0, z1, wall, open_face):
+def shell(name, coll, x0, x1, y0, y1, z0, z1, wall, open_face, clip=False):
     """A closed box with its inside taken out and one face opened -- a lamp housing. `open_face` is
-    the spec-X end left off, because that is the end the lamp looks out of."""
+    the spec-X end left off, because that is the end the lamp looks out of. With clip the OUTER
+    solid is first intersected with the inset skin, so the housing follows the inside of the body;
+    both operands are closed then, which is the only kind of boolean that has held in this file."""
     outer = box(name, coll, x0, x1, y0, y1, z0, z1)
+    if clip:
+        sk = inset_skin(coll, x0, x1)
+        clip_to(outer, sk)
+        bpy.data.objects.remove(sk, do_unlink=True)
     ix0 = x0 - 8 if open_face == "front" else x0 + wall
     ix1 = x1 - wall if open_face == "front" else x1 + 8
     inner = box(name + "_void", coll, ix0, ix1, y0 + wall, y1 - wall, z0 + wall, z1 - wall)
@@ -198,6 +204,47 @@ def shell(name, coll, x0, x1, y0, y1, z0, z1, wall, open_face):
     bpy.ops.object.modifier_apply(modifier=m.name)
     bpy.data.objects.remove(inner, do_unlink=True)
     return outer
+
+
+INSET_MM = 3.0   # a housing or duct stays this far inside the skin (the laminate and the bond)
+
+
+def inset_skin(coll, x0, x1):
+    """A closed copy of the body volume that holds spec X x0..x1, every vertex moved INWARD along
+    its normal by INSET_MM. Intersected with a housing's or a duct's outer solid, it makes the part
+    follow the inside of the skin, as a real housing bonded behind a panel does (2026-10-02: the
+    headlamp housings stood 39 mm above the bonnet at their outer rear corner, the tail housings
+    32 mm out of the narrowed tail, the duct ran through the rear wheel opening)."""
+    best, ov = None, -1.0
+    for o in body_objects():
+        xs = [-(o.matrix_world @ v.co).x * 1000.0 for v in o.data.vertices]
+        o_ = min(max(xs), x1) - max(min(xs), x0)
+        if o_ > ov:
+            best, ov = o, o_
+    cp = best.copy()
+    cp.data = best.data.copy()
+    cp.name = "_inset_" + best.name
+    for m in list(cp.modifiers):
+        cp.modifiers.remove(m)
+    coll.objects.link(cp)
+    bm = bmesh.new()
+    bm.from_mesh(cp.data)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.normal_update()
+    d = INSET_MM / 1000.0
+    moves = [(v, v.normal.copy()) for v in bm.verts]
+    for v, n in moves:
+        v.co -= n * d
+    bm.to_mesh(cp.data)
+    bm.free()
+    return cp
+
+
+def clip_to(ob, cutter):
+    m = ob.modifiers.new("clip", "BOOLEAN")
+    m.operation, m.object, m.solver = "INTERSECT", cutter, "EXACT"
+    bpy.context.view_layer.objects.active = ob
+    bpy.ops.object.modifier_apply(modifier=m.name)
 
 
 def duct(name, coll, stations, wall):
@@ -235,6 +282,10 @@ def duct(name, coll, stations, wall):
         bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
         bm.to_mesh(o.data)
         bm.free()
+    # the outer tube follows the inside of the skin and stays out of the wheel opening (2026-10-02)
+    sk = inset_skin(coll, stations[0][0], stations[-1][0])
+    clip_to(ob, sk)
+    bpy.data.objects.remove(sk, do_unlink=True)
     m = ob.modifiers.new("void", "BOOLEAN")
     m.operation, m.object, m.solver = "DIFFERENCE", inner, "EXACT"
     bpy.context.view_layer.objects.active = ob
@@ -368,10 +419,20 @@ def main():
           f"{max(s[2] for s in st)}, cut from the surface at Y {y_surf:.0f} inward to 430")
 
     # ---- 2. the blade standing in that mouth, the vertical element ref-05 puts across the intake
+    # 2026-10-02: the bottom edge is kept 12 mm above the REAR ARCH (centre 2415 / Z 337.5,
+    # radius 365, the cutter in statev_master_volumes): its rear-bottom corner stood 67 mm into
+    # the wheel opening, visible in the well (check_floating.py).
+    ax_, rad_ = _sk["ARCHES"]["REAR"][0], _sk["ARCHES"]["REAR"][1]
+    zc_ = _sk["ARCHES"]["REAR"][3] / 2.0
+
+    def above_arch(x, z):
+        dx = abs(x - ax_)
+        return z if dx >= rad_ else max(z, zc_ + math.sqrt(rad_ * rad_ - dx * dx) + 12.0)
     for sgn in (1, -1):
         b = blade(f"INTAKE_BLADE_{'L' if sgn > 0 else 'R'}", coll,
-                  [(1975, sgn * (y_surf - 30), 470, 686), (2030, sgn * (y_surf - 46), 455, 696),
-                   (2100, sgn * (y_surf - 52), 452, 694), (2150, sgn * (y_surf - 40), 474, 668)],
+                  [(sx_, sgn * (y_surf - yo), above_arch(sx_, z0_), z1_) for sx_, yo, z0_, z1_ in
+                   ((1975, 30, 470, 686), (2030, 46, 455, 696), (2075, 50, 452, 694),
+                    (2120, 44, 470, 680))],
                   22.0)
         b["panel_id"] = "P13" if sgn > 0 else "P14"
         b["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
@@ -427,8 +488,11 @@ def main():
         tag = "L" if sgn > 0 else "R"
         tops = {}
         for sx in (-215, -125, -35, 55, 145):
-            t = surface_z(sx, 465)
-            tops[sx] = (t - 12.0) if t else 860.0
+            # the lowest skin along the whole slat, not at the slot centre: measured at Y 465
+            # the outboard end of each slat stood 6.5 mm above the bonnet (check_floating.py)
+            ts = [t for t in (surface_z(sx, 391), surface_z(sx, 465), surface_z(sx + 90, 539),
+                              surface_z(sx, 539)) if t]
+            tops[sx] = (min(ts) - 12.0) if ts else 860.0
         z_top_rail = min(tops.values())
         # two rails along the slot walls, 4 mm off them, and four diagonal slats between
         comb = slab(f"FENDER_CHANNEL_{tag}", (-225.0, sgn * 391.0), (155.0, sgn * 391.0),
@@ -511,7 +575,7 @@ def main():
     for sgn in (1, -1):
         h = shell(f"HEADLIGHT_HOUSING_{'L' if sgn > 0 else 'R'}", coll,
                   -686, -514, min(sgn * 584, sgn * 706), max(sgn * 584, sgn * 706),
-                  499, 621, 5.0, "front")
+                  499, 621, 5.0, "front", clip=True)
         h["panel_id"] = "P24" if sgn > 0 else "P25"
         h["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
         made.append(h)
@@ -607,11 +671,14 @@ def main():
                  min(sgn * (TE["y0"] - air), sgn * (TE["y1"] + w + air + 8)),
                  max(sgn * (TE["y0"] - air), sgn * (TE["y1"] + w + air + 8)),
                  TE["z0"] - air, TE["z1"] + air)
-        for tgt, src, op in ((o1, o2, "UNION"), (i1, i2, "UNION"), (o1, i1, "DIFFERENCE")):
+        sk = inset_skin(coll, TE["x0"], TB["x1"])
+        for tgt, src, op in ((o1, o2, "UNION"), (o1, sk, "INTERSECT"), (i1, i2, "UNION"),
+                             (o1, i1, "DIFFERENCE")):
             m = tgt.modifiers.new("b", "BOOLEAN")
             m.operation, m.object, m.solver = op, src, "EXACT"
             bpy.context.view_layer.objects.active = tgt
             bpy.ops.object.modifier_apply(modifier=m.name)
+        bpy.data.objects.remove(sk, do_unlink=True)
         for dead in (o2, i1, i2):
             bpy.data.objects.remove(dead, do_unlink=True)
         h1 = o1
@@ -785,14 +852,16 @@ def main():
                 fz = floor_z(x)
                 if fz is None:
                     continue
-                st.append((x, sgn * y, 125.0, fz + 12.0))
+                # v055: the fin's lower edge on the legs' line, so it stands IN the tunnel
+                # between the legs instead of hanging 150-190 mm below a raised floor
+                st.append((x, sgn * y, _sk["table_z"](_sk["DIFFUSER_LEGS"]["leg_z"], x), fz + 12.0))
             if len(st) < 2:
                 continue
             b = blade(f"DIFFUSER_FIN_{nm}_{'L' if sgn > 0 else 'R'}", coll, st, 16.0)
             b["panel_id"] = pid_l if sgn > 0 else pid_r
             b["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
             made.append(b)
-    print("  diffuser fins: four 16 mm blades standing in the rising floor, bottoms at Z 125")
+    print("  diffuser fins: four 16 mm blades in the tunnel between the legs, bottoms on the leg line")
     print("    -> P44 / P45 inner at Y +-150, P46 / P47 outer at Y +-330")
 
     # ---- 9. THE DRL GROOVE, 2026-09-28. The DRL blade had been a curve in 04_LIGHTING since
@@ -915,6 +984,27 @@ def main():
     cuts.append(box("CUT_LIP_RECESS", coll, -1000.0, -910.0, -620.0, 620.0, 150.0, 194.0))
     print("  splitter lip: the face recessed 40 mm over Z 150..200 so the lip stands proud inside the locked length")
 
+    # the skin as it was BEFORE any Stage-03 opening, kept hidden for check_floating.py: an element
+    # sitting in a pocket is outside the cut body by design, and only the uncut skin can say
+    # whether it stands PROUD of the car (2026-10-02)
+    unc = bpy.data.collections.get("_STAGE03_UNCUT")
+    if unc:
+        for o in list(unc.objects):
+            me = o.data
+            bpy.data.objects.remove(o, do_unlink=True)
+            bpy.data.meshes.remove(me)
+    else:
+        unc = bpy.data.collections.new("_STAGE03_UNCUT")
+        bpy.context.scene.collection.children.link(unc)
+    for o in body_objects():
+        cp = o.copy()
+        cp.data = o.data.copy()
+        cp.name = "UNCUT_" + o.name
+        for m in list(cp.modifiers):
+            cp.modifiers.remove(m)
+        unc.objects.link(cp)
+        cp.hide_render = True
+        cp.hide_viewport = True
     # cut them all out of the body
     for c in cuts:
         for o in body_objects():

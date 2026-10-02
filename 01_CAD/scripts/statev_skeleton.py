@@ -156,6 +156,18 @@ ARCHES = {
 
 # diffuser central tunnel (msg1 §18): width 500 inside the 1500 wide diffuser
 DIFFUSER_TUNNEL = (3145, 0, 230, 550, 500, 220)   # spec_x, y, z, size_x, size_y, size_z
+# THE DIFFUSER AS A TUNNEL BETWEEN LEGS, 2026-10-02. ref-09's rear view and the poster's "diffuser
+# detail" both show a dark tunnel spanning the middle with the body's outer corners coming DOWN as
+# legs either side of it, and the fins standing inside the tunnel with their lower edges on the
+# legs' line. Read off ref-09's rear view (1.64 mm/px on 1850): tunnel half-width ~640, legs
+# ~640..860. The legs' bottom rises toward the tail for the departure angle: 200 at the tip is
+# 11.3 deg from the rear contact patch. The floor inside the tunnel is DIFFUSER_FLOOR (unchanged).
+# Measured on the first build: REAR_UNDERCUT pulls the body under Z ~330 in by 108 mm, so at the
+# leg line the half-width is only ~650 and a 640 tunnel left no leg at all. The tunnel therefore
+# takes what is left after a leg of leg_w, capped at tunnel_hw and never narrower than tunnel_min;
+# and the leg line sits lower (170 at the tip: 9.7 deg departure) so the tunnel has depth.
+DIFFUSER_LEGS = dict(tunnel_hw=640.0, tunnel_min=380.0, leg_w=120.0,
+                     leg_z=[(2870, 120), (3000, 130), (3420, 170)])
 
 # door character line (msg1 §11): the surface crease, front/middle/rear heights on the door
 DOOR_CHAR_LINE_Z = {"front": 420, "middle": 500, "rear": 520}

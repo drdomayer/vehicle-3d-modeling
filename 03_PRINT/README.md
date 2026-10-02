@@ -25,19 +25,15 @@ Every file is one printable solid, laid on its flattest face, sitting on Z = 0, 
 | joint tab | 20 mm past each cut, dropped inward by wall + bond | fit test |
 | orientation | smallest dimension vertical | Q32 / Q33 |
 
-Estimated core mass across both tiers at these assumptions: **~74.5 kg**.
+Estimated core mass across both tiers at these assumptions: **~72.8 kg**.
 
 ## Quality of the files, as a slicer sees them
 
-`print_qc.py` reads every file back: closed, manifold, consistently wound, positive volume. Last run: **40 of 41 clean**, 1 with a defect.
-
-Files with something to say (all non-manifold edges, a handful each; most slicers repair these, but that is not a guarantee):
-
-- `P21_REAR_FASCIA_whole.stl` — 2 open edge(s); 1 non-manifold edge(s)
+`print_qc.py` reads every file back: closed, manifold, consistently wound, positive volume. Last run: **41 of 41 clean**, 0 with a defect.
 
 ## Known problems, stated rather than hidden
 
-- **876 cm² of skin is in no file**: seam slivers and lone faces the region rule handed to a panel without connecting them to it, dropped and counted per file in `DROPPED_MM2`. The laminate bridges these; none is a part.
+- **851 cm² of skin is in no file**: seam slivers and lone faces the region rule handed to a panel without connecting them to it, dropped and counted per file in `DROPPED_MM2`. The laminate bridges these; none is a part.
 - The files are the **core** only. Laminate, filler and paint go on top and none of their thicknesses exist as data yet.
 - Orientation is *lay flattest, class-A face up* — never chosen against an overhang limit (Q32). `04_ENGINEERING/reports/overhang.csv` says, per file, how much area hangs past 45° and 60° as laid and turned over, so the shop's limit turns into a count rather than a question.
 - Nothing here touches the donor car. Every mounting point, hinge, hole and flange that lands on the Porsche is deliberately absent until the car is scanned.

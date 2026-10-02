@@ -79,6 +79,9 @@ NOT_PANEL = {
     "X_TAIL_CORNER": "wall of the tail corner pocket under the light bar's L end",
 }
 
+DIFFUSER_FRONT = 2870.0   # DIFFUSER_FLOOR's first station in statev_master_volumes: the tunnel's start
+
+
 # The Stage 03 pockets, as stage03_elements.py cuts them. Named here so the rejection can be read
 # against its source instead of against four bare numbers.
 POCKETS = [("X_INTAKE", 1910.0, 2180.0, 420.0, 1000.0, 440.0, 710.0),
@@ -208,7 +211,10 @@ def panel_of(sx, ay, z):
     if sx < B["intake_rear"] and B["rocker_top"] <= z < 700:
         return "P11"                           # side intake surround
     if z < B["rocker_top"]:
-        if sx > B["fascia_front"]:
+        # v055: the diffuser starts where its tunnel starts (DIFFUSER_FLOOR, 2870), so the tunnel
+        # ceiling and the legs are one moulding; with the boundary at 3000 the ceiling between
+        # 2870 and 3000 was a loose 134 x 506 mm piece of P39/P40
+        if sx > DIFFUSER_FRONT:
             return "P22"
         return "P39" if sx > B["rocker_end"] else "P07"
     if sx >= B["fascia_front"]:

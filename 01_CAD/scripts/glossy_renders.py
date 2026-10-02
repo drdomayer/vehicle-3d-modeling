@@ -30,7 +30,13 @@ VIEWS = [("side", (-1.2, 9.0, 0.7), (-1.2, 0.0, 0.45), 55, "PERSP"),
          ("front34", (4.6, 4.0, 1.9), (-0.8, 0.0, 0.4), 45, "PERSP"),
          ("rear34", (-6.8, 3.8, 1.9), (-1.5, 0.0, 0.4), 45, "PERSP"),
          ("front", (7.5, 0.0, 1.1), (-0.6, 0.0, 0.45), 60, "PERSP"),
-         ("rear", (-9.5, 0.0, 1.1), (-1.6, 0.0, 0.45), 60, "PERSP")]
+         ("rear", (-9.5, 0.0, 1.1), (-1.6, 0.0, 0.45), 60, "PERSP"),
+         # 2026-10-02: the remaining four of ref-09's seven panels, so every panel of the
+         # reference has a model picture from the same side (review_sheets.py pairs them)
+         ("top", (-1.2, 0.0, 12.0), (-1.2, 0.0, 0.0), 4.9, "ORTHO"),
+         ("mask", (3.4, 0.0, 1.05), (0.85, 0.0, 0.40), 50, "PERSP"),
+         ("taildetail", (-6.0, 0.0, 1.15), (-3.3, 0.0, 0.50), 50, "PERSP"),
+         ("intake", (-1.05, 2.9, 0.80), (-2.05, 0.88, 0.55), 40, "PERSP")]
 
 
 def principled(mat):
@@ -128,7 +134,125 @@ def clean_bodies():
     return added, names
 
 
+def finish_map():
+    """FINISH per part id, from the register's CSV (panel_registry.py --csv)."""
+    import csv
+    p = os.path.join(REPO, "04_ENGINEERING", "reports", "panel_bom.csv")
+    if not os.path.exists(p):
+        return {}
+    with open(p, encoding="utf-8") as f:
+        return {r["ID"]: r.get("FINISH", "paint") for r in csv.DictReader(f)}
+
+
+def ctx_objects(sc):
+    """The donor and the lamps, for the PICTURE only (2026-10-02): the windscreen frame and the roll
+    hoops are the donor's and stay; seats; the deck zone between the buttresses (BLOCKED until scan
+    S2) as a dark field where ref-09 has the louvred cover; the DRL and the tail light bars lit.
+    Without them the review compared a car with a cockpit, glass and lights to an open tub."""
+    out = []
+
+    def mesh(name, verts, faces):
+        me = bpy.data.meshes.new(name)
+        me.from_pydata(verts, [], faces)
+        me.update()
+        ob = bpy.data.objects.new(name, me)
+        sc.collection.objects.link(ob)
+        out.append(ob)
+        return ob
+
+    def tube(name, pts, r):
+        cu = bpy.data.curves.new(name, "CURVE")
+        cu.dimensions, cu.bevel_depth, cu.bevel_resolution = "3D", r, 4
+        sp = cu.splines.new("POLY")
+        sp.points.add(len(pts) - 1)
+        for i, p in enumerate(pts):
+            sp.points[i].co = (p[0], p[1], p[2], 1.0)
+        ob = bpy.data.objects.new(name, cu)
+        sc.collection.objects.link(ob)
+        out.append(ob)
+        return ob
+
+    def P_(sx, y, z):
+        return (-sx / 1000.0, y / 1000.0, z / 1000.0)
+    tags = {}
+    # windscreen (donor): base at the cowl (420, Z 970), header (1055, Z 1255)
+    g = mesh("GLOSSY_CTX_GLASS", [P_(420, -650, 968), P_(420, 650, 968), P_(1055, 570, 1255),
+                                  P_(1055, -570, 1255)], [(0, 1, 2, 3)])
+    tags[g.name] = "glass"
+    tags[tube("GLOSSY_CTX_FRAME", [P_(420, -650, 968), P_(1055, -570, 1255), P_(1055, 570, 1255),
+                                   P_(420, 650, 968)], 0.022).name] = "gloss black"
+    for sgn in (1, -1):
+        y = sgn * 350.0
+        tags[tube("GLOSSY_CTX_HOOP", [P_(1760, y - 180, 880), P_(1760, y - 170, 1200),
+                                      P_(1760, y - 120, 1235), P_(1760, y + 120, 1235),
+                                      P_(1760, y + 170, 1200), P_(1760, y + 180, 880)], 0.028).name] = "gloss black"
+        x0, x1 = 1250.0, 1680.0
+        s_ = mesh("GLOSSY_CTX_SEAT", [P_(x0, y - 240, 650), P_(x0, y + 240, 650), P_(x1, y + 240, 660),
+                                      P_(x1, y - 240, 660), P_(x1 + 60, y - 240, 1180),
+                                      P_(x1 + 60, y + 240, 1180), P_(x1 - 40, y + 240, 1180),
+                                      P_(x1 - 40, y - 240, 1180)],
+                  [(0, 1, 2, 3), (3, 2, 5, 4), (7, 6, 1, 0), (4, 5, 6, 7), (0, 3, 4, 7), (1, 6, 5, 2)])
+        tags[s_.name] = "tan"
+    # deck zone between the buttresses: BLOCKED geometry, drawn as a dark field at the spine
+    sk = {}
+    with open(os.path.join(REPO, "01_CAD", "scripts", "statev_skeleton.py"), encoding="utf-8") as f:
+        exec(f.read().split("\ndef build(")[0], sk)
+    spine, tz = sk["DECK_SPINE"], sk["table_z"]
+    xs = [1790 + k * 60 for k in range(23)]
+    vs, fs = [], []
+    for i, x in enumerate(xs):
+        z = tz(spine, x) - 6
+        vs += [P_(x, -560, z), P_(x, 560, z)]
+        if i:
+            fs.append((2 * i - 2, 2 * i - 1, 2 * i + 1, 2 * i))
+    tags[mesh("GLOSSY_CTX_DECK", vs, fs).name] = "gloss black"
+    # DRL along DRL_PATH at DRL_Z, both sides joined on the centreline
+    path = sk["DRL_PATH"]
+    side = [(x, y, tz(sk["DRL_Z"], abs(y))) for x, y in path]
+    pts = [P_(x, -y, z) for x, y, z in reversed(side)] + [P_(path[0][0] - 2, 0, tz(sk["DRL_Z"], 0))] + \
+          [P_(x, y, z) for x, y, z in side]
+    tags[tube("GLOSSY_CTX_DRL", pts, 0.006).name] = "light white"
+    # tail light bar and its L ends (the LOCKED envelopes), lit at the face
+    for sgn in (1, -1):
+        tags[mesh("GLOSSY_CTX_TAIL", [P_(3212, 0, 600), P_(3212, sgn * 720, 600), P_(3212, sgn * 720, 624),
+                                      P_(3212, 0, 624)], [(0, 1, 2, 3)]).name] = "light red"
+    return out, tags
+
+
 def main():
+    """Runs the render and ALWAYS puts the scene back. 2026-10-02: a render that failed half-way
+    left hide_render on every object it had hidden, panel_production then copied the Stage-03
+    parts with that flag, and the STL exporter wrote nine of them EMPTY while reporting success."""
+    snap = {o.name: o.hide_render for o in bpy.data.objects}
+    sc = bpy.context.scene
+    cam0, world0 = sc.camera, sc.world
+    try:
+        _main()
+    finally:
+        for o in list(bpy.data.objects):
+            if o.name.startswith("GLOSSY_"):
+                d = o.data
+                bpy.data.objects.remove(o, do_unlink=True)
+                for coll in (bpy.data.meshes, bpy.data.curves, bpy.data.lights, bpy.data.cameras):
+                    if d is not None and d.name in coll and coll[d.name] == d and d.users == 0:
+                        coll.remove(d)
+            else:
+                if o.name in snap:
+                    o.hide_render = snap[o.name]
+                for m in [m for m in o.modifiers if m.name == "GLOSSY_SUBD"]:
+                    o.modifiers.remove(m)
+        for m in [m for m in bpy.data.materials if m.name.startswith("GLOSSY_") and m.users == 0]:
+            bpy.data.materials.remove(m)
+        if sc.camera is None or sc.camera.name not in bpy.data.objects:
+            sc.camera = cam0 if (cam0 is not None and cam0.name in bpy.data.objects) else None
+        if sc.world is not None and sc.world.name.startswith("GLOSSY_"):
+            w = sc.world
+            sc.world = world0 if (world0 is not None and not world0.name.startswith("GLOSSY_")) else None
+            if w.users == 0:
+                bpy.data.worlds.remove(w)
+
+
+def _main():
     sc = bpy.context.scene
     source = globals().get("GLOSSY_SOURCE", "body")
     files = import_files() if source == "files" else []
@@ -179,9 +303,11 @@ def main():
     # materials: paint, and dark rubber for the wheel cylinders
     paint = bpy.data.materials.new("GLOSSY_PAINT")
     p = principled(paint)
-    set_in(p, ("Base Color",), (0.012, 0.055, 0.028, 1.0))
-    set_in(p, ("Metallic",), 0.55)
-    set_in(p, ("Roughness",), 0.22)
+    # dark metallic green, as ref-09 and the brand decision (CLAUDE.md); was a mid green that
+    # read as a toy next to the reference
+    set_in(p, ("Base Color",), (0.006, 0.026, 0.014, 1.0))
+    set_in(p, ("Metallic",), 0.6)
+    set_in(p, ("Roughness",), 0.24)
     set_in(p, ("Coat Weight", "Clearcoat"), 1.0)
     set_in(p, ("Coat Roughness", "Clearcoat Roughness"), 0.05)
     rubber = bpy.data.materials.new("GLOSSY_RUBBER")
@@ -193,14 +319,39 @@ def main():
     set_in(b, ("Base Color",), (0.42, 0.28, 0.12, 1.0))
     set_in(b, ("Metallic",), 0.9)
     set_in(b, ("Roughness",), 0.35)
+    def mat(name, col, metal, rough, emit=None):
+        m = bpy.data.materials.new(name)
+        q = principled(m)
+        set_in(q, ("Base Color",), col)
+        set_in(q, ("Metallic",), metal)
+        set_in(q, ("Roughness",), rough)
+        if emit:
+            set_in(q, ("Emission Color", "Emission"), emit)
+            set_in(q, ("Emission Strength",), 12.0)
+        return m
+    finmats = {"paint": paint,
+            "carbon": mat("GLOSSY_CARBON", (0.018, 0.018, 0.02, 1.0), 0.3, 0.32),
+            "gloss black": mat("GLOSSY_GBLACK", (0.008, 0.008, 0.009, 1.0), 0.1, 0.12),
+            "hidden": mat("GLOSSY_HIDDEN", (0.02, 0.02, 0.02, 1.0), 0.0, 0.6),
+            "tan": mat("GLOSSY_TAN", (0.42, 0.21, 0.09, 1.0), 0.0, 0.55),
+            "glass": mat("GLOSSY_GLASS", (0.01, 0.012, 0.012, 1.0), 0.0, 0.03),
+            "light white": mat("GLOSSY_LW", (1, 1, 1, 1), 0.0, 0.3, (0.9, 0.95, 1.0, 1.0)),
+            "light red": mat("GLOSSY_LR", (1, 0, 0, 1), 0.0, 0.3, (1.0, 0.03, 0.02, 1.0))}
+    fin = finish_map()
     saved = {}
     for n in body:
         o = bpy.data.objects[n]
         saved[n] = [m for m in o.data.materials]
         o.data.materials.clear()
-        o.data.materials.append(paint)
+        pid = o.get("panel_id") or (n[len("GLOSSY_FILE_"):][:3] if n.startswith("GLOSSY_FILE_") else None)
+        o.data.materials.append(finmats.get(fin.get(pid, "paint"), paint))
+    ctx, ctx_tags = ctx_objects(sc) if globals().get("GLOSSY_CONTEXT", True) else ([], {})
+    for o in ctx:
+        o.data.materials.append(finmats[ctx_tags[o.name]])
+        tyres.append(o)
     for t in tyres:
-        t.data.materials.append(rubber if t.name.startswith("GLOSSY_TYRE") else bronze)
+        if t.name.startswith(("GLOSSY_TYRE", "GLOSSY_RIM")):
+            t.data.materials.append(rubber if t.name.startswith("GLOSSY_TYRE") else bronze)
     # ground plane, big and light grey, for the bounce and the shadow
     gm = bpy.data.meshes.new("GLOSSY_GROUND")
     gm.from_pydata([(-40, -40, 0), (40, -40, 0), (40, 40, 0), (-40, 40, 0)], [], [(0, 1, 2, 3)])
@@ -252,7 +403,11 @@ def main():
     cd.clip_start, cd.clip_end = 0.01, 100.0
     os.makedirs(OUT, exist_ok=True)
     for tag, loc, target, lens, kind in VIEWS:
-        cd.type, cd.lens = kind, lens
+        cd.type = kind
+        if kind == "ORTHO":
+            cd.ortho_scale = lens
+        else:
+            cd.lens = lens
         cam.location = loc
         dv = mathutils.Vector(target) - mathutils.Vector(loc)
         cam.rotation_euler = dv.to_track_quat("-Z", "Y").to_euler()
@@ -270,7 +425,10 @@ def main():
     for o in files + tyres:
         me = o.data
         bpy.data.objects.remove(o, do_unlink=True)
-        bpy.data.meshes.remove(me)
+        if isinstance(me, bpy.types.Mesh):
+            bpy.data.meshes.remove(me)
+        elif me is not None:
+            bpy.data.curves.remove(me)
     for o, m in subd:
         o.modifiers.remove(m)
     for o in made:
@@ -285,7 +443,7 @@ def main():
     sc.camera = old_cam
     sc.world = old_world
     bpy.data.worlds.remove(world)
-    for m in (paint, rubber, bronze, gmat):
+    for m in (rubber, bronze, gmat, *finmats.values()):
         bpy.data.materials.remove(m)
     sc.render.engine = old_engine
     for o, h in hidden:

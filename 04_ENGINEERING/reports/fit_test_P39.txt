@@ -21,7 +21,7 @@ FIT TEST — P39 ROCKER_END_L
 
   THE FILES — 1 section(s), print all of them
     file                                               L       W       H  one piece
-    P39_ROCKER_END_L_whole.stl                     349.7   903.8   211.2  yes
+    P39_ROCKER_END_L_whole.stl                     216.4   288.3   200.2  yes
 
     Each file is already laid on its flattest face and sitting on Z = 0. Print it as
     it comes; do not re-orient it, because the schedule's placement puts it back on
@@ -33,28 +33,27 @@ FIT TEST — P39 ROCKER_END_L
 
     landmark          spec X         Y         Z
     front-most        2716.4     634.6     135.1
-    rear-most         3066.0     697.4     242.3
+    rear-most         2932.8     714.2     229.2
     left-most         2779.6     903.8     330.0
-    right-most        2900.0      -0.0     130.3
-    lowest            2866.7     377.3     124.8
-    highest           3024.3     816.0     336.0
+    right-most        2866.7     617.4     135.2
+    lowest            2716.6     636.5     132.8
+    highest           2866.5     889.1     332.9
 
     DESIGN DISTANCES, in millimetres. These are what the part is checked against.
-      front-most     -> rear-most          371.1
+      front-most     -> rear-most          249.1
       front-most     -> left-most          338.3
-      front-most     -> right-most         660.7
-      front-most     -> lowest             298.1
-      front-most     -> highest            410.0
-      rear-most      -> left-most          363.8
-      rear-most      -> right-most         725.6
-      rear-most      -> lowest             394.9
-      rear-most      -> highest            156.8
-      left-most      -> right-most         933.4
-      left-most      -> lowest             571.7
-      left-most      -> highest            260.1
-      right-most     -> lowest             378.9
-      right-most     -> highest            850.6
-      lowest         -> highest            511.7
+      front-most     -> right-most         151.3
+      front-most     -> highest            355.6
+      rear-most      -> left-most          263.8
+      rear-most      -> right-most         150.3
+      rear-most      -> lowest             249.2
+      rear-most      -> highest            213.9
+      left-most      -> right-most         357.2
+      left-most      -> lowest             338.1
+      left-most      -> highest             88.3
+      right-most     -> lowest             151.3
+      right-most     -> highest            336.0
+      lowest         -> highest            355.5
 
   WHEN TO MEASURE, and what a change at each stage means
     1. straight off the printer, per section   -> shrinkage, and whether the

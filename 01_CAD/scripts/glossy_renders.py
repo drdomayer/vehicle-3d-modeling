@@ -39,6 +39,11 @@ VIEWS = [("side", (-1.2, 9.0, 0.7), (-1.2, 0.0, 0.45), 55, "PERSP"),
          ("intake", (-1.05, 2.9, 0.80), (-2.05, 0.88, 0.55), 40, "PERSP")]
 
 
+# the poster's two hero angles, rendered in the final mode only
+HERO = [("hero_front", (4.4, 3.3, 0.85), (-1.0, 0.0, 0.42), 38, "PERSP"),
+        ("hero_rear", (-6.2, 3.5, 1.25), (-2.0, 0.0, 0.48), 38, "PERSP")]
+
+
 def principled(mat):
     mat.use_nodes = True
     return next(n for n in mat.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
@@ -50,6 +55,89 @@ def set_in(node, names, value):
             node.inputs[nm].default_value = value
             return True
     return False
+
+
+def smooth_by_angle(o, deg):
+    """Smooth shading with edges over `deg` kept sharp: the printed files carry a 3 mm wall whose
+    rim is a right angle, and plain smooth shading smeared it into dark bands at every panel edge."""
+    import bmesh
+    bm = bmesh.new()
+    bm.from_mesh(o.data)
+    lim = math.radians(deg)
+    for f in bm.faces:
+        f.smooth = True
+    for e in bm.edges:
+        if len(e.link_faces) != 2:
+            e.smooth = False
+        else:
+            a, b = e.link_faces[0].normal, e.link_faces[1].normal
+            e.smooth = not (a.length and b.length and a.angle(b) > lim)
+    bm.to_mesh(o.data)
+    bm.free()
+
+
+def wheel_parts(sc, spec_x, od, wdt, half_track, sgn, sidewall):
+    """A 19-inch ten-spoke wheel for the picture: tyre, bronze rim lip, ten spokes and hub, dark
+    barrel, brake disc and a bronze caliper (ref-09 / the poster). Render-only, removed after."""
+    out = []
+    cx, cz = -spec_x / 1000.0, od / 2000.0
+    rr = od / 2000.0 - sidewall / 1000.0               # rim radius
+    yo = sgn * (half_track + wdt / 2.0 - 22.0) / 1000.0  # spoke face plane, just inside the tyre
+
+    def add(name, verts, faces, tag):
+        me = bpy.data.meshes.new(name)
+        me.from_pydata(verts, [], faces)
+        me.update()
+        ob = bpy.data.objects.new(name, me)
+        sc.collection.objects.link(ob)
+        ob["glossy_tag"] = tag
+        out.append(ob)
+        return ob
+
+    def disc(name, r_out, r_in, y0, y1, tag, n=72):
+        v, f = [], []
+        for k in range(n):
+            a = 2 * math.pi * k / n
+            for r in (r_out, r_in):
+                for y in (y0, y1):
+                    v.append((cx + r * math.cos(a), y, cz + r * math.sin(a)))
+        for k in range(n):
+            a, b = 4 * k, 4 * ((k + 1) % n)
+            f += [(a, b, b + 1, a + 1), (a + 2, a + 3, b + 3, b + 2), (a, a + 2, b + 2, b), (a + 1, b + 1, b + 3, a + 3)]
+        ob = add(name, v, f, tag)
+        for p in ob.data.polygons:
+            p.use_smooth = True
+        return ob
+    t = 0.014
+    tyre = disc("GLOSSY_TYREBAND", od / 2000.0, rr - 0.002, sgn * (half_track - wdt / 2.0) / 1000.0,
+                sgn * (half_track + wdt / 2.0) / 1000.0, "rubber", 96)
+    bv = tyre.modifiers.new("bevel", "BEVEL")
+    bv.width, bv.segments, bv.limit_method = 0.03, 6, "ANGLE"
+    disc("GLOSSY_RIMLIP", rr + 0.004, rr - 0.018, yo - sgn * 0.004, yo + sgn * 0.010, "bronze")
+    disc("GLOSSY_BARREL", rr - 0.004, rr - 0.012, yo - sgn * 0.20, yo - sgn * 0.004, "dark")
+    disc("GLOSSY_HUB", 0.062, 0.018, yo - sgn * 0.02, yo + sgn * 0.012, "bronze", 36)
+    disc("GLOSSY_BRAKEDISC", rr - 0.05, 0.07, yo - sgn * 0.075, yo - sgn * 0.050, "disc")
+    for k in range(10):
+        a = 2 * math.pi * k / 10 + 0.1
+        ca, sa = math.cos(a), math.sin(a)
+        tx, tz = -sa, ca
+        w0, w1 = 0.016, 0.011
+        r0, r1 = 0.058, rr - 0.012
+        v = []
+        for r, w in ((r0, w0), (r1, w1)):
+            for s_ in (-1, 1):
+                for y in (yo - sgn * t, yo + sgn * 0.004):
+                    v.append((cx + r * ca + s_ * w * tx, y, cz + r * sa + s_ * w * tz))
+        f = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]
+        add("GLOSSY_SPOKE", v, f, "bronze")
+    # caliper: a block at the rear-upper quadrant of the disc
+    a = math.radians(120 if spec_x < 1000 else 60)
+    ccx, ccz = cx + (rr - 0.07) * math.cos(a), cz + (rr - 0.07) * math.sin(a)
+    yc0, yc1 = yo - sgn * 0.10, yo - sgn * 0.035
+    v = [(ccx + dx, y, ccz + dz) for dx in (-0.06, 0.06) for y in (yc0, yc1) for dz in (-0.035, 0.035)]
+    f = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]
+    add("GLOSSY_CALIPER", v, f, "caliper")
+    return out
 
 
 def import_files():
@@ -83,8 +171,7 @@ def import_files():
                 o.matrix_world = mathutils.Matrix(mat) @ mathutils.Matrix.Diagonal(
                     (0.001, 0.001, 0.001, 1.0))
                 o.name = "GLOSSY_FILE_" + fn
-                for p in o.data.polygons:
-                    p.use_smooth = True
+                smooth_by_angle(o, 35.0)
                 out.append(o)
     return out
 
@@ -225,7 +312,7 @@ def main():
     parts with that flag, and the STL exporter wrote nine of them EMPTY while reporting success."""
     snap = {o.name: o.hide_render for o in bpy.data.objects}
     sc = bpy.context.scene
-    cam0, world0 = sc.camera, sc.world
+    cam0, world0, eng0 = sc.camera, sc.world, sc.render.engine
     try:
         _main()
     finally:
@@ -245,6 +332,10 @@ def main():
             bpy.data.materials.remove(m)
         if sc.camera is None or sc.camera.name not in bpy.data.objects:
             sc.camera = cam0 if (cam0 is not None and cam0.name in bpy.data.objects) else None
+        try:
+            sc.render.engine = eng0
+        except TypeError:
+            pass
         if sc.world is not None and sc.world.name.startswith("GLOSSY_"):
             w = sc.world
             sc.world = world0 if (world0 is not None and not world0.name.startswith("GLOSSY_")) else None
@@ -269,6 +360,8 @@ def _main():
         print("  nothing to render: build the body first")
         return
     tag_prefix = {"files": "rv_glossy_files_", "clean": "rv_glossy_clean_"}.get(source, "rv_glossy_")
+    if globals().get("GLOSSY_FINAL"):
+        tag_prefix = "rv_glossy_car_"
     # TYRES AND RIMS, 2026-09-29 (v051). The cage's wheel cylinders (48 flat sides, grey) made every
     # render read as a toy and the owner said so. Four tyres are built for the render only: the
     # 19" sizes and the donor tracks from the skeleton, rounded shoulders, dark rubber, a bronze
@@ -289,6 +382,13 @@ def _main():
             bv.width, bv.segments = 0.028, 6
             for p in t.data.polygons:
                 p.use_smooth = True
+            if globals().get("GLOSSY_FINAL"):
+                # the capped cylinder hid the spokes: in the final mode the tyre is a ring
+                me_ = t.data
+                bpy.data.objects.remove(t, do_unlink=True)
+                bpy.data.meshes.remove(me_)
+                tyres += wheel_parts(sc, spec_x, od, wdt, half_track, sgn, 82.0 if spec_x < 1000 else 96.0)
+                continue
             bpy.ops.mesh.primitive_cylinder_add(radius=od / 2000.0 - 0.105, depth=wdt / 1000.0 - 0.02, vertices=96,
                                                 location=(-spec_x / 1000.0, sgn * (half_track + 12.0) / 1000.0, od / 2000.0))
             r = bpy.context.active_object
@@ -306,7 +406,7 @@ def _main():
     # dark metallic green, as ref-09 and the brand decision (CLAUDE.md); was a mid green that
     # read as a toy next to the reference
     set_in(p, ("Base Color",), (0.006, 0.026, 0.014, 1.0))
-    set_in(p, ("Metallic",), 0.6)
+    set_in(p, ("Metallic",), 0.35 if globals().get("GLOSSY_FINAL") else 0.6)
     set_in(p, ("Roughness",), 0.24)
     set_in(p, ("Coat Weight", "Clearcoat"), 1.0)
     set_in(p, ("Coat Roughness", "Clearcoat Roughness"), 0.05)
@@ -349,9 +449,16 @@ def _main():
     for o in ctx:
         o.data.materials.append(finmats[ctx_tags[o.name]])
         tyres.append(o)
+    wheelmats = {"bronze": bronze, "rubber": rubber,
+                 "dark": mat("GLOSSY_DARK", (0.015, 0.015, 0.015, 1.0), 0.2, 0.5),
+                 "disc": mat("GLOSSY_DISC", (0.25, 0.25, 0.26, 1.0), 0.9, 0.35),
+                 "caliper": mat("GLOSSY_CALIPER", (0.55, 0.30, 0.10, 1.0), 0.6, 0.3)}
+    finmats.update({k: v for k, v in wheelmats.items() if k not in finmats})
     for t in tyres:
         if t.name.startswith(("GLOSSY_TYRE", "GLOSSY_RIM")):
             t.data.materials.append(rubber if t.name.startswith("GLOSSY_TYRE") else bronze)
+        elif t.get("glossy_tag") in wheelmats and not t.data.materials:
+            t.data.materials.append(wheelmats[t["glossy_tag"]])
     # ground plane, big and light grey, for the bounce and the shadow
     gm = bpy.data.meshes.new("GLOSSY_GROUND")
     gm.from_pydata([(-40, -40, 0), (40, -40, 0), (40, 40, 0), (-40, 40, 0)], [], [(0, 1, 2, 3)])
@@ -380,18 +487,24 @@ def _main():
     world.use_nodes = True
     bg = next(n for n in world.node_tree.nodes if n.type == "BACKGROUND")
     bg.inputs["Color"].default_value = (0.75, 0.76, 0.78, 1.0)
-    bg.inputs["Strength"].default_value = 1.0
+    bg.inputs["Strength"].default_value = 0.35 if globals().get("GLOSSY_FINAL") else 1.0
     sc.world = world
     old_engine = sc.render.engine
-    for eng in ("BLENDER_EEVEE_NEXT", "BLENDER_EEVEE", "CYCLES"):
+    engines = ("CYCLES",) if globals().get("GLOSSY_FINAL") else ("BLENDER_EEVEE_NEXT", "BLENDER_EEVEE", "CYCLES")
+    for eng in engines:
         try:
             sc.render.engine = eng
             break
         except TypeError:
             continue
     if sc.render.engine == "CYCLES":
-        sc.cycles.samples = 64
-    sc.render.resolution_x, sc.render.resolution_y = 1600, 900
+        sc.cycles.samples = int(globals().get("GLOSSY_SAMPLES", 64))
+        try:
+            sc.cycles.use_denoising = True
+            sc.cycles.device = "GPU"
+        except Exception:
+            pass
+    sc.render.resolution_x, sc.render.resolution_y = (1920, 1080) if globals().get("GLOSSY_FINAL") else (1600, 900)
     sc.render.resolution_percentage = 100
     sc.render.image_settings.file_format = "PNG"
     sc.render.film_transparent = False
@@ -402,7 +515,12 @@ def _main():
     sc.camera = cam
     cd.clip_start, cd.clip_end = 0.01, 100.0
     os.makedirs(OUT, exist_ok=True)
-    for tag, loc, target, lens, kind in VIEWS:
+    only = globals().get("GLOSSY_ONLY")
+    for tag, loc, target, lens, kind in VIEWS + HERO:
+        if only and tag not in only:
+            continue
+        if tag in dict((h[0], 1) for h in HERO) and not globals().get("GLOSSY_FINAL"):
+            continue
         cd.type = kind
         if kind == "ORTHO":
             cd.ortho_scale = lens
@@ -443,7 +561,7 @@ def _main():
     sc.camera = old_cam
     sc.world = old_world
     bpy.data.worlds.remove(world)
-    for m in (rubber, bronze, gmat, *finmats.values()):
+    for m in {id(x): x for x in (rubber, bronze, gmat, *finmats.values())}.values():
         bpy.data.materials.remove(m)
     sc.render.engine = old_engine
     for o, h in hidden:

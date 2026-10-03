@@ -3,6 +3,8 @@ P01,FRONT_FASCIA,-,FRONT,3,+X,printed master -> composite,OURS,C,yes,RED,A2 B1 C
 P28,FRONT_SPLITTER_L,L,FRONT,4,+Z,printed master -> composite,OURS,C,yes,RED,A2 B1 C3,"our splitter; the first thing to ground out, so replaceable alone"
 P41,FRONT_SPLITTER_R,R,FRONT,4,+Z,printed master -> composite,OURS,C,yes,RED,A2 B1 C3,"our splitter; the first thing to ground out, so replaceable alone"
 P43,FRONT_MASK,-,FRONT,4,+X,direct print,OURS,C,yes,RED,A2 B1 C3,our mask in the central mouth; what the mouth feeds is a donor question
+P54,CORNER_GRILLE_L,L,FRONT,4,+X,direct print,OURS,C,yes,RED,A2 B1 C3,our grille in our corner pocket; what it feeds is a donor question
+P55,CORNER_GRILLE_R,R,FRONT,4,+X,direct print,OURS,C,yes,RED,A2 B1 C3,our grille in our corner pocket; what it feeds is a donor question
 P02,HOOD,-,FRONT,5,-Z,printed master -> composite,MIXED,C,yes,YELLOW,A1 B2 C3,outer shape ours; rear edge lands on the donor cowl
 P03,FRONT_FENDER_L,L,FRONT,5,-Y,printed master -> composite,DONOR,C,yes,YELLOW,A2 B1 C3,arch opening and the front shut line govern it
 P04,FRONT_FENDER_R,R,FRONT,5,+Y,printed master -> composite,DONOR,C,yes,YELLOW,A2 B1 C3,arch opening and the front shut line govern it
@@ -32,6 +34,8 @@ P20,ENGINE_COVER,-,REAR,17,-Z,printed master -> composite,MIXED,C,yes,RED,A0 B1 
 P33,ENGINE_COVER_LOUVRES,-,REAR,18,-Z,direct print,MIXED,C,yes,RED,A0 B1 C3,our louvres; the engine lid aperture governs where they can sit
 P21,REAR_FASCIA,-,REAR,19,-X,printed master -> composite,OURS,C,yes,YELLOW,A1 B1 C2,our rear form
 P22,DIFFUSER,-,REAR,22,-X,printed master -> composite,OURS,C,yes,RED,A1 B0 C3,our diffuser; only its top edge meets the donor floor
+P56,TAIL_VENT_GRILLE_L,L,REAR,20,-X,direct print,OURS,C,yes,YELLOW,A1 B1 C2,our grille in our tail corner pocket
+P57,TAIL_VENT_GRILLE_R,R,REAR,20,-X,direct print,OURS,C,yes,YELLOW,A1 B1 C2,our grille in our tail corner pocket
 P44,DIFFUSER_FIN_INNER_L,L,REAR,23,-Z,direct print,OURS,C,yes,RED,A1 B0 C3,our fin in our diffuser floor; nothing of the donor reaches it
 P45,DIFFUSER_FIN_INNER_R,R,REAR,23,-Z,direct print,OURS,C,yes,RED,A1 B0 C3,our fin in our diffuser floor; nothing of the donor reaches it
 P46,DIFFUSER_FIN_OUTER_L,L,REAR,23,-Z,direct print,OURS,C,yes,RED,A1 B0 C3,our fin in our diffuser floor; nothing of the donor reaches it

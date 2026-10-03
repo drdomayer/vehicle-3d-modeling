@@ -56,6 +56,10 @@ PARTS = [
     ("P41", "FRONT_SPLITTER_R",    "R",  "FRONT", 4,  "+Z", "printed master -> composite", "FRONT_CLAMSHELL"),
     # 2026-09-26: the central mouth exists for the first time (stage 03); this is the mask in it
     ("P43", "FRONT_MASK",          "-",  "FRONT", 4,  "+X", "direct print", "FRONT_CLAMSHELL"),
+    # 2026-10-03 (v058): the hexagonal grilles of ref-09. The mouth's mesh is P43's own infill; the
+    # two corner intakes and the two rear corner vents get their own plates. Printed (open item b).
+    ("P54", "CORNER_GRILLE_L",     "L",  "FRONT", 4,  "+X", "direct print", "FRONT_CLAMSHELL"),
+    ("P55", "CORNER_GRILLE_R",     "R",  "FRONT", 4,  "+X", "direct print", "FRONT_CLAMSHELL"),
     # 2026-09-29: the vertical bars standing in the corner intakes
     # P48..P51 (corner bars, strakes) and P52/P53 (tail corner blades) RETIRED 2026-09-29 -- owner's
     # review: parasitic. P29/P30 (lamp frames), P34 (centre mask), P35 (exhaust surround) and P36
@@ -100,6 +104,8 @@ PARTS = [
     ("P33", "ENGINE_COVER_LOUVRES","-",  "REAR",  18, "-Z", "direct print", "ENGINE_COVER"),
     ("P21", "REAR_FASCIA",         "-",  "REAR",  19, "-X", "printed master -> composite", "REAR_FASCIA"),
     ("P22", "DIFFUSER",            "-",  "REAR",  22, "-X", "printed master -> composite", "DIFFUSER"),
+    ("P56", "TAIL_VENT_GRILLE_L",  "L",  "REAR",  20, "-X", "direct print", "REAR_FASCIA"),
+    ("P57", "TAIL_VENT_GRILLE_R",  "R",  "REAR",  20, "-X", "direct print", "REAR_FASCIA"),
     # 2026-09-26: the diffuser has a rising floor for the first time, and fins standing in it
     ("P44", "DIFFUSER_FIN_INNER_L", "L",  "REAR",  23, "-Z", "direct print", "DIFFUSER"),
     ("P45", "DIFFUSER_FIN_INNER_R", "R",  "REAR",  23, "-Z", "direct print", "DIFFUSER"),
@@ -129,7 +135,8 @@ FINISH = {
     "P41": "carbon", "P22": "carbon", "P44": "carbon", "P45": "carbon", "P46": "carbon",
     "P47": "carbon", "P13": "carbon", "P14": "carbon",
     "P05": "gloss black", "P06": "gloss black", "P43": "gloss black",
-    "P33": "gloss black",
+    "P33": "gloss black", "P54": "gloss black", "P55": "gloss black", "P56": "gloss black",
+    "P57": "gloss black",
     # v056: the cover is BODY COLOUR around a black louvre field (ref-09 top and rear); it was
     # gloss black, and the assembled car showed a 1.0 x 1.1 m black slab behind the hoops
     "P20": "paint",
@@ -157,7 +164,7 @@ ASSEMBLY_ORDER = [
     (17, "engine cover"),
     (18, "engine cover louvres"),
     (19, "rear fascia"),
-    (20, "rear centre mask"),
+    (20, "rear corner vent grilles"),     # was the centre mask, retired 2026-09-30 (P34)
     (21, "plate recess and its lamp"),
     (22, "diffuser"),
     (23, "exhaust surround"),

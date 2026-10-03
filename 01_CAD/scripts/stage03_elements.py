@@ -191,6 +191,106 @@ def yz_prism(name, coll, x0, x1, poly):
     return ob
 
 
+def inset_poly(poly, d):
+    """A convex polygon (u, v) moved inward by d (negative: outward), corner by corner."""
+    n = len(poly)
+    area = sum(poly[i][0] * poly[(i + 1) % n][1] - poly[(i + 1) % n][0] * poly[i][1] for i in range(n))
+    sgn = 1.0 if area > 0 else -1.0
+    lines = []
+    for i in range(n):
+        (a, b), (c, e) = poly[i], poly[(i + 1) % n]
+        L = math.hypot(c - a, e - b)
+        nx, ny = -(e - b) / L * sgn, (c - a) / L * sgn      # inward normal
+        lines.append(((a + nx * d, b + ny * d), (c - a, e - b)))
+    out = []
+    for i in range(n):
+        (p1, d1), (p2, d2) = lines[i - 1], lines[i]
+        den = d1[0] * d2[1] - d1[1] * d2[0]
+        t = ((p2[0] - p1[0]) * d2[1] - (p2[1] - p1[1]) * d2[0]) / den
+        out.append((p1[0] + d1[0] * t, p1[1] + d1[1] * t))
+    return out
+
+
+def _inside(poly, u, v):
+    n = len(poly)
+    area = sum(poly[i][0] * poly[(i + 1) % n][1] - poly[(i + 1) % n][0] * poly[i][1] for i in range(n))
+    for i in range(n):
+        (a, b), (c, e) = poly[i], poly[(i + 1) % n]
+        if ((c - a) * (v - b) - (e - b) * (u - a)) * (1 if area > 0 else -1) < 0:
+            return False
+    return True
+
+
+def hex_grille(name, coll, poly, rim, pitch, bar, thick, to_world):
+    """A hexagonal mesh as ONE printable plate: the convex outline `poly` in a local (u, v) frame,
+    `thick` deep, with a hexagonal hole wherever a whole hexagon fits at least `rim` inside the
+    outline -- so the edge is a continuous frame and nothing is a loose bar. Built flat in (u, v, w)
+    and mapped to the car by the AFFINE `to_world(u, v, w) -> (spec_x, y, z)` after the boolean,
+    which keeps a planar grid planar and a slanted one slanted (2026-10-03, v058)."""
+    def prism_mesh(nm, pts2, w0, w1):
+        k = len(pts2)
+        v = [(u / 1000.0, vv / 1000.0, w0 / 1000.0) for u, vv in pts2] + \
+            [(u / 1000.0, vv / 1000.0, w1 / 1000.0) for u, vv in pts2]
+        f = [tuple(range(k)), tuple(range(2 * k - 1, k - 1, -1))] + \
+            [(i, (i + 1) % k, k + (i + 1) % k, k + i) for i in range(k)]
+        return v, f
+    pv, pf = prism_mesh(name, poly, -thick / 2.0, thick / 2.0)
+    me = bpy.data.meshes.new(name)
+    me.from_pydata(pv, [], pf)
+    me.update()
+    plate = bpy.data.objects.new(name, me)
+    coll.objects.link(plate)
+    inner = inset_poly(poly, rim)
+    r = (pitch - bar) / math.sqrt(3.0)              # hole circumradius, pointy-top
+    us = [q[0] for q in poly]
+    vs = [q[1] for q in poly]
+    cv, cf, holes = [], [], 0
+    row = 0
+    v0 = min(vs)
+    while v0 + row * pitch * math.sqrt(3.0) / 2.0 <= max(vs):
+        vc = v0 + row * pitch * math.sqrt(3.0) / 2.0
+        uc = min(us) + (pitch / 2.0 if row % 2 else 0.0)
+        while uc <= max(us):
+            hexp = [(uc + r * math.cos(math.radians(90 + 60 * k)),
+                     vc + r * math.sin(math.radians(90 + 60 * k))) for k in range(6)]
+            if all(_inside(inner, a, b) for a, b in hexp):
+                hv, hf = prism_mesh("h", hexp, -thick, thick)
+                base = len(cv)
+                cv += hv
+                cf += [tuple(base + i for i in f) for f in hf]
+                holes += 1
+            uc += pitch
+        row += 1
+    if holes:
+        cm = bpy.data.meshes.new(name + "_holes")
+        cm.from_pydata(cv, [], cf)
+        cm.update()
+        cut_o = bpy.data.objects.new(name + "_holes", cm)
+        coll.objects.link(cut_o)
+        for o_ in (plate, cut_o):
+            bm = bmesh.new()
+            bm.from_mesh(o_.data)
+            bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+            bm.to_mesh(o_.data)
+            bm.free()
+        m = plate.modifiers.new("holes", "BOOLEAN")
+        m.operation, m.object, m.solver = "DIFFERENCE", cut_o, "EXACT"
+        bpy.context.view_layer.objects.active = plate
+        bpy.ops.object.modifier_apply(modifier=m.name)
+        bpy.data.objects.remove(cut_o, do_unlink=True)
+    for vtx in plate.data.vertices:
+        sx, y, z = to_world(vtx.co.x * 1000.0, vtx.co.y * 1000.0, vtx.co.z * 1000.0)
+        vtx.co = (-sx / 1000.0, y / 1000.0, z / 1000.0)
+    plate.data.update()
+    bm = bmesh.new()
+    bm.from_mesh(plate.data)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(plate.data)
+    bm.free()
+    plate["holes"] = holes
+    return plate
+
+
 def frame(name, coll, x0, x1, y0, y1, z0, z1, wall):
     """A rectangular surround: the outer box with the inner one taken out of it, so what is left is
     a thin frame standing in the pocket. This is the 'thin light blade' read -- the lamp sits behind
@@ -1066,6 +1166,67 @@ def main():
         print(f"  engine-cover louvres: aperture spec X {LOUVRE['x0']:.0f}..{LOUVRE['x1']:.0f}, |Y| < "
               f"{LOUVRE['hw']:.0f}, {LOUVRE['depth']:.0f} deep; a crate of {n_sl} transverse slats on "
               f"{len(ribs_y)} ribs, tops {LOUVRE['under']:.0f} under the skin -> P33 (SHAPE ONLY)")
+
+    # ---- 12. THE GRILLES, 2026-10-03 (v058). Owner: "continue with the bumpers, grilles". ref-09
+    # closes every front opening with a HEXAGONAL MESH -- the central mouth, both corner intakes --
+    # and puts the same mesh in the vertical vents at the rear corners. Ours were open holes. Each
+    # is one flat printed plate standing in its pocket, outline 2 mm INTO the pocket walls so it is
+    # carried by them, never hanging: the central one is the P43 frame's own infill (one part),
+    # the corners are P54 / P55, the tail vents P56 / P57. Hexagons only where a whole one fits
+    # inside a continuous rim, so there is no loose bar to print. Gloss black. This decides the
+    # owner's open item (b) as PRINTED; a bought mesh drops into the same frame if preferred.
+    fm_ = next((o_ for o_ in made if o_.name.startswith("FRONT_MASK")), None)
+    mpoly = [(-MOUTH["hw_lo"], MOUTH["z_lo"]), (MOUTH["hw_lo"], MOUTH["z_lo"]),
+             (MOUTH["hw_hi"], MOUTH["z_hi"]), (-MOUTH["hw_hi"], MOUTH["z_hi"])]
+    mg = hex_grille("FRONT_MASK_GRILLE", coll, inset_poly(mpoly, 22.0), 6.0, 34.0, 5.0, 6.0,
+                    lambda u, v, w: (-841.0 + w, u, v))
+    if fm_ is not None:
+        m = fm_.modifiers.new("grille", "BOOLEAN")
+        m.operation, m.object, m.solver = "UNION", mg, "EXACT"
+        bpy.context.view_layer.objects.active = fm_
+        bpy.ops.object.modifier_apply(modifier=m.name)
+        print(f"  mouth grille: {mg['holes']} hexagons, pitch 34, bars 5, 6 deep, in the P43 frame (one part)")
+        bpy.data.objects.remove(mg, do_unlink=True)
+    # the corner grilles: a plane 30 mm behind the chamfered face, leaning with it (the face runs
+    # from spec X ~-945 at the inner edge to ~-790 at the outer), and never closer than 8 mm to
+    # the pocket floor at -750
+    def face_x(yy):
+        xs = []
+        for zt in (300.0, 360.0, 420.0):
+            p_, n_ = surface_hit(mathutils.Vector((mm(1000.0), mm(yy), mm(zt))), [(1.5, 0.0, 0.0)])
+            if p_ is not None:
+                xs.append(-p_.x * 1000.0)
+        return max(xs) if xs else None
+    ya, yb = CORNER_POLY[0][0], CORNER_POLY[1][0]
+    fa, fb = face_x(ya + 15.0), face_x(yb - 15.0)
+    xa = min((fa if fa is not None else -900.0) + 30.0, CORNER["x_floor"] - 8.0)
+    xb = min((fb if fb is not None else -790.0) + 30.0, CORNER["x_floor"] - 8.0)
+    k_ = (xb - xa) / (yb - ya)
+    nn = math.hypot(1.0, k_)
+    cpoly = inset_poly(CORNER_POLY, -2.0)
+    for sgn in (1, -1):
+        cg = hex_grille(f"CORNER_GRILLE_{'L' if sgn > 0 else 'R'}", coll, cpoly, 6.0, 44.0, 5.0, 6.0,
+                        lambda u, v, w, sgn=sgn: (xa + k_ * (u - ya) + w / nn, sgn * (u - w * k_ / nn), v))
+        cg["panel_id"] = "P54" if sgn > 0 else "P55"
+        cg["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
+        made.append(cg)
+    print(f"  corner grilles: {cg['holes']} hexagons each, pitch 44, a plane from spec X {xa:.0f} (Y {ya:.0f}) "
+          f"to {xb:.0f} (Y {yb:.0f}), 30 mm behind the face -> P54 / P55")
+    # the tail corner vents: a rearward-facing plate 15 mm behind the pocket's floor
+    # outer edge 4 mm inside the SKIN, not the pocket: the pocket runs out through the narrowing
+    # tail (hw ~765 at 3200), and with the outer edge at the pocket's 762 the plate stood 8 mm
+    # proud at its lower outer corner (check_floating, first run)
+    ys_ = [surface_y(TC["x_floor"] + 15.0, zz) for zz in (TC["z0"] - 2.0, 360.0, 420.0, 480.0, 540.0, TC["z1"] + 2.0)]
+    y_out_ = min([TC["y_out"] + 2.0] + [y_ - 4.0 for y_ in ys_ if y_])
+    tpoly = [(TC["y_in"] - 2.0, TC["z0"] - 2.0), (y_out_, TC["z0"] - 2.0),
+             (y_out_, TC["z1"] + 2.0), (TC["y_in"] - 2.0, TC["z1"] + 2.0)]
+    for sgn in (1, -1):
+        tg = hex_grille(f"TAIL_VENT_GRILLE_{'L' if sgn > 0 else 'R'}", coll, tpoly, 5.0, 26.0, 4.0, 6.0,
+                        lambda u, v, w, sgn=sgn: (TC["x_floor"] + 15.0 + w, sgn * u, v))
+        tg["panel_id"] = "P56" if sgn > 0 else "P57"
+        tg["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
+        made.append(tg)
+    print(f"  tail vent grilles: {tg['holes']} hexagons each, pitch 26, at spec X {TC['x_floor'] + 15:.0f} -> P56 / P57")
 
     # ---- 11. THE STRAKES AND THE SPLITTER LIP, 2026-09-29. ref-09's mask is faceted: from each
     # lamp's inner end a crease runs down and inward to the mouth's upper corner (the cheekbone),

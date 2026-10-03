@@ -118,6 +118,14 @@ DEF = {
             "off for exhaust and light access", "splits at the centreline and outboard of the bar"),
     "P43": ("front centre mask standing in the mouth; the grille", T_OURS, 8, "off with the fascia",
             "single piece"),
+    "P54": ("hexagonal grille in the left corner intake", T_OURS, 6, "off from the front, clipped "
+            "into the pocket walls", "single flat piece"),
+    "P55": ("hexagonal grille in the right corner intake", T_OURS, 6, "off from the front, clipped "
+            "into the pocket walls", "single flat piece"),
+    "P56": ("hexagonal grille in the left rear corner vent", T_OURS, 6, "off from behind",
+            "single flat piece"),
+    "P57": ("hexagonal grille in the right rear corner vent", T_OURS, 6, "off from behind",
+            "single flat piece"),
     "P44": ("inner diffuser fin, left", T_OURS, 8, "off with the diffuser", "single piece"),
     "P45": ("inner diffuser fin, right", T_OURS, 8, "off with the diffuser", "single piece"),
     "P46": ("outer diffuser fin, left", T_OURS, 8, "off with the diffuser", "single piece"),

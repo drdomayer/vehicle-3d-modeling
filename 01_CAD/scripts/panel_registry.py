@@ -111,6 +111,9 @@ PARTS = [
     ("P45", "DIFFUSER_FIN_INNER_R", "R",  "REAR",  23, "-Z", "direct print", "DIFFUSER"),
     ("P46", "DIFFUSER_FIN_OUTER_L", "L",  "REAR",  23, "-Z", "direct print", "DIFFUSER"),
     ("P47", "DIFFUSER_FIN_OUTER_R", "R",  "REAR",  23, "-Z", "direct print", "DIFFUSER"),
+    # 2026-10-03 (v059): the third pair, three fins each side of the exhaust box as in ref-09
+    ("P58", "DIFFUSER_FIN_EDGE_L",  "L",  "REAR",  23, "-Z", "direct print", "DIFFUSER"),
+    ("P59", "DIFFUSER_FIN_EDGE_R",  "R",  "REAR",  23, "-Z", "direct print", "DIFFUSER"),
     # P23: the ducktail has been IN the tail profile since v031 and the REAR_SPOILER envelope sits
     # 125.7 mm inside the body (stage03, 2026-09-21). A register question for the owner: absorb it
     # into P21/P19 (one line to delete here) or keep a separate lip. Left as is until answered.
@@ -133,7 +136,7 @@ FINISH = {
     "P23": "paint", "P37": "paint", "P38": "paint",
     "P07": "carbon", "P08": "carbon", "P39": "carbon", "P40": "carbon", "P28": "carbon",
     "P41": "carbon", "P22": "carbon", "P44": "carbon", "P45": "carbon", "P46": "carbon",
-    "P47": "carbon", "P13": "carbon", "P14": "carbon",
+    "P47": "carbon", "P58": "carbon", "P59": "carbon", "P13": "carbon", "P14": "carbon",
     "P05": "gloss black", "P06": "gloss black", "P43": "gloss black",
     "P33": "gloss black", "P54": "gloss black", "P55": "gloss black", "P56": "gloss black",
     "P57": "gloss black",

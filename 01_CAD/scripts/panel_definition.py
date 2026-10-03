@@ -130,6 +130,8 @@ DEF = {
     "P45": ("inner diffuser fin, right", T_OURS, 8, "off with the diffuser", "single piece"),
     "P46": ("outer diffuser fin, left", T_OURS, 8, "off with the diffuser", "single piece"),
     "P47": ("outer diffuser fin, right", T_OURS, 8, "off with the diffuser", "single piece"),
+    "P58": ("edge diffuser fin, left", T_OURS, 8, "off with the diffuser", "single piece"),
+    "P59": ("edge diffuser fin, right", T_OURS, 8, "off with the diffuser", "single piece"),
     "P22": ("large functional diffuser, few large fins", T_BOLT, 15,
             "first thing to ground out; replaceable alone", "splits between fin roots"),
     "P23": ("integrated ducktail lip growing from the deck", T_OURS, 10,

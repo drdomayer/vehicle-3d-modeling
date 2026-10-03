@@ -607,7 +607,7 @@ def main():
     for sgn in (1, -1):
         tag = "L" if sgn > 0 else "R"
         tops = {}
-        for sx in (-215, -125, -35, 55, 145):
+        for sx in (-215, -161, -107, -53, 1, 55, 145):
             # the lowest skin along the whole slat, not at the slot centre: measured at Y 465
             # the outboard end of each slat stood 6.5 mm above the bonnet (check_floating.py)
             ts = [t for t in (surface_z(sx, 391), surface_z(sx, 465), surface_z(sx + 90, 539),
@@ -619,7 +619,9 @@ def main():
                     712.0, z_top_rail, 6.0)
         parts = [slab(f"_rail2_{tag}", (-225.0, sgn * 539.0), (155.0, sgn * 539.0),
                       712.0, z_top_rail, 6.0)]
-        for sx in (-215, -125, -35, 55):
+        # v059: SIX slats at a 54 mm pitch instead of four at 90 -- ref-09's vent carries 5..6;
+        # the first and last stay where they were, so the comb still ends inside the slot
+        for sx in (-215, -161, -107, -53, 1, 55):
             parts.append(slab(f"_slat_{tag}_{sx}", (sx, sgn * 391.0), (sx + 90.0, sgn * 539.0),
                               712.0, tops[sx], 6.0))
         for p in parts:
@@ -631,7 +633,7 @@ def main():
         comb["panel_id"] = "P05" if sgn > 0 else "P06"
         comb["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
         made.append(comb)
-    print("  fender vent: a louvre comb -- four diagonal 6 mm slats on two rails, one part -> P05 / P06")
+    print("  fender vent: a louvre comb -- six diagonal 6 mm slats on two rails, one part -> P05 / P06")
 
 
     # ---- 4. the rear. In ref-05 the tail is not a wall: a recessed centre mask sits between the
@@ -957,20 +959,21 @@ def main():
     # floor surface and its bottom at Z 125 -- the body's own floor is Z 120, so the 120 mm road
     # clearance is untouched. The tail narrows to ~260 mm at spec X 3420, so the outer pair stops
     # at 3300 where the underside is still ~960 wide; the inner pair runs to 3400.
-    def floor_z(sx):
-        a = [(-mm(sx), mm(0.0), mm(-1.0))]
+    def floor_z(sx, yy=0.0):
         best = None
         for o in body_objects():
             inv = o.matrix_world.inverted()
-            origin = inv @ mathutils.Vector((-mm(sx), 0.0, -1.0))
+            origin = inv @ mathutils.Vector((-mm(sx), mm(yy), -1.0))
             d = inv.to_3x3() @ mathutils.Vector((0.0, 0.0, 1.0))
             h, loc, n, i = o.ray_cast(origin, d)
             if h:
                 z = (o.matrix_world @ loc).z * 1000.0
                 best = z if best is None else min(best, z)
         return best
-    for pid_l, pid_r, y, x_end, nm in (("P44", "P45", 150.0, 3400.0, "INNER"),
-                                       ("P46", "P47", 330.0, 3300.0, "OUTER")):
+    # v059: re-spaced 150/330 -> 120/255 so three fit EVENLY in the flat tunnel, which is
+    # measured flat only to |Y| ~400..450 (outboard of that the floor drops into the legs' wall)
+    for pid_l, pid_r, y, x_end, nm in (("P44", "P45", 120.0, 3400.0, "INNER"),
+                                       ("P46", "P47", 255.0, 3300.0, "OUTER")):
         xs = [3000.0 + k * (x_end - 3000.0) / 4.0 for k in range(5)]
         for sgn in (1, -1):
             st = []
@@ -987,8 +990,29 @@ def main():
             b["panel_id"] = pid_l if sgn > 0 else pid_r
             b["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
             made.append(b)
-    print("  diffuser fins: four 16 mm blades in the tunnel between the legs, bottoms on the leg line")
-    print("    -> P44 / P45 inner at Y +-150, P46 / P47 outer at Y +-330")
+    # v059, 2026-10-03: a THIRD pair. ref-09's rear view carries three fins each side of the
+    # exhaust box; ours had two. Y 490 was tried first and the tunnel is not flat there at any
+    # station (measured: 23 mm lower at 3000). At Y 390 it is, as far back as the tail's narrowing
+    # allows: the fin runs from 3000 to the last station where the floor at its outer face (Y 398)
+    # is within 3 mm of the centre floor -- read off the body, not typed.
+    st_e = {1: [], -1: []}
+    for k in range(9):
+        x = 3000.0 + k * 50.0
+        f0, fy = floor_z(x), floor_z(x, 398.0)
+        if f0 is None or fy is None or abs(fy - f0) > 3.0:
+            break
+        for sgn in (1, -1):
+            st_e[sgn].append((x, sgn * 390.0, _sk["table_z"](_sk["DIFFUSER_LEGS"]["leg_z"], x), f0 + 12.0))
+    for sgn in (1, -1):
+        if len(st_e[sgn]) >= 3:
+            b = blade(f"DIFFUSER_FIN_EDGE_{'L' if sgn > 0 else 'R'}", coll, st_e[sgn], 16.0)
+            b["panel_id"] = "P58" if sgn > 0 else "P59"
+            b["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
+            made.append(b)
+    x_e = st_e[1][-1][0] if st_e[1] else None
+    print("  diffuser fins: six 16 mm blades in the tunnel between the legs, bottoms on the leg line")
+    print(f"    -> P44 / P45 inner at Y +-120, P46 / P47 outer at Y +-255, P58 / P59 edge at Y +-390 "
+          f"(3000..{x_e:.0f})" if x_e else "    -> edge pair NOT built: the tunnel is not flat at Y 390")
 
     # ---- 9. THE DRL GROOVE, 2026-09-28. The DRL blade had been a curve in 04_LIGHTING since
     # 2026-09-14 and nothing was ever cut for it -- the front's strongest signature in ref-09, a

@@ -105,6 +105,7 @@ PANELS = ["P01", "P28", "P41", "P07", "P08", "P39", "P40", "P21", "P22",
           "P05", "P06", "P13", "P14", "P43",
           "P44", "P45", "P46", "P47",   # P17 / P18 are SHAPE ONLY; P48..P53 retired 2026-09-29
           "P54", "P55", "P56", "P57",   # v058: the grilles
+          "P58", "P59",                 # v059: the third fin pair
           "P24", "P25", "P31", "P32",
           # 2026-09-21: the tail blade's housings. They were BLOCKED for having no geometry, not
           # for waiting on the car -- docs/14 locks the lamp as a thin wide blade with sharp L
@@ -199,7 +200,7 @@ SHAPE_ONLY = {
 # Stage 03 elements are built by stage03_elements.py as closed solids in their own right -- a blade
 # already HAS its thickness -- so they skip both the map and the wall and go straight to sectioning.
 STAGE03 = {"P05", "P06", "P13", "P14", "P43",
-           "P44", "P45", "P46", "P47", "P17", "P18", "P54", "P55", "P56", "P57",
+           "P44", "P45", "P46", "P47", "P17", "P18", "P54", "P55", "P56", "P57", "P58", "P59",
            "P24", "P25", "P31", "P32", "P26", "P27", "P33"}
 SCHEDULE = []
 PLACEMENT = {}   # printed file -> the 4x4 that puts it back on the car

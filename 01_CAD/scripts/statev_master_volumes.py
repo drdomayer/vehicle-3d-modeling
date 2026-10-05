@@ -254,6 +254,75 @@ except (OSError, KeyError):
     _DS = None
 
 
+# THE DONOR TABLE, SMOOTHED FOR THE CLAMP, 2026-10-05 (v062). waviness_check found the side lumpy
+# and the measurement put the cause here: on the door band the skin sits EXACTLY on donor + 30
+# (Z 550: 873 874 872 867 869 871 ... against the table's 869 869 869 870 874 869 ...), so it
+# copied the table's +-5 mm cell-to-cell noise -- and the table is a blueprint read to +-30..50 mm,
+# so that noise says nothing about the car.
+# BILATERAL, not Gaussian: a plain blur ran across the real jumps (the wheel niches, 602 against
+# 889 in one cell) and fell 130-150 mm short of the table beside them. The bilateral weight
+# (sigma 150 mm in X, 50 in Z, 8 mm in value) averages only neighbours of similar value, so the
+# noise goes and the jumps stay. Its remaining shortfall (5.9 mm at worst) is then given back
+# LOCALLY: dilated over +-250 x 75 mm and blurred (sigma 75 x 25), which is >= the shortfall where
+# it occurs -- measured, the smoothed floor is nowhere inside the raw table (0.0 mm). Cost: the
+# floor sits on average 3.0..3.6 mm further out. check_donor_fit measures against the RAW table.
+# MEASURED AND SWITCHED OFF the same day: on the master, waviness_check 0.85 -> 0.83 mm RMS
+# overall, Z 550 0.78 -> 0.71 but Z 750 0.99 -> 1.07. The table's noise is real and was copied,
+# but it is not what makes the side lumpy in the gloss; that is the loft's long waves. Kept as
+# a switch, not deleted, because the scan will replace the table and the question will recur.
+DONOR_SMOOTH = False
+
+
+def _smooth_donor_table():
+    import math as _m
+    X, Z, H = _DS_X, _DS_Z, _DS_H
+    nx, nz = len(X), len(Z)
+    sx_, sz_ = X[1] - X[0], Z[1] - Z[0]
+    raw = [[H[str(x)][str(z)] for z in Z] for x in X]
+    rx, rz = int(3 * 150.0 / sx_), int(3 * 50.0 / sz_)
+    sm = [[None] * nz for _ in range(nx)]
+    for i in range(nx):
+        for j in range(nz):
+            v = raw[i][j]
+            if v is None:
+                continue
+            acc = wt = 0.0
+            for a in range(-rx, rx + 1):
+                for b in range(-rz, rz + 1):
+                    ii, jj = i + a, j + b
+                    if 0 <= ii < nx and 0 <= jj < nz and raw[ii][jj] is not None:
+                        u = raw[ii][jj]
+                        w = _m.exp(-0.5 * ((a * sx_ / 150.0) ** 2 + (b * sz_ / 50.0) ** 2 + ((u - v) / 8.0) ** 2))
+                        acc += w * u
+                        wt += w
+            sm[i][j] = acc / wt
+    de = [[max(0.0, raw[i][j] - sm[i][j]) if raw[i][j] is not None else 0.0 for j in range(nz)]
+          for i in range(nx)]
+    dx, dz = 5, 3
+    dil = [[max(de[ii][jj] for ii in range(max(0, i - dx), min(nx, i + dx + 1))
+                for jj in range(max(0, j - dz), min(nz, j + dz + 1))) for j in range(nz)] for i in range(nx)]
+    gx, gz = int(3 * 75.0 / sx_) + 1, int(3 * 25.0 / sz_) + 1
+    lift = [[0.0] * nz for _ in range(nx)]
+    for i in range(nx):
+        for j in range(nz):
+            acc = wt = 0.0
+            for a in range(-gx, gx + 1):
+                for b in range(-gz, gz + 1):
+                    ii, jj = i + a, j + b
+                    if 0 <= ii < nx and 0 <= jj < nz:
+                        w = _m.exp(-0.5 * ((a * sx_ / 75.0) ** 2 + (b * sz_ / 25.0) ** 2))
+                        acc += w * dil[ii][jj]
+                        wt += w
+            lift[i][j] = acc / wt
+    return {str(x): {str(z): (None if sm[i][j] is None else sm[i][j] + lift[i][j])
+                     for j, z in enumerate(Z)} for i, x in enumerate(X)}
+
+
+if _DS is not None and DONOR_SMOOTH:
+    _DS_H_RAW = _DS_H
+    _DS_H = _smooth_donor_table()
+
+
 def donor_hw(spec_x, z):
     """The donor block's half-width at (spec X, Z), bilinear on the 50 x 25 mm table; None off it
     or where the block has no body (a niche, the wheel well)."""
@@ -736,7 +805,13 @@ ROCKER_X0, ROCKER_X1 = 330.0, 1820.0
 
 # 2b. Rear flank. Every section was a smooth arc from floor to crown, so the haunch read as a bulge.
 # In the reference the flank is near vertical between the shoulder and the undercut.
-FLANK_X0, FLANK_X1 = 1900.0, 3050.0
+# X0 1900 -> 1700 on 2026-10-05 (v062), with FLANK_TOP starting at the door's own pushed-out top
+# (DOOR_OUT, Z 570..760, which ends at 1720). The owner: "the rear fenders do not look right".
+# Measured: between the end of DOOR_OUT (1720) and the start of this band (1900, wall top 660)
+# the shoulder fell into a SADDLE -- top at Y 880: 799 at 1700, 757 at 1900, 863 at 2300; width at
+# Z 800: 879, 852, 903 -- one 40 mm dip where ref-09's haunch line rises without a break. The two
+# fields now overlap instead of leaving a gap.
+FLANK_X0, FLANK_X1 = 1550.0, 3050.0   # 1700 left a 16 mm dip at 1800..1900: its 300 mm ramp-in
 FLANK_Z_LO, FLANK_Z_HI = 300.0, 660.0      # the band held near constant width (Z_HI: see FLANK_TOP)
 # The top of the wall became a TABLE on 2026-09-26, after the rear end view was measured against
 # ref-09 (endview_overlay.py): the reference keeps the haunch side a wall to about 0.55 of the
@@ -745,7 +820,7 @@ FLANK_Z_LO, FLANK_Z_HI = 300.0, 660.0      # the band held near constant width (
 # degrees from there: 0.07 / 0.17 / 0.26 of the climb at 1 / 3 / 5% in against 0.29 / 0.55 / 0.59.
 # The HAUNCH SAIL note below read the reference as "tucking in above the shoulder"; measured, it
 # does not, not until the plateau. Falls toward the tail so the haunch top drops with the body.
-FLANK_TOP = [(1900, 660), (2100, 800), (2600, 800), (2850, 740), (3050, 660)]
+FLANK_TOP = [(1550, 760), (1700, 770), (1900, 785), (2100, 800), (2600, 800), (2850, 740), (3050, 660)]
 # the plateau on top of the wall, as (in from the section top, up from it), scaled by the band's
 # own end fade; both are skipped where they would run into the deck-edge approach
 # (30, 35), (75, 50) measured first: plateau at 0.4 of the climb from the widest row to the

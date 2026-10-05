@@ -493,6 +493,7 @@ def ribbon(name, coll, targets, toward, width, depth_out, depth_in):
 
 SLIVER_MM = 10.0   # a cutter that overlaps a body volume by less than this along X is not applied to it
 PARASITIC = False  # 2026-09-29: the corner bars, strakes and tail corner blades are retired (owner's review)
+SAILS = False      # 2026-10-05: the buttress boards P17/P18 are retired (owner's review; see section 10)
 
 
 def cut(target, cutter):
@@ -1105,7 +1106,13 @@ def main():
     # BLOCKED; the blade goes to the shape-only tier with that written on it, so the rear can be
     # judged against the render as a whole and nothing here is a part to bond before S2.
     BUT_TOP = [(1800, 1120), (2000, 1120), (2200, 1110), (2415, 1090), (2600, 1040), (2750, 990)]
-    for sgn in (1, -1):
+    # RETIRED 2026-10-05 (v062). The owner: "the sides behind the seats do not look right". ref-09's
+    # top and side views, read together, show what these were standing in for: not thin sails but a
+    # HUMP behind each seat -- as tall as the hoop, as wide as the seat, sloping back into the louvre
+    # tray -- and from above, deck surface right up to the seat backs with no wall at the cabin edge.
+    # A 40 mm board 950 mm long at Y 705 matched neither view. The humps sit exactly in the volume
+    # the soft top folds into, so they wait on scan S2 with the deck (docs/14 J, superseded).
+    for sgn in (() if not SAILS else (1, -1)):
         st = []
         for sx, ztop in BUT_TOP:
             foot = surface_z(sx, sgn * 705.0)
@@ -1119,8 +1126,8 @@ def main():
         bl["stage"] = ("03 element — SHAPE ONLY: stands outboard of the GUESSED roof fold envelope "
                        "(Y 650); the deck between the blades and the blade's own foot wait on scan S2")
         made.append(bl)
-    print("  buttress blades: 40 mm sails at Y +-705, spec X 1800..2750, tops 1120 -> 990, outboard of the")
-    print("    guessed fold envelope -> P17 / P18 as SHAPE ONLY; the deck between them stays BLOCKED")
+    print("  buttress boards P17 / P18 retired (v062): ref-09 has humps behind the seats there, which")
+    print("    wait on scan S2 with the deck")
 
     # ---- 10b. THE ENGINE-COVER LOUVRES, 2026-10-02 (v056). The owner: "the rear cover is very
     # different". It was not different, it was ABSENT: the deck and the cover are BLOCKED on the

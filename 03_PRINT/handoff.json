@@ -1,5 +1,5 @@
 {
- "when": 1791189901.572264,
+ "when": 1791190386.3004029,
  "decisions": {
   "wall_mm": 3.0,
   "density_g_cm3": 1.24,
@@ -67,16 +67,14 @@
    "P12",
    "P15",
    "P16",
-   "P17",
-   "P18",
    "P19",
    "P20",
    "P33",
    "P42"
   ],
-  "sections": 19,
-  "one_piece": 19,
-  "fits_bed": 19,
+  "sections": 17,
+  "one_piece": 17,
+  "fits_bed": 17,
   "missing": {
    "P03": "outer form ours; the inner face is the donor's fender line. Carries a 30 mm TRIM ALLOWANCE past the door shut line (overlaps P09 by 30 mm): the line moves with door_front_x by +-15..30 mm and the scan says where to cut.",
    "P04": "mirror of P03, same note",
@@ -86,8 +84,6 @@
    "P16": "mirror of P15, same note",
    "P11": "outer form ours (the intake surround, spec X 1780..2300 above the rocker); the real opening behind it and the duct route are the donor's. Fit and bond surface come from the scan, as for P15.",
    "P12": "mirror of P11, same note",
-   "P17": "SHAPE ONLY in the strongest sense: a 40 mm sail at Y 685..725 on the quarter top, outboard of a roof fold envelope that is itself a guess (06_ROOF, PROVISIONAL). Its foot, the deck between the blades and whether it can exist at all wait on scan S2. Print it to look at the rear, not to bond.",
-   "P18": "mirror of P17, same note",
    "P19": "SHAPE ONLY in the strongest sense: the deck from the hoop plane to the fascia, around the engine cover. Its HEIGHT is the roof question (docs/14, DECK_SPINE BLOCKED): scan S2 decides whether it stays, moves with the clamshell or drops. Print to look, not to bond.",
    "P42": "mirror of P19, same note",
    "P20": "SHAPE ONLY in the strongest sense: the engine cover with the louvre aperture, spec X 2000..3000, |Y| < 560. Height as P19 (roof); the hinge, the latch and the real engine lid opening are the donor's. Print to look, not to bond.",
@@ -95,7 +91,7 @@
    "P02": "outer form ours between the fender crests (|Y| < 380). Rear edge: the file ends at spec X ~385, 35 mm short of the donor cowl (420) -- no allowance can be carried across the cabin cut, so the real rear edge, the hinges and the frunk aperture come from the scan."
   }
  },
- "core_kg": 86.2,
- "dropped_skin_mm2": 65401,
+ "core_kg": 70.5,
+ "dropped_skin_mm2": 65162,
  "small_sections_under_40mm": 0
 }

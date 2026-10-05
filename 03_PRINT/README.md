@@ -9,7 +9,7 @@
 | folder | parts | files | one piece | fits bed | what it is |
 |---|---|---|---|---|---|
 | `production/` | 33 | 35 | 35 | 35 | cores whose outer shape is final; mounting interface still to come from the donor scan |
-| `shape_only/` | 15 | 19 | 19 | 19 | shape masters for fitting — **not** parts to bond; the inner face or the trim edge depends on the car |
+| `shape_only/` | 13 | 17 | 17 | 17 | shape masters for fitting — **not** parts to bond; the inner face or the trim edge depends on the car |
 
 Every file is one printable solid, laid on its flattest face, sitting on Z = 0, in **millimetres**. Print it as it comes. `placement.json` in each folder carries the matrix that puts each file back on the car; `04_ENGINEERING/reports/print_schedule.csv` carries the same as degrees and millimetres.
 
@@ -25,15 +25,15 @@ Every file is one printable solid, laid on its flattest face, sitting on Z = 0, 
 | joint tab | 20 mm past each cut, dropped inward by wall + bond | fit test |
 | orientation | smallest dimension vertical | Q32 / Q33 |
 
-Estimated core mass across both tiers at these assumptions: **~86.2 kg**.
+Estimated core mass across both tiers at these assumptions: **~70.5 kg**.
 
 ## Quality of the files, as a slicer sees them
 
-`print_qc.py` reads every file back: closed, manifold, consistently wound, positive volume. Last run: **54 of 54 clean**, 0 with a defect.
+`print_qc.py` reads every file back: closed, manifold, consistently wound, positive volume. Last run: **52 of 52 clean**, 0 with a defect.
 
 ## Known problems, stated rather than hidden
 
-- **654 cm² of skin is in no file**: seam slivers and lone faces the region rule handed to a panel without connecting them to it, dropped and counted per file in `DROPPED_MM2`. The laminate bridges these; none is a part.
+- **652 cm² of skin is in no file**: seam slivers and lone faces the region rule handed to a panel without connecting them to it, dropped and counted per file in `DROPPED_MM2`. The laminate bridges these; none is a part.
 - The files are the **core** only. Laminate, filler and paint go on top and none of their thicknesses exist as data yet.
 - Orientation is *lay flattest, class-A face up* — never chosen against an overhang limit (Q32). `04_ENGINEERING/reports/overhang.csv` says, per file, how much area hangs past 45° and 60° as laid and turned over, so the shop's limit turns into a count rather than a question.
 - Nothing here touches the donor car. Every mounting point, hinge, hole and flange that lands on the Porsche is deliberately absent until the car is scanned.
@@ -52,8 +52,6 @@ Estimated core mass across both tiers at these assumptions: **~86.2 kg**.
 - **P16** — mirror of P15, same note
 - **P11** — outer form ours (the intake surround, spec X 1780..2300 above the rocker); the real opening behind it and the duct route are the donor's. Fit and bond surface come from the scan, as for P15.
 - **P12** — mirror of P11, same note
-- **P17** — SHAPE ONLY in the strongest sense: a 40 mm sail at Y 685..725 on the quarter top, outboard of a roof fold envelope that is itself a guess (06_ROOF, PROVISIONAL). Its foot, the deck between the blades and whether it can exist at all wait on scan S2. Print it to look at the rear, not to bond.
-- **P18** — mirror of P17, same note
 - **P19** — SHAPE ONLY in the strongest sense: the deck from the hoop plane to the fascia, around the engine cover. Its HEIGHT is the roof question (docs/14, DECK_SPINE BLOCKED): scan S2 decides whether it stays, moves with the clamshell or drops. Print to look, not to bond.
 - **P42** — mirror of P19, same note
 - **P20** — SHAPE ONLY in the strongest sense: the engine cover with the louvre aperture, spec X 2000..3000, |Y| < 560. Height as P19 (roof); the hinge, the latch and the real engine lid opening are the donor's. Print to look, not to bond.

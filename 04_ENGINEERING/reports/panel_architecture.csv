@@ -26,8 +26,6 @@ P13,INTAKE_BLADE_L,L,SIDE,13,-Y,direct print or CNC,OURS,C,yes,RED,A0 B1 C3,blad
 P14,INTAKE_BLADE_R,R,SIDE,13,+Y,direct print or CNC,OURS,C,yes,RED,A0 B1 C3,blade inside our own mouth
 P15,REAR_HAUNCH_L,L,REAR,14,-Y,printed master -> composite,DONOR,C,no,RED,A3 B0 C3,overlay bonded to the welded quarter; the quarter governs it
 P16,REAR_HAUNCH_R,R,REAR,14,+Y,printed master -> composite,DONOR,C,no,RED,A3 B0 C3,overlay bonded to the welded quarter; the quarter governs it
-P17,BUTTRESS_L,L,REAR,15,-Z,printed master -> composite,MIXED,C,no,YELLOW,A2 B3 C2,"our blade, but it sits in the roof fold envelope"
-P18,BUTTRESS_R,R,REAR,15,-Z,printed master -> composite,MIXED,C,no,YELLOW,A2 B3 C2,"our blade, but it sits in the roof fold envelope"
 P19,REAR_DECK_L,L,REAR,16,-Z,printed master -> composite,MIXED,C,no,RED,A0 B3 C3,"our deck, height governed by the roof fold envelope"
 P42,REAR_DECK_R,R,REAR,16,-Z,printed master -> composite,MIXED,C,no,RED,A0 B3 C3,"our deck, height governed by the roof fold envelope"
 P20,ENGINE_COVER,-,REAR,17,-Z,printed master -> composite,MIXED,C,yes,RED,A0 B1 C3,"our cover, aperture governed by the donor engine lid"

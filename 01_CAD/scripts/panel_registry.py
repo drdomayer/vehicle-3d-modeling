@@ -92,8 +92,8 @@ PARTS = [
     ("P14", "INTAKE_BLADE_R",      "R",  "SIDE",  13, "+Y", "direct print or CNC", "SIDE_INTAKE"),
     ("P15", "REAR_HAUNCH_L",       "L",  "REAR",  14, "-Y", "printed master -> composite", "REAR_HAUNCH"),
     ("P16", "REAR_HAUNCH_R",       "R",  "REAR",  14, "+Y", "printed master -> composite", "REAR_HAUNCH"),
-    ("P17", "BUTTRESS_L",          "L",  "REAR",  15, "-Z", "printed master -> composite", "BUTTRESS"),
-    ("P18", "BUTTRESS_R",          "R",  "REAR",  15, "-Z", "printed master -> composite", "BUTTRESS"),
+    # P17 / P18 BUTTRESS RETIRED 2026-10-05 (v062): 40 mm boards at Y 705 that matched neither ref-09
+    # view; the render has a hump behind each seat there, in the roof fold volume (scan S2).
     # Split into a pair on 2026-09-16. The engine cover occupies the centre of the deck, so the
     # deck was never one piece: it is two strips, one either side, that do not touch. The boundary
     # between them is our own cover half-width, not a donor value, so the pairing is safe to fix now
@@ -135,7 +135,7 @@ PARTS = [
 FINISH = {
     "P01": "paint", "P02": "paint", "P03": "paint", "P04": "paint", "P09": "paint",
     "P10": "paint", "P11": "paint", "P12": "paint", "P15": "paint", "P16": "paint",
-    "P17": "paint", "P18": "paint", "P19": "paint", "P42": "paint", "P21": "paint",
+    "P19": "paint", "P42": "paint", "P21": "paint",
     "P37": "paint", "P38": "paint", "P61": "carbon", "P62": "carbon", "P60": "satin silver",
     "P07": "carbon", "P08": "carbon", "P39": "carbon", "P40": "carbon", "P28": "carbon",
     "P41": "carbon", "P22": "carbon", "P44": "carbon", "P45": "carbon", "P46": "carbon",
@@ -165,7 +165,7 @@ ASSEMBLY_ORDER = [
     (12, "intake ducts"),
     (13, "intake blades"),
     (14, "rear haunches"),
-    (15, "buttresses"),
+    (15, "(buttresses -- retired 2026-10-05; the humps behind the seats wait on scan S2)"),
     (16, "rear deck"),
     (17, "engine cover"),
     (18, "engine cover louvres"),

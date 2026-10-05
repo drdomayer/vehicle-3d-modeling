@@ -174,11 +174,7 @@ SHAPE_ONLY = {
     "P12": "mirror of P11, same note",
     # 2026-09-29: the buttress blades, standing outboard of the GUESSED roof fold envelope. The
     # rear cannot be judged against the render without them; nothing about them is settled.
-    "P17": "SHAPE ONLY in the strongest sense: a 40 mm sail at Y 685..725 on the quarter top, "
-           "outboard of a roof fold envelope that is itself a guess (06_ROOF, PROVISIONAL). Its "
-           "foot, the deck between the blades and whether it can exist at all wait on scan S2. "
-           "Print it to look at the rear, not to bond.",
-    "P18": "mirror of P17, same note",
+    # P17 / P18 (the buttress boards) retired 2026-10-05 -- see stage03 section 10
     # 2026-10-02 (v056): THE DECK AND THE ENGINE COVER, on the footing of P17/P18. The assembled
     # car had a hole behind the hoops -- the surface exists in the body (Z 920..1020) but no file
     # carried it, because all three are BLOCKED on the roof fold envelope. That reason stands and
@@ -201,7 +197,7 @@ SHAPE_ONLY = {
 # Stage 03 elements are built by stage03_elements.py as closed solids in their own right -- a blade
 # already HAS its thickness -- so they skip both the map and the wall and go straight to sectioning.
 STAGE03 = {"P05", "P06", "P13", "P14", "P43",
-           "P44", "P45", "P46", "P47", "P17", "P18", "P54", "P55", "P56", "P57", "P58", "P59", "P60", "P61", "P62",
+           "P44", "P45", "P46", "P47", "P54", "P55", "P56", "P57", "P58", "P59", "P60", "P61", "P62",
            "P24", "P25", "P31", "P32", "P26", "P27", "P33"}
 SCHEDULE = []
 PLACEMENT = {}   # printed file -> the 4x4 that puts it back on the car

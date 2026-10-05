@@ -5,7 +5,7 @@ WAVINESS — the PRINT FILES (assembled), residual from a local quadratic over 3
   profile        samples   RMS mm   max mm   at spec X
   side  Z 350        175     0.46     2.85   3100
   side  Z 450        166     0.60     3.00   -630
-  side  Z 550        180     0.85     5.41   -620
+  side  Z 550        180     0.85     5.40   -620
   side  Z 650        203     0.64     2.30   320
   side  Z 750        329     1.05     5.02   1120
   top   Y 0          186     0.83     4.36   2210
@@ -17,4 +17,4 @@ WAVINESS — the PRINT FILES (assembled), residual from a local quadratic over 3
 
   A ripple shorter than the window reads at its own height; the car's curvature does
   not. Seams, lamp slots and openings break a profile rather than counting as waves.
-  Source: files, 54 files
+  Source: files, 58 files

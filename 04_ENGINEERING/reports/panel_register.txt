@@ -1,5 +1,5 @@
 ================================================================================================
-STATEV 001 — panel register.  50 parts, minimum practical count.
+STATEV 001 — panel register.  54 parts, minimum practical count.
 gap 4.0 mm | flange 20-35 mm | overlap 10-20 mm | nominal thickness 2.5 mm
 These are preliminary and change with the composite shop's answers (docs/13).
 ================================================================================================
@@ -52,6 +52,10 @@ P61  SPLITTER_END_L        L     FRONT   4     +X   RED     direct print
 P62  SPLITTER_END_R        R     FRONT   4     +X   RED     direct print
 P60  BADGE_REAR            -     REAR    21    -X   YELLOW  direct print
 P24  HEADLIGHT_HOUSING_L   L     LIGHTS  25    +X   YELLOW  direct print, ASA
+P65  EYE_BEZEL_IN_L        L     LIGHTS  25    +X   YELLOW  direct print, ASA
+P66  EYE_BEZEL_IN_R        R     LIGHTS  25    +X   YELLOW  direct print, ASA
+P67  EYE_BEZEL_OUT_L       L     LIGHTS  25    +X   YELLOW  direct print, ASA
+P68  EYE_BEZEL_OUT_R       R     LIGHTS  25    +X   YELLOW  direct print, ASA
 P25  HEADLIGHT_HOUSING_R   R     LIGHTS  25    +X   YELLOW  direct print, ASA
 P26  TAIL_HOUSING_L        L     LIGHTS  26    -X   YELLOW  direct print, ASA
 P27  TAIL_HOUSING_R        R     LIGHTS  26    -X   YELLOW  direct print, ASA
@@ -99,6 +103,6 @@ NOT IN THIS REGISTER YET — needs geometry or the shop's answers:
   - the exploded view itself — needs the panels
   - door operation envelope — needs hinge positions from the scan
 
-status of the 50 parts: RED 29, YELLOW 21
+status of the 54 parts: RED 29, YELLOW 25
 
 wrote /Users/miroslavstatev/vehicle-3d-modeling/04_ENGINEERING/reports/panel_bom.csv

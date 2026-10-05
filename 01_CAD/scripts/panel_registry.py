@@ -125,6 +125,12 @@ PARTS = [
     ("P62", "SPLITTER_END_R",      "R",  "FRONT", 4,  "+X", "direct print", "FRONT_CLAMSHELL"),
     ("P60", "BADGE_REAR",          "-",  "REAR",  21, "-X", "direct print", "REAR_FASCIA"),
     ("P24", "HEADLIGHT_HOUSING_L", "L",  "LIGHTS", 25, "+X", "direct print, ASA", "HEADLIGHT"),
+    # v066: the eye bezels -- the eye's volume minus the lens's R48 visibility cone, which splits
+    # each side into an inboard tip and an outboard blade. Bonded in after the housing.
+    ("P65", "EYE_BEZEL_IN_L",      "L",  "LIGHTS", 25, "+X", "direct print, ASA", "HEADLIGHT"),
+    ("P66", "EYE_BEZEL_IN_R",      "R",  "LIGHTS", 25, "+X", "direct print, ASA", "HEADLIGHT"),
+    ("P67", "EYE_BEZEL_OUT_L",     "L",  "LIGHTS", 25, "+X", "direct print, ASA", "HEADLIGHT"),
+    ("P68", "EYE_BEZEL_OUT_R",     "R",  "LIGHTS", 25, "+X", "direct print, ASA", "HEADLIGHT"),
     ("P25", "HEADLIGHT_HOUSING_R", "R",  "LIGHTS", 25, "+X", "direct print, ASA", "HEADLIGHT"),
     ("P26", "TAIL_HOUSING_L",      "L",  "LIGHTS", 26, "-X", "direct print, ASA", "TAIL_LIGHT"),
     ("P27", "TAIL_HOUSING_R",      "R",  "LIGHTS", 26, "-X", "direct print, ASA", "TAIL_LIGHT"),
@@ -149,8 +155,11 @@ FINISH = {
     # v056: the cover is BODY COLOUR around a black louvre field (ref-09 top and rear); it was
     # gloss black, and the assembled car showed a 1.0 x 1.1 m black slab behind the hoops
     "P20": "paint",
-    "P24": "hidden", "P25": "hidden", "P26": "hidden", "P27": "hidden", "P31": "hidden",
+    # v066: the headlamp housings are SEEN through the eye's module aperture, so they are black
+    # like the bezels round them; in v065 they rendered as grey boxes in the eye
+    "P24": "gloss black", "P25": "gloss black", "P26": "hidden", "P27": "hidden", "P31": "hidden",
     "P32": "hidden",
+    "P65": "gloss black", "P66": "gloss black", "P67": "gloss black", "P68": "gloss black",
 }
 
 ASSEMBLY_ORDER = [

@@ -730,6 +730,7 @@ def main():
         eye_st += [(ya + (yb - ya) * j / k, za0 + (zb0 - za0) * j / k, za1 + (zb1 - za1) * j / k)
                    for j in range(k)]
     eye_st.append(EYE[-1])
+    eye_hits = {1: [], -1: []}
     for sgn in (1, -1):
         quads = []
         for yy, z0, z1 in eye_st:
@@ -739,6 +740,7 @@ def main():
             if p_ is None:
                 continue
             ax = mathutils.Vector((1.0, 0.0, 0.0))     # repo +X is spec forward, out of the face
+            eye_hits[sgn].append((yy, z0, z1, p_.x))
             o_, i_ = p_ + ax * mm(EYE_OUT), p_ - ax * mm(EYE_DEPTH)
             quads.append([(o_.x, o_.y, mm(z0)), (i_.x, i_.y, mm(z0)), (i_.x, i_.y, mm(z1)), (o_.x, o_.y, mm(z1))])
         if len(quads) < 3:
@@ -762,6 +764,197 @@ def main():
     print(f"  eye: a {EYE_DEPTH:.0f} mm black wedge recess along the skin, Y {EYE[0][0]:.0f}..{EYE[-1][0]:.0f}, "
           f"{EYE[3][2]-EYE[3][1]:.0f} mm tall at the module tapering to {EYE[-1][2]-EYE[-1][1]:.0f} outboard")
 
+
+    # ---- 5d. THE EYE BEZELS, 2026-10-05 (v066). Owner: "make the headlamp bezel". In v065 the eye
+    # read as a hole: the housing box and the pocket's bare walls showed through it. A real lamp has
+    # a black bezel round the module, and that is what this is -- with one rule above the look:
+    # R48 GEOMETRIC VISIBILITY of the dipped beam (45 deg outward, 10 inward, 15 up, 10 down) is a
+    # legal input (hard constraint 5), so the bezel is the eye's volume MINUS the cone the lens must
+    # be seen through. Measured before it existed: from the lens, 55 % is visible at 45 out, 90 %
+    # at 10 in, 100 % at 15 up, 81 % at 10 down -- check_lighting re-measures it with the bezels in
+    # place, and the cone cut means they cannot take away any of it by construction.
+    # The consequence is a fact, not a choice: the cone fills the eye's whole height in front of
+    # the lens, so a CLOSED frame round the module is not possible; the bezel is two parts a side,
+    # an inboard tip and the outboard blade. Gloss black, 6 mm under the skin so the eye keeps a
+    # sharp lip; back face on the eye floor; 1 mm clearance to the pocket all round.
+    BEZEL = dict(front=6.0, back=39.5, gap=1.0)
+    LENS = dict(sx=-675.0, y=645.0, z=560.0, r=48.0)    # PROJECTOR face; Hella 90 mm lens + 3 mm
+    R48 = dict(out=45.0, inb=10.0, up=15.0, down=10.0)
+
+    def vis_cone(name, sgn):
+        bm = bmesh.new()
+        dirs = [(0.0, 0.0, 0.0)] + [(0.40, h, v) for h in (R48["out"], -R48["inb"])
+                                     for v in (R48["up"], -R48["down"])]
+        for dx, h, v in dirs:
+            for k in range(32):
+                a = 2.0 * math.pi * k / 32
+                y = LENS["y"] + LENS["r"] * math.cos(a)
+                z = LENS["z"] + LENS["r"] * math.sin(a)
+                bm.verts.new((mm(-LENS["sx"]) + dx, sgn * (mm(y) + dx * math.tan(math.radians(h))),
+                              mm(z) + dx * math.tan(math.radians(v))))
+        res = bmesh.ops.convex_hull(bm, input=bm.verts[:])
+        junk = set(res["geom_interior"]) | set(res["geom_unused"])
+        if junk:
+            bmesh.ops.delete(bm, geom=list(junk), context="VERTS")
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        me = bpy.data.meshes.new(name)
+        bm.to_mesh(me)
+        bm.free()
+        ob = bpy.data.objects.new(name, me)
+        coll.objects.link(ob)
+        return ob
+
+    def skin_x(y_mm, z_mm):
+        """Repo X of the uncut skin met by a ray along -X at (Y, Z); the cuts are applied last."""
+        best = None
+        for o in body_objects():
+            inv = o.matrix_world.inverted()
+            org = mathutils.Vector((2.0, mm(y_mm), mm(z_mm)))
+            h, loc, _n, _i = o.ray_cast(inv @ org, (inv.to_3x3() @ mathutils.Vector((-1.0, 0.0, 0.0))).normalized())
+            if h:
+                x = (o.matrix_world @ loc).x
+                best = x if best is None else max(best, x)
+        return best
+
+    bez_made = []
+    for sgn in (1, -1):
+        # every 5 mm, not the eye's 15: across the nose's corner crease (Y ~750) a 15 mm chord of
+        # the face stood up to 5 mm outside the skin. The eye floor between its stations is linear
+        # (the cutter is lofted straight), so interpolating px keeps the back on the floor exactly.
+        st = []
+        for a, b in zip(eye_hits[sgn], eye_hits[sgn][1:]):
+            k = max(1, int(math.ceil(abs(b[0] - a[0]) / 5.0)))
+            st += [tuple(a[q] + (b[q] - a[q]) * j / k for q in range(4)) for j in range(k)]
+        if eye_hits[sgn]:
+            st.append(eye_hits[sgn][-1])
+        if len(st) < 3:
+            continue
+        # The face follows the skin at EVERY height, not at the station's mid-height: the first run
+        # placed it from one skin point per station and check_floating read the bezels 43-44 mm
+        # proud, because above Z ~600 the skin turns back into the bonnet. Each station is now N
+        # points on the skin minus BEZEL["front"], over the Z range where the skin is at least
+        # 2 mm + front ahead of the eye floor; where the eye never opened, there is no bezel.
+        N = 9
+        profiles = []
+        for i, (yy, z0, z1, px) in enumerate(st):
+            y_ = yy + (BEZEL["gap"] if i == 0 else -BEZEL["gap"] if i == len(st) - 1 else 0.0)
+            bx = px - mm(BEZEL["back"])
+            zs = [z0 + BEZEL["gap"] + (z1 - z0 - 2 * BEZEL["gap"]) * k / 24.0 for k in range(25)]
+            ok = [(z, skin_x(sgn * y_, z)) for z in zs]
+            ok = [(z, x) for z, x in ok if x is not None and x - mm(BEZEL["front"]) - bx >= mm(2.0)]
+            if len(ok) < 2:
+                continue
+            # the longest contiguous run of valid heights
+            runs, cur = [], [ok[0]]
+            for a, b in zip(ok, ok[1:]):
+                if b[0] - a[0] > (z1 - z0) / 24.0 * 1.5:
+                    runs.append(cur)
+                    cur = []
+                cur.append(b)
+            runs.append(cur)
+            run = max(runs, key=len)
+            if len(run) < 2:
+                continue
+            zlo, zhi = run[0][0], run[-1][0]
+            prof = []
+            for k in range(N):
+                z = zlo + (zhi - zlo) * k / (N - 1)
+                x = skin_x(sgn * y_, z) or (bx + mm(BEZEL["front"] + 2.0))
+                prof.append((max(x - mm(BEZEL["front"]), bx + mm(2.0)), mm(sgn * y_), mm(z)))
+            prof += [(bx, mm(sgn * y_), mm(zhi - (zhi - zlo) * k / (N - 1))) for k in range(N)]
+            profiles.append(prof)
+        if len(profiles) < 2:
+            continue
+        P = 2 * N
+        verts = [v for pr in profiles for v in pr]
+        faces = [tuple(range(P)), tuple(range(len(verts) - 1, len(verts) - 1 - P, -1))]
+        for i in range(len(profiles) - 1):
+            a, b = i * P, (i + 1) * P
+            faces += [(a + k, a + (k + 1) % P, b + (k + 1) % P, b + k) for k in range(P)]
+        side = "L" if sgn > 0 else "R"
+        me = bpy.data.meshes.new(f"_bezel_{side}")
+        me.from_pydata(verts, [], faces)
+        me.update()
+        bz = bpy.data.objects.new(me.name, me)
+        coll.objects.link(bz)
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        bm.to_mesh(me)
+        bm.free()
+        cone = vis_cone(f"_r48_cone_{side}", sgn)
+        m = bz.modifiers.new("r48", "BOOLEAN")
+        m.operation, m.object, m.solver = "DIFFERENCE", cone, "EXACT"
+        bpy.context.view_layer.objects.active = bz
+        bpy.ops.object.modifier_apply(modifier=m.name)
+        bpy.data.objects.remove(cone, do_unlink=True)
+        # and never outside the skin: intersected with the (still uncut) front volume. Across the
+        # nose corner's crest (Z ~553, rising along Y) the loft between two stations crossed the
+        # step and stood up to 5 mm proud however densely it was sampled; the intersection makes
+        # that impossible, at the price of the face sitting flush there instead of 6 mm under.
+        fronts = [o for o in body_objects() if "FRONT" in o.name]
+        if fronts:
+            m = bz.modifiers.new("in_skin", "BOOLEAN")
+            m.operation, m.object, m.solver = "INTERSECT", fronts[0], "EXACT"
+            bpy.context.view_layer.objects.active = bz
+            bpy.ops.object.modifier_apply(modifier=m.name)
+        # one object per connected piece; the inboard one is the tip, the outboard one the blade
+        bm = bmesh.new()
+        bm.from_mesh(bz.data)
+        bm.faces.ensure_lookup_table()
+        seen, comps = set(), []
+        for f0 in bm.faces:
+            if f0.index in seen:
+                continue
+            stack, fs = [f0], []
+            seen.add(f0.index)
+            while stack:
+                f = stack.pop()
+                fs.append(f.index)
+                for e in f.edges:
+                    for g in e.link_faces:
+                        if g.index not in seen:
+                            seen.add(g.index)
+                            stack.append(g)
+            comps.append(fs)
+        for fs in comps:
+            pb = bmesh.new()
+            pb.from_mesh(bz.data)
+            pb.faces.ensure_lookup_table()
+            keep = set(fs)
+            bmesh.ops.delete(pb, geom=[f for f in pb.faces if f.index not in keep], context="FACES")
+            # the cone and the skin intersection leave NEEDLES -- a zero-area triangle with a 100 mm
+            # edge at Y 560 / Z 523 on the inboard tip, which the print file read as 1 open and
+            # 5 non-manifold edges. Collapsed here, not deleted (deleting opens the solid).
+            bmesh.ops.remove_doubles(pb, verts=pb.verts[:], dist=1e-5)
+            bmesh.ops.dissolve_degenerate(pb, dist=1e-5, edges=pb.edges[:])
+            loose = [v for v in pb.verts if not v.link_faces]
+            if loose:
+                bmesh.ops.delete(pb, geom=loose, context="VERTS")
+            vol_cm3 = abs(pb.calc_volume()) * 1e6
+            if vol_cm3 < 2.0:              # a crumb of the cone cut, not a part
+                pb.free()
+                continue
+            ymid = sum(abs(v.co.y) for v in pb.verts) / max(1, len(pb.verts)) * 1000.0
+            where = "IN" if ymid < LENS["y"] else "OUT"
+            pid = {("IN", 1): "P65", ("IN", -1): "P66", ("OUT", 1): "P67", ("OUT", -1): "P68"}[(where, sgn)]
+            nm = f"EYE_BEZEL_{where}_{side}"
+            stale = bpy.data.meshes.get(nm)     # the previous run's mesh outlives its object
+            if stale is not None and stale.users == 0:
+                bpy.data.meshes.remove(stale)
+            pm = bpy.data.meshes.new(nm)
+            pb.to_mesh(pm)
+            pb.free()
+            po = bpy.data.objects.new(nm, pm)
+            coll.objects.link(po)
+            po["panel_id"] = pid
+            po["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
+            made.append(po)
+            bez_made.append((po.name, round(vol_cm3, 1), round(ymid)))
+        bpy.data.objects.remove(bz, do_unlink=True)
+    print(f"  eye bezels: gloss black, {BEZEL['front']:.0f} mm under the skin (flush over the corner crest), minus the R48 visibility cone "
+          f"of the lens (45 out / 10 in / 15 up / 10 down) -> " +
+          ", ".join(f"{n} {v} cm3 at |Y| {y}" for n, v, y in bez_made))
 
     # ---- 6. the lamp housing behind the blade. PROJECTOR is a DECIDED envelope at spec X -600,
     # Y +-560, Z 570, 150 x 110 x 110 for one Hella 90 mm bi-LED module, and the module itself may

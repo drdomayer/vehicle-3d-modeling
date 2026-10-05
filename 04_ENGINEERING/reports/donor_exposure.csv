@@ -10,5 +10,5 @@ P19,REAR_DECK_L,0.8339,1761,2969,hoop_x,yes,15-30,15.0,boundary travels with the
 P20,ENGINE_COVER,0.6076,2035,2998,,no,0,15.0,boundary INDEPENDENT of every approx donor value
 P21,REAR_FASCIA,1.2067,3000,3420,,no,0,15.0,boundary INDEPENDENT of every approx donor value
 P22,DIFFUSER,1.274,2870,3420,,no,0,15.0,boundary INDEPENDENT of every approx donor value
-P28,FRONT_SPLITTER_L,0.083,-950,-661,,no,0,15.0,boundary INDEPENDENT of every approx donor value
+P28,FRONT_SPLITTER_L,0.0907,-950,-661,,no,0,15.0,boundary INDEPENDENT of every approx donor value
 P39,ROCKER_END_L,0.0769,2729,2864,,no,0,15.0,boundary INDEPENDENT of every approx donor value

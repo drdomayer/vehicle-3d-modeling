@@ -172,14 +172,22 @@ def in_poly(u, v, poly, tol):
 
 
 def not_panel(sx, ay, z, nz, ny):
-    if z < 130 and nz < -0.4:
+    # v066: the floor never faces FORWARD. Ahead of the fascia line (spec X < -655) the lower edge of
+    # the nose chamfer rolls under at Z 120..132 with normals like (-0.63, 0.39, -0.67): the rule
+    # below took that strip for floor, and it was the only skin joining the splitter's front lip
+    # (Y 0..530) to its chamfer band (Y 470..790) -- so P28 was two surfaces touching at ONE vertex,
+    # hidden for months by a piece count that walked vertices. A face there with |nx| over 0.25 is
+    # the splitter's own surface. The flat floor reads |nx| ~0.
+    nxa = max(0.0, 1.0 - nz * nz - ny * ny) ** 0.5
+    nose_edge = sx < -655.0 and nxa > 0.25
+    if z < 130 and nz < -0.4 and not nose_edge:
         return "X_FLOOR"
     # v061: the underside roll-under. Faces facing the road (nz < -0.85) just above Z 130 were
     # skin while their neighbours below 130 were floor, so the strip broke into islands that the
     # print chain then dropped -- assembly_check's worst point, a 24 mm gap under P03 at spec X
     # -309, Z 120..135, present since at least v059. Kept off the diffuser, whose tunnel ceiling
     # faces down at Z 150..330 and IS a panel.
-    if z < 145 and nz < -0.85 and sx < DIFFUSER_FRONT:
+    if z < 145 and nz < -0.85 and sx < DIFFUSER_FRONT and not nose_edge:
         return "X_FLOOR"
     if CABIN["x0"] <= sx <= CABIN["x1"] and ay <= 715 and z > 600 and ny > 0.4:
         return "X_CABIN"

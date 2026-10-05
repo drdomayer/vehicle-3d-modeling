@@ -8,7 +8,7 @@
 
 | folder | parts | files | one piece | fits bed | what it is |
 |---|---|---|---|---|---|
-| `production/` | 33 | 35 | 35 | 35 | cores whose outer shape is final; mounting interface still to come from the donor scan |
+| `production/` | 37 | 39 | 39 | 39 | cores whose outer shape is final; mounting interface still to come from the donor scan |
 | `shape_only/` | 15 | 19 | 19 | 19 | shape masters for fitting — **not** parts to bond; the inner face or the trim edge depends on the car |
 
 Every file is one printable solid, laid on its flattest face, sitting on Z = 0, in **millimetres**. Print it as it comes. `placement.json` in each folder carries the matrix that puts each file back on the car; `04_ENGINEERING/reports/print_schedule.csv` carries the same as degrees and millimetres.
@@ -25,11 +25,11 @@ Every file is one printable solid, laid on its flattest face, sitting on Z = 0, 
 | joint tab | 20 mm past each cut, dropped inward by wall + bond | fit test |
 | orientation | smallest dimension vertical | Q32 / Q33 |
 
-Estimated core mass across both tiers at these assumptions: **~75.3 kg**.
+Estimated core mass across both tiers at these assumptions: **~76.6 kg**.
 
 ## Quality of the files, as a slicer sees them
 
-`print_qc.py` reads every file back: closed, manifold, consistently wound, positive volume. Last run: **54 of 54 clean**, 0 with a defect.
+`print_qc.py` reads every file back: closed, manifold, consistently wound, positive volume. Last run: **58 of 58 clean**, 0 with a defect.
 
 ## Known problems, stated rather than hidden
 

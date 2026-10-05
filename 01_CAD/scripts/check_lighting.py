@@ -77,12 +77,71 @@ def main():
         print(f"{name:<14}{x:>7}{f'{z_lo:.0f}..{z_hi:.0f}':>12}"
               f"{('--' if top is None else f'{top:.1f}'):>18}"
               f"{('--' if hw is None else f'{hw:.1f}'):>12}{enc:>11}{wid:>10}{legal:>8}")
+    bad += visibility()
     print(f"\n{bad} problem(s).")
     if bad:
         print("A lamp that reads OUT is not recessed into the body; it protrudes by that much.")
         print("A lamp that reads OVER is wider than the car is at its own station.")
         print("Moving it rearward along specX is usually the cheapest fix, because the body rises")
         print("toward the cowl. Dropping it is usually not: the legal floor leaves little margin.")
+    return bad
+
+
+# R48 GEOMETRIC VISIBILITY of the dipped beam, added 2026-10-05 (v066) with the eye bezels. The
+# angles are the regulation's: 45 deg outward, 10 inward, 15 up, 10 down from the lamp's axis. What
+# is measured is the FRACTION OF THE LENS a ray leaving it at that angle clears everything built --
+# body, Stage 03 elements, the bezels. Rays from 0.9 of the lens radius, 13 x 13 grid.
+# What it does NOT decide: how much hidden apparent surface the technical service accepts. That is
+# their call on the real lamp (hard constraint 6). What it guards: a styling part may never take a
+# lens away silently. A direction at 0 % is a problem; anything else is printed for the engineer.
+LENS = dict(sx=-675.0, y=645.0, z=560.0, r=45.0)    # PROJECTOR face, Hella 90 mm bi-LED
+R48_DIRS = [("axis", 0.0, 0.0), ("45 out", 45.0, 0.0), ("10 in", -10.0, 0.0),
+            ("15 up", 0.0, 15.0), ("10 down", 0.0, -10.0)]
+
+
+def visibility():
+    import math
+    import bmesh
+    import mathutils
+    from mathutils.bvhtree import BVHTree
+    dg = bpy.context.evaluated_depsgraph_get()
+    bm = bmesh.new()
+    for cn in ("STATEV_MASTER", "STATEV_STAGE03"):
+        c = bpy.data.collections.get(cn)
+        if c is None:
+            continue
+        for o in c.all_objects:
+            if o.type != "MESH" or o.name.startswith(("CUT_", "_")):
+                continue
+            ev = o.evaluated_get(dg)
+            me = ev.to_mesh()
+            me.transform(o.matrix_world)
+            bm.from_mesh(me)
+            ev.to_mesh_clear()
+    tree = BVHTree.FromBMesh(bm)
+    print(f"\nR48 GEOMETRIC VISIBILITY, dipped beam -- fraction of the {2 * LENS['r']:.0f} mm lens a ray clears")
+    print(f"{'side':<6}" + "".join(f"{d[0]:>10}" for d in R48_DIRS))
+    bad = 0
+    for sgn, side in ((1, "L"), (-1, "R")):
+        row = []
+        for _n, h, v in R48_DIRS:
+            th, ph = math.radians(h), math.radians(v)
+            d = mathutils.Vector((math.cos(th) * math.cos(ph), sgn * math.sin(th) * math.cos(ph), math.sin(ph)))
+            ok = n = 0
+            for i in range(-6, 7):
+                for j in range(-6, 7):
+                    y, z = LENS["y"] + 0.9 * LENS["r"] * i / 6, LENS["z"] + 0.9 * LENS["r"] * j / 6
+                    if (y - LENS["y"]) ** 2 + (z - LENS["z"]) ** 2 > (0.9 * LENS["r"]) ** 2:
+                        continue
+                    o = mathutils.Vector((-LENS["sx"] / 1000.0 + 0.0015, sgn * y / 1000.0, z / 1000.0))
+                    n += 1
+                    ok += tree.ray_cast(o, d, 3.0)[0] is None
+            row.append(100.0 * ok / n)
+            bad += ok == 0
+        print(f"{side:<6}" + "".join(f"{r:>9.0f}%" for r in row))
+    bm.free()
+    print("  0 % in any direction is a problem; how much obstruction the technical service accepts is")
+    print("  theirs to judge on the real lamp. The eye bezels are cut by this cone, so they add none.")
     return bad
 
 

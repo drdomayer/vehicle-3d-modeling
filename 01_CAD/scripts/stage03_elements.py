@@ -1129,6 +1129,86 @@ def main():
     print("  buttress boards P17 / P18 retired (v062): ref-09 has humps behind the seats there, which")
     print("    wait on scan S2 with the deck")
 
+    # ---- 10a. THE HUMPS BEHIND THE SEATS, 2026-10-05 (v063). The owner, after the boards were
+    # retired: "continue with the humps behind the seats". ref-09, side and top read together: one
+    # hump behind each seat, as tall as the hoop's shoulder, as wide as the seat, its top flat for
+    # ~200 mm and then falling into the louvre tray. Built as a SHELL (4 mm, open underneath, its
+    # rim 25 mm into the deck) so the print is a fairing, not 40 litres of plastic. SHAPE ONLY in the
+    # strongest sense: it stands where the 986 stows its top under a lid behind the seats. The
+    # precedent is the Boxster Spyder, whose humps are ON that lid and lift with it -- whether ours
+    # can do the same is scan S2's answer, and nothing here is a part to bond before it.
+    HUMP = dict(yc=345.0, wall=4.0, sink=25.0,
+                st=[(1772.0, 1175.0, 215.0), (1850.0, 1175.0, 225.0), (1950.0, 1160.0, 222.0),
+                    (2040.0, 1110.0, 210.0), (2120.0, 1040.0, 190.0), (2185.0, 985.0, 165.0)])
+
+    def hump_solid(name, sgn, inset):
+        rings = []
+        n_ = 28
+        for sx, ztop, w in HUMP["st"]:
+            base = min([z_ for z_ in (surface_z(sx, sgn * (HUMP["yc"] + d)) for d in (-w, 0.0, w))
+                        if z_ is not None] or [900.0]) - HUMP["sink"] - (8.0 if inset else 0.0)
+            ztop_ = max(ztop, base + 40.0) - inset
+            w_ = w - inset
+            zm, hz = (ztop_ + base) / 2.0, (ztop_ - base) / 2.0
+            ring = []
+            for k in range(n_):
+                t = 2.0 * math.pi * k / n_
+                c_, s_ = math.cos(t), math.sin(t)
+                yy = HUMP["yc"] + w_ * math.copysign(abs(c_) ** (2.0 / 3.5), c_)
+                zz = zm + hz * math.copysign(abs(s_) ** (2.0 / 3.5), s_)
+                ring.append((sx, sgn * yy, zz))
+            rings.append(ring)
+        if inset:   # the cavity stops short of both end caps, so the shell is closed at the ends
+            rings[0] = [(x + inset, y, z) for x, y, z in rings[0]]
+            rings[-1] = [(x - inset, y, z) for x, y, z in rings[-1]]
+        verts = [(-mm(x), mm(y), mm(z)) for ring in rings for x, y, z in ring]
+        faces = []
+        for i in range(len(rings) - 1):
+            for k in range(n_):
+                a, b = i * n_ + k, i * n_ + (k + 1) % n_
+                faces.append((a, b, b + n_, a + n_))
+        faces.append(tuple(range(n_ - 1, -1, -1)))
+        last = (len(rings) - 1) * n_
+        faces.append(tuple(range(last, last + n_)))
+        me = bpy.data.meshes.new(name)
+        me.from_pydata(verts, [], faces)
+        me.update()
+        ob = bpy.data.objects.new(name, me)
+        coll.objects.link(ob)
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        bm.to_mesh(me)
+        bm.free()
+        return ob
+    for sgn in (1, -1):
+        outer = hump_solid(f"SEAT_HUMP_{'L' if sgn > 0 else 'R'}", sgn, 0.0)
+        inner = hump_solid("_hump_void", sgn, HUMP["wall"])
+        m = outer.modifiers.new("void", "BOOLEAN")
+        m.operation, m.object, m.solver = "DIFFERENCE", inner, "EXACT"
+        bpy.context.view_layer.objects.active = outer
+        bpy.ops.object.modifier_apply(modifier=m.name)
+        bpy.data.objects.remove(inner, do_unlink=True)
+        # open underneath: the shell is cut 10 mm under the deck surface, following it along X,
+        # so its rim is buried in the deck and nothing below it is printed
+        under = prism("_hump_under", coll,
+                      [(sx - (6.0 if i == 0 else -6.0 if i == len(HUMP["st"]) - 1 else 0.0), 500.0,
+                        (surface_z(sx, sgn * HUMP["yc"]) or 900.0) - 10.0)
+                       for i, (sx, _zt, _w) in enumerate(HUMP["st"])],
+                      sgn * 640.0, sgn * 50.0)
+        m = outer.modifiers.new("under", "BOOLEAN")
+        m.operation, m.object, m.solver = "DIFFERENCE", under, "EXACT"
+        bpy.context.view_layer.objects.active = outer
+        bpy.ops.object.modifier_apply(modifier=m.name)
+        bpy.data.objects.remove(under, do_unlink=True)
+        outer["panel_id"] = "P63" if sgn > 0 else "P64"
+        outer["stage"] = ("03 element — SHAPE ONLY: stands where the 986 stows its top; whether it "
+                          "lifts with the lid (Boxster Spyder) is scan S2's answer")
+        made.append(outer)
+    print(f"  seat humps: {HUMP['wall']:.0f} mm shells at Y +-{HUMP['yc']:.0f}, spec X "
+          f"{HUMP['st'][0][0]:.0f}..{HUMP['st'][-1][0]:.0f}, tops {HUMP['st'][0][1]:.0f} -> "
+          f"{HUMP['st'][-1][1]:.0f} -> P63 / P64 (SHAPE ONLY, scan S2)")
+
     # ---- 10b. THE ENGINE-COVER LOUVRES, 2026-10-02 (v056). The owner: "the rear cover is very
     # different". It was not different, it was ABSENT: the deck and the cover are BLOCKED on the
     # roof (DECK_SPINE), no file carried them, and the assembled car had a hole behind the hoops.

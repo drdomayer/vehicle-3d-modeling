@@ -98,6 +98,9 @@ PARTS = [
     # deck was never one piece: it is two strips, one either side, that do not touch. The boundary
     # between them is our own cover half-width, not a donor value, so the pairing is safe to fix now
     # even though the deck's SHAPE stays SCAN REQUIRED behind the roof fold envelope.
+    # 2026-10-05 (v063): the humps behind the seats, on the owner's call -- SHAPE ONLY, roof volume
+    ("P63", "SEAT_HUMP_L",         "L",  "REAR",  16, "-Z", "printed master -> composite", "REAR_DECK"),
+    ("P64", "SEAT_HUMP_R",         "R",  "REAR",  16, "-Z", "printed master -> composite", "REAR_DECK"),
     ("P19", "REAR_DECK_L",         "L",  "REAR",  16, "-Z", "printed master -> composite", "REAR_DECK"),
     ("P42", "REAR_DECK_R",         "R",  "REAR",  16, "-Z", "printed master -> composite", "REAR_DECK"),
     ("P20", "ENGINE_COVER",        "-",  "REAR",  17, "-Z", "printed master -> composite", "ENGINE_COVER"),
@@ -135,7 +138,7 @@ PARTS = [
 FINISH = {
     "P01": "paint", "P02": "paint", "P03": "paint", "P04": "paint", "P09": "paint",
     "P10": "paint", "P11": "paint", "P12": "paint", "P15": "paint", "P16": "paint",
-    "P19": "paint", "P42": "paint", "P21": "paint",
+    "P19": "paint", "P63": "paint", "P64": "paint", "P42": "paint", "P21": "paint",
     "P37": "paint", "P38": "paint", "P61": "carbon", "P62": "carbon", "P60": "satin silver",
     "P07": "carbon", "P08": "carbon", "P39": "carbon", "P40": "carbon", "P28": "carbon",
     "P41": "carbon", "P22": "carbon", "P44": "carbon", "P45": "carbon", "P46": "carbon",

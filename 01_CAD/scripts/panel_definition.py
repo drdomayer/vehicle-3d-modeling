@@ -42,7 +42,7 @@ PANEL_STATUS, interfaces, worst = _pa["PANEL_STATUS"], _pa["interfaces"], _pa["w
 
 # Panels that sit in or on the volume the soft top folds into. docs/14 marks DECK_SPINE BLOCKED
 # and the buttress measures a 10 mm lip against a 93 mm intent for the same reason.
-ROOF_BLOCKED = {"P17", "P18", "P19", "P42", "P20", "P33"}
+ROOF_BLOCKED = {"P17", "P18", "P19", "P42", "P20", "P33", "P63", "P64"}
 
 # Per-panel facts that are not derivable from the other three layers.
 #   pid: (design function, mounting strategy, trim allowance mm, access/service, split note)
@@ -104,6 +104,10 @@ DEF = {
             "single piece, but the blade itself is BLOCKED"),
     "P18": ("buttress blade beside the deck", T_OURS, 12, "fixed; sits over the roof fold volume",
             "single piece, but the blade itself is BLOCKED"),
+    "P63": ("hump behind the left seat, a fairing on the deck", T_OURS, 12,
+            "must lift with the roof lid or clear the fold path -- scan S2", "single piece"),
+    "P64": ("hump behind the right seat, a fairing on the deck", T_OURS, 12,
+            "must lift with the roof lid or clear the fold path -- scan S2", "single piece"),
     "P19": ("deck skin over the roof mechanism, left strip", T_OURS, 15,
             "must clear the fold path in all four roof positions",
             "no centreline split needed: the engine cover already ends it inboard"),

@@ -175,6 +175,10 @@ SHAPE_ONLY = {
     # 2026-09-29: the buttress blades, standing outboard of the GUESSED roof fold envelope. The
     # rear cannot be judged against the render without them; nothing about them is settled.
     # P17 / P18 (the buttress boards) retired 2026-10-05 -- see stage03 section 10
+    "P63": "SHAPE ONLY in the strongest sense: the hump behind the left seat, a 4 mm shell on the "
+           "deck. It stands where the 986 stows its top; whether it lifts with the lid as on the "
+           "Boxster Spyder is scan S2's answer. Print it to look at the car, not to bond.",
+    "P64": "mirror of P63, same note",
     # 2026-10-02 (v056): THE DECK AND THE ENGINE COVER, on the footing of P17/P18. The assembled
     # car had a hole behind the hoops -- the surface exists in the body (Z 920..1020) but no file
     # carried it, because all three are BLOCKED on the roof fold envelope. That reason stands and
@@ -197,7 +201,7 @@ SHAPE_ONLY = {
 # Stage 03 elements are built by stage03_elements.py as closed solids in their own right -- a blade
 # already HAS its thickness -- so they skip both the map and the wall and go straight to sectioning.
 STAGE03 = {"P05", "P06", "P13", "P14", "P43",
-           "P44", "P45", "P46", "P47", "P54", "P55", "P56", "P57", "P58", "P59", "P60", "P61", "P62",
+           "P44", "P45", "P46", "P47", "P54", "P55", "P56", "P57", "P58", "P59", "P60", "P61", "P62", "P63", "P64",
            "P24", "P25", "P31", "P32", "P26", "P27", "P33"}
 SCHEDULE = []
 PLACEMENT = {}   # printed file -> the 4x4 that puts it back on the car

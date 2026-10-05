@@ -483,6 +483,14 @@ def nose_face(spec_x, pts, fz):
 
 BUTTRESS = dict(x0=1740, x1=3200, y=620, w=300, height=152)   # starts at the hoop plane,
                                                               # outboard of the cabin cut
+# THE CREST RUNS DIAGONALLY IN PLAN, 2026-10-05 (v063). The owner: "from above something does not
+# look right". ref-09's top view (6.51 mm/px) carries the haunch crest from about (spec X 1800,
+# Y 800) at the intake to (3210, 610) at the tail lamp's inner corner -- a diagonal drawn in toward
+# the tail. Ours ran straight along X at Y 650 (b["y"] + 30). Only WHERE it runs changes: the
+# height is the same gaussian on DECK_SPINE, so the side silhouette cannot move.
+# Pivoted about the axle: at 2415, where the crest is highest and the rear END VIEW reads it, it
+# stays at the old 620 (+30). First drawn with 655 there, end view rear regressed 0.08 -> 0.12.
+BUTTRESS_Y = [(1740, 690), (2100, 655), (2415, 620), (2800, 580), (3200, 540)]
 
 
 # SMOOTH INTERPOLATION, 2026-09-29 (v052). Every longitudinal table in this file (crest, belt,
@@ -1325,7 +1333,7 @@ def ring(spec_x):
             if vd >= 6.0 and vy < fy - 20 and vz > pts[-1][1] + 6:
                 half.append((vy, vz))
     if b_top is not None and b_top > pts[-1][1] + 8:
-        y_crest = b["y"] + b["w"] * BUTTRESS_TOP_FRAC / 2
+        y_crest = table_z(BUTTRESS_Y, spec_x) + b["w"] * BUTTRESS_TOP_FRAC / 2
         # The drop is capped at 60 % of the height actually available above the section top. A
         # fixed 34 mm was simply skipped wherever the buttress is low — at specX 2200 and again
         # out at 3100 — which left the edge strong over the wheel and absent at both ends of it.

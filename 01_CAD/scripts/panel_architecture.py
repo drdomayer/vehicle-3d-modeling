@@ -153,6 +153,8 @@ ARCH = {
     "P33": ("MIXED", "yes", "our louvres; the engine lid aperture governs where they can sit"),
     "P43": ("OURS",  "yes", "our mask in the central mouth; what the mouth feeds is a donor question"),
     "P58": ("OURS",  "yes", "our fin in our diffuser floor; nothing of the donor reaches it"),
+    "P63": ("MIXED", "yes", "our hump, but it stands in the roof fold volume"),
+    "P64": ("MIXED", "yes", "our hump, but it stands in the roof fold volume"),
     "P59": ("OURS",  "yes", "our fin in our diffuser floor; nothing of the donor reaches it"),
     "P54": ("OURS",  "yes", "our grille in our corner pocket; what it feeds is a donor question"),
     "P55": ("OURS",  "yes", "our grille in our corner pocket; what it feeds is a donor question"),

@@ -90,9 +90,11 @@ def prism(name, coll, stations, y_out, y_in):
     """A pocket cutter: a lofted prism running along spec X, from outboard of the surface inward.
     `stations` is [(spec_x, z_lo, z_hi)] and the walls are vertical, which is what gives the lip."""
     verts, faces = [], []
-    for sx, z0, z1 in stations:
+    for st_ in stations:
+        sx, z0, z1 = st_[:3]
+        yi = st_[3] if len(st_) > 3 else y_in      # v069: a station may carry its own inner Y
         base = len(verts)
-        for y in (y_out, y_in):
+        for y in (y_out, yi):
             for z in (z0, z1):
                 verts.append((-mm(sx), mm(y), mm(z)))
         del base
@@ -555,6 +557,29 @@ def main():
         cuts.append(c)
     print(f"  side intake mouth: spec X {st[0][0]}..{st[-1][0]}, Z {min(s[1] for s in st)}.."
           f"{max(s[2] for s in st)}, cut from the surface at Y {y_surf:.0f} inward to 430")
+
+    # ---- 1b. THE SCOOP, 2026-10-05 (v069), on the owner's decision ("странична въздухозаборна
+    # шахта"): cut the solid OEM quarter ahead of the donor's opening. Calibrated on ref-09's side
+    # view by the wheel centres (2415 mm = 920 px at 2x, 2.625 mm/px): its intake opens at spec X
+    # ~1730..1900, right behind the door shut (1635) and AHEAD of the 986's own opening (1900..2080),
+    # with the front edge leaning back at the top. Built as a NACA-style ramp, so it is functional,
+    # not a fake vent: 25 mm deep at 1735 (the B-pillar and the striker sit behind the first 100 mm
+    # of the quarter), deepening to 130 at 1925 where it runs into the through-cut mouth above.
+    # Bottom at Z 340-350, over the rocker seam (330). The depth is SCAN REQUIRED: what stands
+    # behind the OEM quarter between 1735 and 1925 has never been measured; this is the outer form.
+    SCOOP_SKIN_Y = 920.0
+    SCOOP = [(1735, 345, 470, 25), (1775, 340, 580, 45), (1820, 340, 650, 70), (1870, 340, 690, 100),
+             (1925, 345, 700, 130)]
+    # Ends at 1925, inside the SIDE volume (333..1933): run on to 1965 it crossed the side/rear
+    # split plane and the EXACT difference left the cutter's outer face in the body -- width 2000
+    # against 1850, the same failure v050 recorded for the mouth. The mouth above takes over at 1925.
+    for sgn in (1, -1):
+        c = prism(f"CUT_SCOOP_{'L' if sgn > 0 else 'R'}", coll,
+                  [(sx, z0, z1, sgn * (SCOOP_SKIN_Y - d)) for sx, z0, z1, d in SCOOP],
+                  sgn * (SCOOP_SKIN_Y + 80.0), None)
+        cuts.append(c)
+    print(f"  side scoop: a ramp in the OEM quarter, spec X {SCOOP[0][0]}..{SCOOP[-1][0]}, "
+          f"{SCOOP[0][3]} -> {SCOOP[-1][3]} mm deep, front edge leaning back (ref-09) -- depth SCAN REQUIRED")
 
     # ---- 2. the blade standing in that mouth, the vertical element ref-05 puts across the intake
     # 2026-10-02: the bottom edge is kept 12 mm above the REAR ARCH (centre 2415 / Z 337.5,

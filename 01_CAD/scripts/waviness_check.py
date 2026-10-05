@@ -42,6 +42,18 @@ with open(_ac["__file__"], encoding="utf-8") as _f:
     exec(_f.read().split("\ndef main(")[0], _ac)
 
 
+# v069: the side openings outlined in X-Z (the scoop) break a SIDE profile, as a seam or a lamp slot
+# does: its ramp is 25 mm deep at the front edge, under JUMP, and read as a 13 mm "wave" at 1730.
+_pm = {"__name__": "_pm"}
+with open(os.path.join(REPO, "01_CAD/scripts/panel_map.py"), encoding="utf-8") as _f:
+    exec(_f.read().split("\ndef main(")[0], _pm)
+XZ_OPENINGS = [(p, 10.0) for _n, _y0, _y1, p, _t in _pm.get("POCKETS_XZ", [])]
+
+
+def in_opening(x, z):
+    return any(_pm["in_poly"](x, z, p, t) for p, t in XZ_OPENINGS)
+
+
 def files_tree():
     placement = {}
     for d in (_ac["PROD"], _ac["SHAPE"]):
@@ -107,6 +119,7 @@ def main():
     for z in SIDE_Z:
         prof = profile(tree, lambda x, z=z: mathutils.Vector((-x / 1000.0, 2.0, z / 1000.0)),
                        mathutils.Vector((0.0, -1.0, 0.0)), 1)
+        prof = [(x, None if in_opening(x, z) else v) for x, v in prof]
         lines.append((f"side  Z {z:.0f}", prof))
     for y in TOP_Y:
         prof = profile(tree, lambda x, y=y: mathutils.Vector((-x / 1000.0, y / 1000.0, 3.0)),

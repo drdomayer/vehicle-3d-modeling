@@ -98,11 +98,19 @@ def main():
                                      ("door band air, Z 400..700", 460, 1620, 400, 700),
                                      ("rear quarter air, Z 400..700", 1700, 2300, 400, 700)):
             worst, n, n_in = None, 0, 0
+            n_cut = [0]
             for x, y, z in P:
                 if not (x0 <= x <= x1 and z0 <= z <= z1):
                     continue
                 if any(px0 <= x <= px1 and py0 <= abs(y) <= py1 and pz0 <= z <= pz1
                        for _, px0, px1, py0, py1, pz0, pz1, *_poly in pockets):
+                    continue
+                # v069: nor the side scoop. It cuts the OEM quarter ON PURPOSE (owner's decision,
+                # docs/14 Z): its floor is inside the donor skin by design, and the cut itself is what
+                # the bodyshop does. Excluded by name and counted, not silently.
+                if any(py0 <= abs(y) <= py1 and _pm["in_poly"](x, z, ppoly, ptol)
+                       for _, py0, py1, ppoly, ptol in _pm.get("POCKETS_XZ", [])):
+                    n_cut[0] += 1
                     continue
                 # nor the arch cylinders' own walls and end caps: the first run reported -303 mm
                 # at spec X 2294 / Z 682 from a vertex ON the rear arch cylinder (d = 365) at the
@@ -128,7 +136,9 @@ def main():
                 add("CHECK" if worst[0] < 15.0 else "OK", what, f"{worst[0]:+.0f}", ">= 15",
                     "donor block approx +-30..50 mm",
                     f"{n_in} of {n} skin vertices under +15 mm; worst at spec X {worst[1]:.0f} "
-                    f"Z {worst[2]:.0f}: ours {worst[3]:.0f}, donor {worst[4]:.0f}. Hard constraint 3.")
+                    f"Z {worst[2]:.0f}: ours {worst[3]:.0f}, donor {worst[4]:.0f}. Hard constraint 3." +
+                    (f" {n_cut[0]} vertices in the side scoop not counted: it cuts the OEM quarter by "
+                     f"decision (docs/14 Z)." if n_cut[0] else ""))
     except (OSError, KeyError) as e:
         add("CHECK", "side vs donor", "--", "table", "data/donor_side_986.json", f"not measured: {e}")
 

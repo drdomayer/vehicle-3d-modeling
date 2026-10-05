@@ -169,7 +169,7 @@ SHAPE_ONLY = {
     # edge really lands is the scan's answer, like the fenders' door line. Outer form ours.
     # 2026-09-28: the side-intake surround joins, on the same footing as the haunch overlay --
     # its outer form is ours, what governs it is the real opening behind it, which is the scan's.
-    "P11": "outer form ours (the intake surround, spec X 1780..2300 above the rocker); the real "
+    "P11": "outer form ours (the intake surround, spec X 1700..2170 above the rocker, round the v069 scoop and the mouth); the real "
            "opening behind it and the duct route are the donor's. Fit and bond surface come from "
            "the scan, as for P15.",
     "P12": "mirror of P11, same note",

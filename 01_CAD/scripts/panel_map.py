@@ -43,8 +43,12 @@ B = dict(
     rocker_top      = 330,    # ROCKER_to_UPPER_BODY seam, and DIFFUSER_to_FASCIA at the same Z
     hood_half_width = 380,    # HOOD_to_FRONT_BODY seam path, where it leaves the centre
     cover_half_width= 560,    # ENGINE_COVER_to_DECK seam path, outer end
-    intake_front    = 1780,   # SIDE_INTAKE field x0 in statev_master_volumes
-    intake_rear     = 2300,   # SIDE_INTAKE field x1
+    intake_front    = 1700,   # v069: 1780 -> 1700, 35 mm ahead of the scoop (stage03 1b, from 1735).
+                              # At 1780 the scoop and its leaning edge cut the surround into three
+                              # pieces; from 1700 it is one ring round the scoop and the mouth.
+    intake_rear     = 2170,   # v069: 2300 -> 2170, just behind the mouth (stage03 1, to 2165). Behind it
+                              # the rear arch cut the surround off: a 59 cm2 piece over the arch
+                              # that belongs with the haunch it touches, not with a frame it doesn't.
     splitter_top    = 194,    # the splitter LIP and its recess (CUT_LIP_RECESS, Z 150..194).
                               # 300 until 2026-10-02 (v056): with the mouth's floor now at 220
                               # the whole nose under Z 300 printed as carbon -- a 180 mm grey band
@@ -141,6 +145,14 @@ POCKETS = [("X_INTAKE", 1910.0, 2180.0, 420.0, 1000.0, 440.0, 710.0),
            ("X_LIP", -1000.0, -905.0, 0.0, 625.0, 148.0, 196.0),
            ("X_TAIL_CORNER", 3175.0, 3500.0, 685.0, 765.0, 347.0, 580.0)]
 
+# v069: pockets whose outline lives in the X-Z plane (a side opening), which a (|Y|, Z) polygon
+# cannot describe: the scoop's front edge LEANS in X-Z, and a box would have taken the painted skin
+# above the lean for a black wall. (name, |Y| from, |Y| to, convex (spec X, Z) polygon, slack mm).
+# |Y| from 760: the ramp's floor is at 790 at its deepest, and the cabin's walls are inboard of it.
+POCKETS_XZ = [("X_INTAKE", 760.0, 1000.0,
+               [(1735.0, 345.0), (1925.0, 345.0), (1925.0, 700.0), (1870.0, 690.0),
+                (1820.0, 650.0), (1775.0, 580.0), (1735.0, 470.0)], 6.0)]
+
 
 # The cabin cutter and the arch cutters, as statev_master_volumes actually builds them. Named here
 # so the cap rules below can be read against their source instead of against bare numbers.
@@ -222,6 +234,9 @@ def not_panel(sx, ay, z, nz, ny):
             # an entry may carry its own slack after the polygon (the eye, v065); the rest use POLY_TOL
             if poly and not in_poly(ay, z, poly[0], poly[1] if len(poly) > 1 else POLY_TOL):
                 continue
+            return nm
+    for nm, y0, y1, poly, tol in POCKETS_XZ:
+        if y0 <= ay <= y1 and in_poly(sx, z, poly, tol):
             return nm
     for ax, r, cz in ARCH_CUTS:
         d = ((sx - ax) ** 2 + (z - cz) ** 2) ** 0.5

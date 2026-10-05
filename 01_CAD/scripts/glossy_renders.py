@@ -228,6 +228,7 @@ _pmg = {"__name__": "_pm"}
 with open(os.path.join(REPO, "01_CAD", "scripts", "panel_map.py"), encoding="utf-8") as _f:
     exec(_f.read().split("\ndef main(")[0], _pmg)
 _POCKETS, _in_poly = _pmg["POCKETS"], _pmg["in_poly"]
+_POCKETS_XZ = _pmg.get("POCKETS_XZ", [])
 
 
 def finish_map():
@@ -507,6 +508,14 @@ def _main():
             for poly in o.data.polygons:
                 c = inv @ poly.center
                 sx, ay, z = -c.x * 1000.0, abs(c.y * 1000.0), c.z * 1000.0
+                # v069: side openings outlined in X-Z (the scoop); its floor looks along Y and must be
+                # strictly inside, its walls get the smoothing's slack
+                ny_ = abs((inv.to_3x3() @ poly.normal).normalized().y)
+                if any(nm in INTERIOR_BLACK and y0 <= ay <= y1 and
+                       _in_poly(sx, z, pl, 0.0 if ny_ > 0.5 else 15.0)
+                       for nm, y0, y1, pl, _t in _POCKETS_XZ):
+                    poly.material_index = 1
+                    continue
                 for nm, x0, x1, y0, y1, z0, z1, *pl in _POCKETS:
                     if nm not in INTERIOR_BLACK:
                         continue

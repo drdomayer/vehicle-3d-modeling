@@ -64,6 +64,13 @@ SUPERSEDED = {
     "the one main side line (shoulder)": "2026-09-28: inside the pushed-out upper door (DOOR_OUT); no edge by design",
 }
 EXCEPTIONS = {
+    "BUTTRESS -> REAR_DECK (haunch crest)":
+        "measured for the first time 2026-10-05 (v064). The DESIGN turns 74 degrees here -- the "
+        "two-point deck edge of 2026-09-15 -- and the mesh showed 46 until the crest was anchored, "
+        "70 after. docs/16 classes it G1; ref-09's top view draws it as a crisp crease, and the "
+        "owner asked for exactly that the same day (\"continue with the fender edges\"). The third "
+        "G1 line of docs/16 designed well above 40 -- with the crest and the sill, one question: "
+        "is docs/16's G1 band the right one for this car's language.",
     "FRONT_FENDER_TOP -> FRONT_FENDER_SIDE (crest)":
         "the DESIGN turns 55.5 degrees here and always has; the mesh was rendering 44.2 until the "
         "crest was anchored on 2026-09-21, and 38.6 before that. So this is not a line that got "
@@ -126,6 +133,10 @@ def lines(M):
         # sill never had while it was a 34 mm tuck. Measured at the shelf's upper edge.
         ("REAR_HAUNCH_TOP -> REAR_HAUNCH_SIDE", "G1",
          lambda x: tz(M["FLANK_TOP"], x), (M["FLANK_X0"] + 300, M["FLANK_X1"] - 300)),
+        # v064: the haunch crest -- the diagonal edge seen from above -- measured for the first
+        # time; until now the coverage table listed BUTTRESS -> REAR_DECK as "no line defined"
+        ("BUTTRESS -> REAR_DECK (haunch crest)", "G1",
+         lambda x: M["buttress_top"](x), (2000.0, 2900.0)),
         # FRONT_CREST is the OUTER top line of the front fender, so its class is
         # FRONT_FENDER_TOP -> FRONT_FENDER_SIDE (G1), not HOOD -> FRONT_FENDER_TOP (G2). The first
         # run of this test had it as G2 and called 38.6 degrees a defect. It is not: the crest was
@@ -161,6 +172,7 @@ LINE_OF = {
     "DOOR_UPPER -> ROCKER (sill line)": ("DOOR_UPPER", "ROCKER"),
     "REAR_HAUNCH_TOP -> REAR_HAUNCH_SIDE": ("REAR_HAUNCH_TOP", "REAR_HAUNCH_SIDE"),
     "FRONT_FENDER_TOP -> FRONT_FENDER_SIDE (crest)": ("FRONT_FENDER_TOP", "FRONT_FENDER_SIDE"),
+    "BUTTRESS -> REAR_DECK (haunch crest)": ("BUTTRESS", "REAR_DECK"),
 }
 
 # Transitions whose break is a HOLE. An opening is a physical break in the surface and the light
@@ -177,7 +189,7 @@ OPENING_OF = {
 
 UNMEASURED = ["NOSE -> HOOD", "HOOD -> HEADLIGHT_SURROUND", "NOSE -> FRONT_LOWER_INTAKE",
               "DOOR_CHANNEL -> SIDE_INTAKE_MOUTH", "REAR_HAUNCH_TOP -> BUTTRESS",
-              "BUTTRESS -> REAR_DECK", "REAR_DECK -> ENGINE_COVER",
+              "REAR_DECK -> ENGINE_COVER",
               "ENGINE_COVER -> REAR_FASCIA", "REAR_HAUNCH_SIDE -> DIFFUSER",
               "FRONT_FENDER_SIDE -> DOOR_UPPER", "DOOR_UPPER -> REAR_HAUNCH_TOP"]
 

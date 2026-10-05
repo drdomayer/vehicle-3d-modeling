@@ -7,15 +7,17 @@ EDGE TEST — docs/16's CONTINUITY classes, as dihedral angles on the built mesh
   and a crease where the map says G2 is the same defect inverted).
 
   line                                         cls    n    mesh   design    lost  verdict
-  DOOR_UPPER -> DOOR_CHANNEL (the side lip)    G0    11    68.6     72.4     3.7  ok
+  DOOR_UPPER -> DOOR_CHANNEL (the side lip)    G0    11    67.0     72.4     5.4  ok
   REAR_FASCIA -> DIFFUSER (undercut edge)      G0     4    73.1     63.1   -10.1  ok
   DOOR_UPPER -> ROCKER (sill line)             G1    13    65.5     49.5   -16.0  out of band — RECORDED exception
-  REAR_HAUNCH_TOP -> REAR_HAUNCH_SIDE          G1     8    13.3     14.8     1.5  ok
-  FRONT_FENDER_TOP -> FRONT_FENDER_SIDE (crest) G1     9    61.4     64.0     2.7  out of band — RECORDED exception
+  REAR_HAUNCH_TOP -> REAR_HAUNCH_SIDE          G1     8    14.5     14.8     0.3  ok
+  BUTTRESS -> REAR_DECK (haunch crest)         G1     8    70.0     74.1     4.2  out of band — RECORDED exception
+  FRONT_FENDER_TOP -> FRONT_FENDER_SIDE (crest) G1     9    51.9     64.0    12.2  out of band — RECORDED exception
 
-  LINES IN BAND 3 / RECORDED EXCEPTION 2 / DEFECT 0  (of 5 measured)
+  LINES IN BAND 3 / RECORDED EXCEPTION 3 / DEFECT 0  (of 6 measured)
 
   DOOR_UPPER -> ROCKER (sill line) — 2026-09-28: the sill is no longer a 34 mm tuck -- the rocker stands out as a BLADE at 918 (statev_master_volumes ROCKER_BLADE) and its top is a ~56 mm shelf over 30 mm of height, so the line is two G0 breaks 30 mm apart, not one G1 transition. Measured at the shelf's lower crease: 65.5 degrees on 13 stations (the finder read 0.9 until its radial filter was made per-face on 2026-09-28 -- the shelf's up-facing face was being thrown away). docs/16 classes DOOR_UPPER -> ROCKER as G1 and the built sill is a G0 shelf: that is the rebuilt side of docs/14 section I, not a defect of the mesh. Older text: sharpened 55 -> 18 -> 10 mm on 2026-09-15/16, measured ~47 against a G1 band this file invented; the OWNER'S CALL on that band still stands for the crest.
+  BUTTRESS -> REAR_DECK (haunch crest) — measured for the first time 2026-10-05 (v064). The DESIGN turns 74 degrees here -- the two-point deck edge of 2026-09-15 -- and the mesh showed 46 until the crest was anchored, 70 after. docs/16 classes it G1; ref-09's top view draws it as a crisp crease, and the owner asked for exactly that the same day ("continue with the fender edges"). The third G1 line of docs/16 designed well above 40 -- with the crest and the sill, one question: is docs/16's G1 band the right one for this car's language.
   FRONT_FENDER_TOP -> FRONT_FENDER_SIDE (crest) — the DESIGN turns 55.5 degrees here and always has; the mesh was rendering 44.2 until the crest was anchored on 2026-09-21, and 38.6 before that. So this is not a line that got sharper, it is a line that became visible. docs/16 classes it G1 and this file's G1 band tops out at 40 -- a number this file invented, not one docs/16 gives. OWNER'S CALL, and it is the SAME call as the rocker below: two of docs/16's G1 lines are designed at about 50 degrees, so either the band is too tight for a car with this language, or both lines are harder than the spec intends.
 
   ------------------------------------------------------------------------------------------------
@@ -23,14 +25,14 @@ EDGE TEST — docs/16's CONTINUITY classes, as dihedral angles on the built mesh
   ------------------------------------------------------------------------------------------------
 
   transition                             cls             crease  break made by                               
-  BUTTRESS -> REAR_DECK                  G1     no line defined  nothing                                     
+  BUTTRESS -> REAR_DECK                  G1          70.0 deg !  nothing                                     
   DOOR_CHANNEL -> SIDE_INTAKE_MOUTH      G1     no line defined  opening INTAKE_BLADE_L                      
-  DOOR_UPPER -> DOOR_CHANNEL             G0         68.6 deg ok  nothing                                     
+  DOOR_UPPER -> DOOR_CHANNEL             G0         67.0 deg ok  nothing                                     
   DOOR_UPPER -> REAR_HAUNCH_TOP          G2     no line defined  seam DOOR_SHUT_REAR (0.00 mm off skin)      
   DOOR_UPPER -> ROCKER                   G1          65.5 deg !  seam ROCKER_to_UPPER_BODY (0.00 mm off skin)
   ENGINE_COVER -> REAR_FASCIA            G1     no line defined  seam REAR_FASCIA_to_DECK (0.00 mm off skin) 
   FRONT_FENDER_SIDE -> DOOR_UPPER        G0     no line defined  seam FRONT_FENDER_to_DOOR (0.00 mm off skin)
-  FRONT_FENDER_TOP -> FRONT_FENDER_SIDE  G1          61.4 deg !  nothing                                     
+  FRONT_FENDER_TOP -> FRONT_FENDER_SIDE  G1          51.9 deg !  nothing                                     
   HOOD -> FRONT_FENDER_TOP               G2     no line defined  seam HOOD_to_FRONT_BODY (0.00 mm off skin)  
   HOOD -> HEADLIGHT_SURROUND             G1     no line defined  opening HEADLIGHT_HOUSING_L                 
   NOSE -> FRONT_LOWER_INTAKE             G0     no line defined  opening FRONT_MASK                          
@@ -39,9 +41,9 @@ EDGE TEST — docs/16's CONTINUITY classes, as dihedral angles on the built mesh
   REAR_FASCIA -> DIFFUSER                G0         73.1 deg ok  seam DIFFUSER_to_FASCIA (0.00 mm off skin)  
   REAR_HAUNCH_SIDE -> DIFFUSER           G1     no line defined  seam DIFFUSER_to_FASCIA (0.00 mm off skin)  
   REAR_HAUNCH_TOP -> BUTTRESS            G0     no line defined  nothing                                     
-  REAR_HAUNCH_TOP -> REAR_HAUNCH_SIDE    G1         13.3 deg ok  nothing                                     
+  REAR_HAUNCH_TOP -> REAR_HAUNCH_SIDE    G1         14.5 deg ok  nothing                                     
 
-  14 of 17 transitions have evidence: a measured crease, a registered panel seam, or a real opening.
+  15 of 17 transitions have evidence: a measured crease, a registered panel seam, or a real opening.
   A seam is not a substitute for a class. The class is about the SURFACE; the seam is
   about PANELS. On a real car a G0 break is often a 4 mm gap between two tangent
   panels rather than a crease, so a seam is evidence that the light breaks — but it
@@ -55,7 +57,6 @@ EDGE TEST — docs/16's CONTINUITY classes, as dihedral angles on the built mesh
     NOSE -> FRONT_LOWER_INTAKE
     DOOR_CHANNEL -> SIDE_INTAKE_MOUTH
     REAR_HAUNCH_TOP -> BUTTRESS
-    BUTTRESS -> REAR_DECK
     REAR_DECK -> ENGINE_COVER
     ENGINE_COVER -> REAR_FASCIA
     REAR_HAUNCH_SIDE -> DIFFUSER

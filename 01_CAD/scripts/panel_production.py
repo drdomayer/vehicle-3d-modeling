@@ -1122,6 +1122,13 @@ def tidy_for_export(ob):
     # degenerate limit.
     bmesh.ops.remove_doubles(bm, verts=bm.verts[:], dist=1e-6)
     bmesh.ops.triangulate(bm, faces=bm.faces[:], quad_method="BEAUTY", ngon_method="BEAUTY")
+    # v064: a COLLINEAR triangle (three distinct vertices on one line, area ~0) is collapsed, not
+    # deleted. The clamp onto +-925 in thicken() flattens wall vertices onto one plane, and on P12's
+    # intake lip (spec X 2076, Z 700) that made one such triangle; deleting it left 3 open edges on
+    # the right side only -- P11, the mirror, kept its triangle by a floating-point hair.
+    bmesh.ops.dissolve_degenerate(bm, dist=1e-6, edges=bm.edges[:])
+    bmesh.ops.triangulate(bm, faces=[f for f in bm.faces if len(f.verts) > 3],
+                          quad_method="BEAUTY", ngon_method="BEAUTY")
     seen, gone = set(), []
     for f in bm.faces:
         k = frozenset(tuple(round(c * 1e6) for c in v.co) for v in f.verts)

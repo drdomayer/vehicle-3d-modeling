@@ -1137,13 +1137,18 @@ def main():
     # strongest sense: it stands where the 986 stows its top under a lid behind the seats. The
     # precedent is the Boxster Spyder, whose humps are ON that lid and lift with it -- whether ours
     # can do the same is scan S2's answer, and nothing here is a part to bond before it.
-    HUMP = dict(yc=345.0, wall=4.0, sink=25.0,
-                st=[(1772.0, 1175.0, 215.0), (1850.0, 1175.0, 225.0), (1950.0, 1160.0, 222.0),
-                    (2040.0, 1110.0, 210.0), (2120.0, 1040.0, 190.0), (2185.0, 985.0, 165.0)])
+    # v064, the owner: "continue with the humps". ref-09's side view draws them ANGULAR -- a flat top
+    # from the hoop back, then a straight ramp down into the louvre tray, the width held to the end
+    # -- where v063 had a rounded loaf tapering in both directions. Flat top to 2010, a straight
+    # ramp 2010 -> 2185, width ~224 throughout, section exponent 6 (boxy, small radii).
+    HUMP = dict(yc=345.0, wall=4.0, sink=25.0, n=6.0,
+                st=[(1772.0, 1180.0, 218.0), (1850.0, 1178.0, 224.0), (1950.0, 1172.0, 224.0),
+                    (2010.0, 1165.0, 224.0), (2070.0, 1110.0, 222.0), (2130.0, 1050.0, 220.0),
+                    (2185.0, 995.0, 216.0)])
 
     def hump_solid(name, sgn, inset):
         rings = []
-        n_ = 28
+        n_ = 48   # the boxy section (exponent 6) needs the points at its corners
         for sx, ztop, w in HUMP["st"]:
             base = min([z_ for z_ in (surface_z(sx, sgn * (HUMP["yc"] + d)) for d in (-w, 0.0, w))
                         if z_ is not None] or [900.0]) - HUMP["sink"] - (8.0 if inset else 0.0)
@@ -1154,8 +1159,8 @@ def main():
             for k in range(n_):
                 t = 2.0 * math.pi * k / n_
                 c_, s_ = math.cos(t), math.sin(t)
-                yy = HUMP["yc"] + w_ * math.copysign(abs(c_) ** (2.0 / 3.5), c_)
-                zz = zm + hz * math.copysign(abs(s_) ** (2.0 / 3.5), s_)
+                yy = HUMP["yc"] + w_ * math.copysign(abs(c_) ** (2.0 / HUMP["n"]), c_)
+                zz = zm + hz * math.copysign(abs(s_) ** (2.0 / HUMP["n"]), s_)
                 ring.append((sx, sgn * yy, zz))
             rings.append(ring)
         if inset:   # the cavity stops short of both end caps, so the shell is closed at the ends
@@ -1184,12 +1189,11 @@ def main():
     for sgn in (1, -1):
         outer = hump_solid(f"SEAT_HUMP_{'L' if sgn > 0 else 'R'}", sgn, 0.0)
         inner = hump_solid("_hump_void", sgn, HUMP["wall"])
-        m = outer.modifiers.new("void", "BOOLEAN")
-        m.operation, m.object, m.solver = "DIFFERENCE", inner, "EXACT"
-        bpy.context.view_layer.objects.active = outer
-        bpy.ops.object.modifier_apply(modifier=m.name)
-        bpy.data.objects.remove(inner, do_unlink=True)
-        # open underneath: the shell is cut 10 mm under the deck surface, following it along X,
+        # ORDER MATTERS (v064): the under-cut first, on the CLOSED solid, then the cavity. The other
+        # way round the second boolean met a shell already open underneath, and EXACT on an open
+        # operand is undefined -- measured: the right hump came out whole, the left one lost
+        # everything above Z 971.
+        # open underneath: the solid is cut 10 mm under the deck surface, following it along X,
         # so its rim is buried in the deck and nothing below it is printed
         under = prism("_hump_under", coll,
                       [(sx - (6.0 if i == 0 else -6.0 if i == len(HUMP["st"]) - 1 else 0.0), 500.0,
@@ -1201,6 +1205,11 @@ def main():
         bpy.context.view_layer.objects.active = outer
         bpy.ops.object.modifier_apply(modifier=m.name)
         bpy.data.objects.remove(under, do_unlink=True)
+        m = outer.modifiers.new("void", "BOOLEAN")
+        m.operation, m.object, m.solver = "DIFFERENCE", inner, "EXACT"
+        bpy.context.view_layer.objects.active = outer
+        bpy.ops.object.modifier_apply(modifier=m.name)
+        bpy.data.objects.remove(inner, do_unlink=True)
         outer["panel_id"] = "P63" if sgn > 0 else "P64"
         outer["stage"] = ("03 element — SHAPE ONLY: stands where the 986 stows its top; whether it "
                           "lifts with the lid (Boxster Spyder) is scan S2's answer")

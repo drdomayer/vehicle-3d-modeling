@@ -696,7 +696,23 @@ def feature_anchors(spec_x):
             table_z(FRONT_CREST["z"], spec_x) - FRONT_CREST["sh_drop"],  # fender wall top
             table_z(FRONT_CREST["z"], spec_x) - FRONT_CREST["pl_drop"],  # fender plateau
             table_z(FRONT_CREST["z"], spec_x) - FRONT_CREST["drop"],   # crest approach
-            table_z(FRONT_CREST["z"], spec_x)]                          # the front fender crest
+            table_z(FRONT_CREST["z"], spec_x),                          # the front fender crest
+            # v064: the HAUNCH CREST, the diagonal edge ref-09 shows from above. Like the front
+            # crest it is appended after the profile, two points 12 mm apart, and with no anchor
+            # the arc-length resample could land on neither. Same formula as ring(), carried over
+            # the whole car so the count stays fixed (outside the buttress it is clamped).
+            # A/B 2026-10-05: without these the crest measured 46.2 degrees on the mesh against a
+            # design 74.1; with them 70.0 (and the flank top 13.3 -> 14.5 against 14.8).
+            buttress_top(spec_x) - DECK_EDGE_DROP,                      # haunch crest approach
+            buttress_top(spec_x)]                                       # the haunch crest
+
+
+def buttress_top(spec_x):
+    """The haunch crest height ring() builds: DECK_SPINE plus the buttress gaussian."""
+    deck = spine_z(DECK_SPINE, spec_x)
+    if deck is None:
+        deck = DECK_SPINE[0][1] if spec_x < DECK_SPINE[0][0] else DECK_SPINE[-1][1]
+    return deck + BUTTRESS["height"] * math.exp(-((spec_x - 2415.0) / 620.0) ** 2)
 
 
 def resample_anchored(poly, n, anch):
@@ -847,6 +863,9 @@ FLANK_PULL = 0.95                          # how strongly it is pulled to the st
 # view measured at 0.02 of the climb 1% in (the reference: 0.29). The reference wall LEANS -- about
 # 82 degrees over its upper 140 mm -- and the corner into the plateau comes after that. So the ease
 # now runs over the whole upper band: 925 at 660 to the raw ~840 at 800 is 80 degrees on average.
+# A/B 2026-10-05 (v064), ease/hold 140/0.45 against 60/0.70, 80/0.60, 40/0.80: the REAR_HAUNCH_TOP
+# line measured 13.3 / 10.1 / 12.0 / 10.6 degrees against a DESIGN angle of 14.8 in every case --
+# these two shape the wall's lean, not the corner, and none of them sharpens it. Kept at 140/0.45.
 FLANK_EASE_TOP = 140.0
 # ...and measured, that alone was still a 39 degree chamfer from 735 to 800, because the pull
 # fades to ZERO at the band top and the raw section tucks 84 mm in over that height. Unclamped the

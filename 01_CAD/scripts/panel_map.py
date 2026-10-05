@@ -157,6 +157,13 @@ def in_poly(u, v, poly, tol):
 def not_panel(sx, ay, z, nz, ny):
     if z < 130 and nz < -0.4:
         return "X_FLOOR"
+    # v061: the underside roll-under. Faces facing the road (nz < -0.85) just above Z 130 were
+    # skin while their neighbours below 130 were floor, so the strip broke into islands that the
+    # print chain then dropped -- assembly_check's worst point, a 24 mm gap under P03 at spec X
+    # -309, Z 120..135, present since at least v059. Kept off the diffuser, whose tunnel ceiling
+    # faces down at Z 150..330 and IS a panel.
+    if z < 145 and nz < -0.85 and sx < DIFFUSER_FRONT:
+        return "X_FLOOR"
     if CABIN["x0"] <= sx <= CABIN["x1"] and ay <= 715 and z > 600 and ny > 0.4:
         return "X_CABIN"
     for ax, r, _cz in ARCH_CUTS:

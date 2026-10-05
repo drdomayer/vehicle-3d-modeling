@@ -25,7 +25,7 @@ Every file is one printable solid, laid on its flattest face, sitting on Z = 0, 
 | joint tab | 20 mm past each cut, dropped inward by wall + bond | fit test |
 | orientation | smallest dimension vertical | Q32 / Q33 |
 
-Estimated core mass across both tiers at these assumptions: **~86.3 kg**.
+Estimated core mass across both tiers at these assumptions: **~86.2 kg**.
 
 ## Quality of the files, as a slicer sees them
 

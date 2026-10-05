@@ -93,6 +93,7 @@ WRITER = {
     "19-panel-by-panel.md": "(P) panel_review.py",
     "fit_test_P39.txt": "(P) fit_test.py P39",
     "overhang.csv": "(P) overhang_report.py",
+    "waviness.txt": "(B) waviness_check.py",
 }
 
 NOT_A_REPORT = {

@@ -665,7 +665,41 @@ def smooth_for_print(ob):
     m.boundary_smooth = "PRESERVE_CORNERS"
     bpy.context.view_layer.objects.active = ob
     bpy.ops.object.modifier_apply(modifier=m.name)
+    fair_for_print(ob)
     return creased
+
+
+# FAIRING, 2026-10-05 (v061). waviness_check.py measured the print files at 0.85 mm RMS of ripple
+# under 300 mm wavelength -- and the master at the same 0.85: the waves are the loft's, not the
+# pipeline's, and the master is what every metric reads, so it is not touched. The PRINT is faired
+# instead (the owner's option (a)): Laplacian smoothing with volume preservation, only on vertices
+# that touch no creased edge and no boundary, so the designed edges and the seams stay exactly
+# where they are. assembly_check measures what it costs against the master.
+FAIR_ITER = int(globals().get("PROD_FAIR_ITER", 0))        # A/B: inject PROD_FAIR_* to try values
+FAIR_LAMBDA = float(globals().get("PROD_FAIR_LAMBDA", 0.3))
+
+
+def fair_for_print(ob):
+    if FAIR_ITER <= 0 or FAIR_LAMBDA <= 0:
+        return 0
+    bm = bmesh.new()
+    bm.from_mesh(ob.data)
+    layer = bm.edges.layers.float.get("crease_edge")
+    keep = set()
+    for e in bm.edges:
+        if e.is_boundary or (layer is not None and e[layer] > 0.5):
+            keep.add(e.verts[0].index)
+            keep.add(e.verts[1].index)
+    free = [v for v in bm.verts if v.index not in keep and not v.is_boundary]
+    # the plain umbrella average, not smooth_laplacian_vert: the latter with preserve_volume on an
+    # OPEN shell is unstable -- tried first, the assembled car came out 93 m long
+    for _ in range(FAIR_ITER):
+        bmesh.ops.smooth_vert(bm, verts=free, factor=FAIR_LAMBDA,
+                              use_axis_x=True, use_axis_y=True, use_axis_z=True)
+    bm.to_mesh(ob.data)
+    bm.free()
+    ob.data.update()
+    return len(free)
 
 
 def thicken(ob):

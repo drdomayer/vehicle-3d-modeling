@@ -956,6 +956,67 @@ def main():
           f"of the lens (45 out / 10 in / 15 up / 10 down) -> " +
           ", ".join(f"{n} {v} cm3 at |Y| {y}" for n, v, y in bez_made))
 
+    # ---- 5e. THE DRL ON INTO THE EYE, 2026-10-05 (v068). ref-09's line of light runs from the nose
+    # up the eye's lower edge to its outer tip. In the skin it cannot (v067: under the corner crest
+    # the skin recedes and a groove zig-zags or floats), so it continues where it can: as a rebate
+    # along the LOWER EDGE of the outboard bezel P67/P68, from the corner (Y 778) to the tip
+    # (Y 846). The same radius-7 half-round as the main DRL, its axis 5 mm above the bezel's lower
+    # edge so it opens the corner instead of leaving a thin lip under it. The bezel's face is found
+    # by ray along -X at each height -- it is the skin offset along X, which is how the eye was cut.
+    def eyebot(y):
+        for (ya, za, _), (yb, zb, _) in zip(EYE, EYE[1:]):
+            if ya <= y <= yb:
+                return za + (zb - za) * (y - ya) / (yb - ya)
+        return None
+    eye_drl = []
+    for sgn in (1, -1):
+        side = "L" if sgn > 0 else "R"
+        bo = bpy.data.objects.get(f"EYE_BEZEL_OUT_{side}")
+        if bo is None:
+            continue
+        inv = bo.matrix_world.inverted()
+        pts, y = [], 778.0
+        while y <= 846.0:
+            z = eyebot(y) + BEZEL["gap"] + 5.0
+            org = mathutils.Vector((2.0, mm(sgn * y), mm(z)))
+            h, loc, n, _i = bo.ray_cast(inv @ org, (inv.to_3x3() @ mathutils.Vector((-1.0, 0.0, 0.0))).normalized())
+            if h:
+                w = bo.matrix_world @ loc
+                nw = (bo.matrix_world.to_3x3() @ n).normalized()
+                pts.append(w + nw * mm(0.3))     # off the face, as the main DRL (v067)
+            y += 8.0
+        if len(pts) < 3:
+            continue
+        bpy.context.scene[f"statev_drl_eye_axis_{side}"] = [c for v in pts for c in (v.x, v.y, v.z)]
+        cu = bpy.data.curves.new(f"_drl_eye_{side}", "CURVE")
+        cu.dimensions = "3D"
+        sp = cu.splines.new("POLY")
+        sp.points.add(len(pts) - 1)
+        for p_, v in zip(sp.points, pts):
+            p_.co = (v.x, v.y, v.z, 1.0)
+        cu.bevel_depth = 0.007
+        cu.bevel_resolution = 4
+        cu.use_fill_caps = True
+        co = bpy.data.objects.new(cu.name, cu)
+        coll.objects.link(co)
+        bpy.context.view_layer.objects.active = co
+        co.select_set(True)
+        bpy.ops.object.convert(target="MESH")
+        cm = bpy.context.view_layer.objects.active
+        bm = bmesh.new()
+        bm.from_mesh(cm.data)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        bm.to_mesh(cm.data)
+        bm.free()
+        m = bo.modifiers.new("drl", "BOOLEAN")
+        m.operation, m.object, m.solver = "DIFFERENCE", cm, "EXACT"
+        bpy.context.view_layer.objects.active = bo
+        bpy.ops.object.modifier_apply(modifier=m.name)
+        bpy.data.objects.remove(cm, do_unlink=True)
+        eye_drl.append(f"{side} {len(pts)} pts")
+    print("  DRL in the eye: a radius-7 rebate along the outboard bezel's lower edge, Y 778..846 -> " +
+          ", ".join(eye_drl))
+
     # ---- 6. the lamp housing behind the blade. PROJECTOR is a DECIDED envelope at spec X -600,
     # Y +-560, Z 570, 150 x 110 x 110 for one Hella 90 mm bi-LED module, and the module itself may
     # never be modified -- so the housing is built around it with a wall and 6 mm of air, open at

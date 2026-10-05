@@ -319,6 +319,13 @@ def ctx_objects(sc):
         pts = [P_(x, -y, z) for x, y, z in reversed(side)] + [P_(path[0][0] - 2, 0, tz(sk["DRL_Z"], 0))] + \
               [P_(x, y, z) for x, y, z in side]
     tags[tube("GLOSSY_CTX_DRL", pts, 0.006).name] = "light white"
+    # v068: the DRL's run on along the outboard eye bezel's lower edge (stage03 5e stores the axis)
+    for side in ("L", "R"):
+        k = f"statev_drl_eye_axis_{side}"
+        if k in sc:
+            a = list(sc[k])
+            tags[tube(f"GLOSSY_CTX_DRL_EYE_{side}", [tuple(a[i:i + 3]) for i in range(0, len(a), 3)],
+                      0.006).name] = "light white"
     # tail light bar and its L ends (the LOCKED envelopes), lit at the face
     # v057: lit only OUTBOARD of |Y| 430, a black band between -- ref-09's rear view (1.68 mm/px):
     # each lamp runs from ~857 in to ~428, and the centre is a dark band carrying the badge. Legal

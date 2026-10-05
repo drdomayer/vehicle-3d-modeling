@@ -11,9 +11,9 @@ WAVINESS — the PRINT FILES (assembled), residual from a local quadratic over 3
   top   Y 0          186     0.83     4.36   2210
   top   Y 250        155     1.54    11.12   2010
   top   Y 500        147     3.23    16.03   2190
-  top   Y 700        342     1.52     7.46   2850
+  top   Y 700        325     1.51     7.46   2850
 
-  ALL: RMS 1.36 mm   90th 1.64   99th 5.73   max 16.03   (1883 samples)
+  ALL: RMS 1.36 mm   90th 1.62   99th 5.73   max 16.03   (1866 samples)
 
   A ripple shorter than the window reads at its own height; the car's curvature does
   not. Seams, lamp slots and openings break a profile rather than counting as waves.

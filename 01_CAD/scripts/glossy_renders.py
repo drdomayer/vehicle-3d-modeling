@@ -223,7 +223,7 @@ def clean_bodies():
 
 # the pockets whose inside is black on the car (v056); read from panel_map, not retyped
 INTERIOR_BLACK = ("X_MOUTH", "X_CORNER", "X_INTAKE", "X_TAIL_CORNER", "X_LOUVRE", "X_FENDER_SLOT",
-                  "X_BADGE")
+                  "X_BADGE", "X_EYE")
 _pmg = {"__name__": "_pm"}
 with open(os.path.join(REPO, "01_CAD", "scripts", "panel_map.py"), encoding="utf-8") as _f:
     exec(_f.read().split("\ndef main(")[0], _pmg)

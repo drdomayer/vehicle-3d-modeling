@@ -178,20 +178,29 @@ def measure(ob):
     # tidy its area figure looks, and the area figure is what hid it: P07 and P28 both measured
     # plausibly and both printed in two. Each object here is already one part on one side, so no
     # halving is needed and none is done.
-    bm.verts.ensure_lookup_table()
-    seen, n = set(), 0
-    for v in bm.verts:
-        if v in seen:
+    # v065: counted the way panel_production builds the file -- faces joined by edges, and a piece
+    # under a tenth of the main one is residue, which production drops and COUNTS rather than prints.
+    # Counting every crumb here put "3 pieces" against P01 in the supplier package while its file was
+    # one piece: two boolean crumbs of 11 and 14 mm2 where the headlamp eye's floor crosses the nose
+    # corner. A report and the file it describes must agree on what a piece is.
+    seen, areas = set(), []
+    for f0 in bm.faces:
+        if f0.index in seen:
             continue
-        n += 1
-        stack = [v]
+        stack, a = [f0], 0.0
+        seen.add(f0.index)
         while stack:
-            u = stack.pop()
-            if u in seen:
-                continue
-            seen.add(u)
-            stack.extend(e.other_vert(u) for e in u.link_edges)
-    pieces = n
+            f = stack.pop()
+            a += f.calc_area()
+            for e in f.edges:
+                for g in e.link_faces:
+                    if g.index not in seen:
+                        seen.add(g.index)
+                        stack.append(g)
+        areas.append(a)
+    big = max(areas) if areas else 0.0
+    pieces = sum(1 for a in areas if a >= 0.10 * big)
+    ob["residue_mm2"] = round(sum(a for a in areas if a < 0.10 * big) * 1e6, 1)
     bm.free()
     vs = [ob.matrix_world @ v.co for v in ob.data.vertices]
     sx = [-v.x * 1000 for v in vs]
@@ -220,6 +229,8 @@ def main():
         rows.append(dict(ID=pid, PART=NAME_OF.get(pid, "?"), **m))
         d = ob.get("mirror_delta_pct")
         flag = "" if m["PIECES"] == 1 else "   <-- not one part"
+        if ob.get("residue_mm2", 0.0) > 0.0:
+            flag += f"   + {ob['residue_mm2']:.0f} mm2 residue (dropped by production, counted)"
         if d is not None and abs(d) >= 1.0:
             flag += f"   mirrored from {TWIN_OF[pid]}; extracting it alone gave {d:+.0f}%"
         print(f"{pid:<6}{NAME_OF.get(pid,'?'):<22}{m['LENGTH']:>8.0f}{m['WIDTH']:>8.0f}"

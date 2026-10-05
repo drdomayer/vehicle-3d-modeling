@@ -707,6 +707,61 @@ def main():
         made.append(ob)
     print("  headlamp: a slot across the nose, the housing's face showing in it (the frame P29/P30 is retired)")
 
+    # ---- 5c. THE EYE, 2026-10-05 (v065). ref-09's headlamp is a long slanted wedge running out and up
+    # from the corner along the fender's leading edge; ours was the module's 110 x 120 slot alone, a
+    # box in the corner. The module is a Hella 90 mm bi-LED and may not be touched, so the eye cannot
+    # be the render's 55 mm: it is as tall as the module needs around it (Z 505..627 over Y 600..700)
+    # and tapers to 28 mm going out and up to Y 850, with a short tip inboard. A black recess 40 mm
+    # deep, cut along X from the skin at each station; the module's own slot stays deeper inside it.
+    # Along X and NOT along the local normal (first run): at the corner the normal is half sideways,
+    # so the walls leaned up to 28 mm inboard of the outline in Y-Z, panel_map's polygon read them as
+    # skin, and P01 broke into five pieces. Cut along X, the walls lie on the outline by construction. What it is: the lamp's visible graphic, not a lens -- nothing
+    # covers the module.
+    EYE = [(520.0, 548.0, 576.0), (560.0, 522.0, 608.0), (600.0, 505.0, 625.0), (700.0, 505.0, 627.0),
+           (760.0, 548.0, 632.0), (820.0, 592.0, 637.0), (850.0, 612.0, 640.0)]
+    EYE_DEPTH, EYE_OUT = 40.0, 20.0
+    # Densified to a station every <= 15 mm along the SAME outline (linear between the seven): with
+    # seven stations each one took the skin's X at a single point, so the cut's edge on the skin was
+    # a chain of 30-100 mm facets and read ragged in the glossy render. The Y-Z outline -- and with
+    # it panel_map's X_EYE polygons -- does not change.
+    eye_st = []
+    for (ya, za0, za1), (yb, zb0, zb1) in zip(EYE, EYE[1:]):
+        k = max(1, int(math.ceil((yb - ya) / 15.0)))
+        eye_st += [(ya + (yb - ya) * j / k, za0 + (zb0 - za0) * j / k, za1 + (zb1 - za1) * j / k)
+                   for j in range(k)]
+    eye_st.append(EYE[-1])
+    for sgn in (1, -1):
+        quads = []
+        for yy, z0, z1 in eye_st:
+            zm = (z0 + z1) / 2.0
+            p_, n_ = surface_hit(mathutils.Vector((mm(1000.0), mm(sgn * yy), mm(zm))),
+                                 [(1.5, 0.0, 0.0), (0.0, sgn * 1.5, 0.0)])
+            if p_ is None:
+                continue
+            ax = mathutils.Vector((1.0, 0.0, 0.0))     # repo +X is spec forward, out of the face
+            o_, i_ = p_ + ax * mm(EYE_OUT), p_ - ax * mm(EYE_DEPTH)
+            quads.append([(o_.x, o_.y, mm(z0)), (i_.x, i_.y, mm(z0)), (i_.x, i_.y, mm(z1)), (o_.x, o_.y, mm(z1))])
+        if len(quads) < 3:
+            continue
+        verts = [v for q in quads for v in q]
+        faces = [(0, 1, 2, 3), (len(verts) - 1, len(verts) - 2, len(verts) - 3, len(verts) - 4)]
+        for i in range(len(quads) - 1):
+            a, b = i * 4, (i + 1) * 4
+            faces += [(a + k, a + (k + 1) % 4, b + (k + 1) % 4, b + k) for k in range(4)]
+        me = bpy.data.meshes.new(f"CUT_EYE_{'L' if sgn > 0 else 'R'}")
+        me.from_pydata(verts, [], faces)
+        me.update()
+        eo = bpy.data.objects.new(me.name, me)
+        coll.objects.link(eo)
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        bm.to_mesh(me)
+        bm.free()
+        cuts.append(eo)
+    print(f"  eye: a {EYE_DEPTH:.0f} mm black wedge recess along the skin, Y {EYE[0][0]:.0f}..{EYE[-1][0]:.0f}, "
+          f"{EYE[3][2]-EYE[3][1]:.0f} mm tall at the module tapering to {EYE[-1][2]-EYE[-1][1]:.0f} outboard")
+
 
     # ---- 6. the lamp housing behind the blade. PROJECTOR is a DECIDED envelope at spec X -600,
     # Y +-560, Z 570, 150 x 110 x 110 for one Hella 90 mm bi-LED module, and the module itself may

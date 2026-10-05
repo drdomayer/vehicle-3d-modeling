@@ -97,6 +97,7 @@ NOT_PANEL = {
     "X_TAIL_CORNER": "wall of the tail corner pocket under the light bar's L end",
     "X_LOUVRE":      "wall or floor of the engine-cover louvre aperture; it looks into the engine bay",
     "X_BADGE":       "wall or floor of the badge band between the tail lamps; a dark recess, printed with P21",
+    "X_EYE":         "wall or floor of the headlamp eye recess; black, printed with the fascia / fender",
 }
 
 DIFFUSER_FRONT = 2870.0   # DIFFUSER_FLOOR's first station in statev_master_volumes: the tunnel's start
@@ -119,6 +120,22 @@ POCKETS = [("X_INTAKE", 1910.0, 2180.0, 420.0, 1000.0, 440.0, 710.0),
             [(450.0, 480.0), (745.0, 480.0), (745.0, 240.0), (590.0, 240.0)]),
            # v056: the engine-cover louvre field (stage03 LOUVRE), read off ref-09's top view
            ("X_LOUVRE", 2207.0, 2893.0, 0.0, 388.0, 700.0, 1100.0),
+           # v065: the headlamp eye (stage03 EYE), in THREE convex parts because the outline is not
+           # convex. in_poly is a convex test; the first run had two parts, and the second was
+           # concave at (820, 592) -- the lower edge's slope falls 0.733 -> 0.667 there -- so the
+           # extended edge 820..850 rejected the eye's own floor at Y 708 and left it in P01 as a
+           # loose face. Measured, then split. And 8 mm of slack, not POLY_TOL: where the lower edge
+           # crosses the nose's corner crease (Y 750..775) the boolean leaves a 1-2 mm lip of facets
+           # with their normals pointing down, ~6 mm outside the outline -- 4 cm2 a side, which made
+           # P01 three pieces. They are black and printed with the panel either way.
+           ("X_EYE", -1000.0, -500.0, 515.0, 705.0, 500.0, 632.0,
+            [(520.0, 548.0), (560.0, 522.0), (600.0, 505.0), (700.0, 505.0), (700.0, 627.0),
+             (600.0, 625.0), (560.0, 608.0), (520.0, 576.0)], 8.0),
+           ("X_EYE", -1000.0, -450.0, 695.0, 825.0, 500.0, 642.0,
+            [(700.0, 505.0), (760.0, 548.0), (820.0, 592.0), (820.0, 637.0), (760.0, 632.0),
+             (700.0, 627.0)], 8.0),
+           ("X_EYE", -1000.0, -450.0, 815.0, 855.0, 585.0, 645.0,
+            [(820.0, 592.0), (850.0, 612.0), (850.0, 640.0), (820.0, 637.0)], 8.0),
            # v060: the badge band, a 20 mm recess in the tail face between the lamps (stage03 BAND)
            ("X_BADGE", 3180.0, 3500.0, 0.0, 431.0, 584.0, 646.0),
            ("X_LIP", -1000.0, -905.0, 0.0, 625.0, 148.0, 196.0),
@@ -194,7 +211,8 @@ def not_panel(sx, ay, z, nz, ny):
         # are not exterior skin (this table), but they ARE the panel's geometry to print; the
         # production gather keeps a pocket's walls with the panel whose region the pocket is in.
         if x0 <= sx <= x1 and y0 <= ay <= y1 and z0 <= z <= z1:
-            if poly and not in_poly(ay, z, poly[0], POLY_TOL):
+            # an entry may carry its own slack after the polygon (the eye, v065); the rest use POLY_TOL
+            if poly and not in_poly(ay, z, poly[0], poly[1] if len(poly) > 1 else POLY_TOL):
                 continue
             return nm
     for ax, r, cz in ARCH_CUTS:

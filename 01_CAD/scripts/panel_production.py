@@ -260,7 +260,7 @@ def gather(pid):
             # X_LOUVRE (v056): the aperture's WALLS print with the cover, as every pocket's do, but
             # not its floor -- the louvres vent into the engine bay; a floor would make a tray
             wall_only = tag == "X_LOUVRE" and abs(n.z) > 0.5
-            if tag and not (tag in ("X_INTAKE", "X_FENDER_SLOT", "X_MOUTH", "X_ROCKER_CHANNEL", "X_CORNER", "X_LIP", "X_TAIL_CORNER", "X_LOUVRE", "X_BADGE")
+            if tag and not (tag in ("X_INTAKE", "X_FENDER_SLOT", "X_MOUTH", "X_ROCKER_CHANNEL", "X_CORNER", "X_LIP", "X_TAIL_CORNER", "X_LOUVRE", "X_BADGE", "X_EYE")
                             and not wall_only and panel_of(sx, ay, z) == base):
                 # a pocket's walls are PRINTED with the panel the pocket is cut into: they are
                 # its recess, even though the skin accounting rightly does not count them as
@@ -1157,6 +1157,16 @@ def tidy_for_export(ob):
             break
         bmesh.ops.delete(bm, geom=list(doomed), context="FACES_ONLY")
         flaps += len(doomed)
+    # v065: a THREE-EDGE hole whose triangle is a sliver is closed again. P01's file came out with
+    # one at Y 700 / Z 505, where the lamp slot's side wall meets the headlamp eye's floor on the
+    # same Z: three vertices 2.5 mm apart on one line, 0.003 mm2 -- a seam connector of the kind the
+    # 2026-09-30 note above says must stay. Only 3-sided loops under FLAP_MAX_MM2 are touched.
+    edge_open = [e for e in bm.edges if len(e.link_faces) == 1]
+    if edge_open:
+        res = bmesh.ops.holes_fill(bm, edges=edge_open, sides=3)
+        big = [f for f in res["faces"] if f.calc_area() * 1e6 >= FLAP_MAX_MM2]
+        if big:        # not a sliver: put it back the way it was rather than invent surface
+            bmesh.ops.delete(bm, geom=big, context="FACES_ONLY")
     loose = [v for v in bm.verts if not v.link_faces]
     if loose:
         bmesh.ops.delete(bm, geom=loose, context="VERTS")

@@ -291,6 +291,23 @@ def hex_grille(name, coll, poly, rim, pitch, bar, thick, to_world):
     return plate
 
 
+def hexa(name, coll, pts):
+    """A closed six-faced solid from 8 spec-mm corners: 0-3 one end, 4-7 the other, same order."""
+    v = [(-mm(x), mm(y), mm(z)) for x, y, z in pts]
+    f = [(0, 1, 2, 3), (7, 6, 5, 4)] + [(i, (i + 1) % 4, 4 + (i + 1) % 4, 4 + i) for i in range(4)]
+    me = bpy.data.meshes.new(name)
+    me.from_pydata(v, [], f)
+    me.update()
+    ob = bpy.data.objects.new(name, me)
+    coll.objects.link(ob)
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(me)
+    bm.free()
+    return ob
+
+
 def frame(name, coll, x0, x1, y0, y1, z0, z1, wall):
     """A rectangular surround: the outer box with the inner one taken out of it, so what is left is
     a thin frame standing in the pocket. This is the 'thin light blade' read -- the lamp sits behind
@@ -817,8 +834,7 @@ def main():
     # meaning the form moved into the body's own tail profile, where TAIL_DROP carries it. P23 is a
     # leftover in the register rather than a part waiting to be modelled, and the register is where
     # it gets resolved.
-    print("  NOT built: P23 REAR_SPOILER — its envelope is 125.7 mm inside the body. The ducktail")
-    print("    is in the tail profile already; P23 is a register question, not a modelling one.")
+    print("  P23 REAR_SPOILER retired (v060): the ducktail is the tail profile itself, not a part")
 
     # ---- 7. the intake duct, from the mouth to the plenum. It runs through the three envelopes the
     # skeleton already carries -- INTAKE_INLET derived, INTAKE_DUCT and INTAKE_OUTLET PROVISIONAL --
@@ -1251,6 +1267,121 @@ def main():
         tg["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
         made.append(tg)
     print(f"  tail vent grilles: {tg['holes']} hexagons each, pitch 26, at spec X {TC['x_floor'] + 15:.0f} -> P56 / P57")
+
+    # ---- 13. THE MASK FACETS, 2026-10-05 (v060). ref-09's mask is built from PLANES: the painted
+    # wedge between the mouth and each corner intake is a facet turned in toward the mouth, which is
+    # what reads as the "V" of the front. Ours lay in the flat face. A planar cut gives the wedge
+    # that facet: 40 mm deep at the mouth's edge, zero at the corner intake's inner edge, so the
+    # plane meets the chamfer where the face already runs back -- a crease along its top and bottom
+    # edges, no step anywhere else. Planar by construction (a linear depth on a quad), so the print
+    # smoothing has nothing to round. Only Z 220..480: the DRL, the lamp slot and the lip are untouched.
+    # The quad's corners lie INSIDE the two pockets, so its edges cross the pockets' walls in
+    # T-junctions at least 21 mm from any pocket corner. Drawn first with its corners ON the pocket
+    # corners, it pinched the fascia at four points and P01 went to print as three files.
+    # Crossings (computed): mouth wall at Y 326 Z 242 and Y 372 Z 404; corner wall at Y 580 Z 257
+    # and Y 462 Z 459. Depth is linear in Y alone, so the cut face stays one plane.
+    FACET = [(300.0, 240.0), (350.0, 390.0), (480.0, 470.0), (640.0, 260.0)]
+    FACET_DEPTH = 40.0
+    def facet_x(yy):
+        return -950.0 + FACET_DEPTH * (1.0 - (yy - 340.0) / (520.0 - 340.0))
+    for sgn in (1, -1):
+        pts = [(-1000.0, sgn * y_, z_) for y_, z_ in FACET] + [(facet_x(y_), sgn * y_, z_) for y_, z_ in FACET]
+        cuts.append(hexa(f"CUT_FACET_{'L' if sgn > 0 else 'R'}", coll, pts))
+    print(f"  mask facets: the mouth-to-corner wedges turned in by a plane, {FACET_DEPTH:.0f} mm at the "
+          f"mouth edge to 0 at the corner intake")
+
+    # ---- 14. THE SPLITTER END PLATES, 2026-10-05 (v060). Withheld on 2026-10-03 as the kind of proud
+    # element retired on 09-29; the owner: "do all the outstanding things". A 10 mm carbon fence
+    # under each corner intake at Y +-600: front edge at spec X -930 (20 mm inside the locked tip),
+    # 40..85 mm ahead of the chamfered face there (measured -846..-887 at Z 125..240), its rear
+    # 80 mm embedded in the corner so it is carried, top raked back from Z 175 to 238 -- under the
+    # corner intake's floor at 240 -- and its foot at Z 122 over the 120 clearance.
+    for sgn in (1, -1):
+        ep = blade(f"SPLITTER_END_{'L' if sgn > 0 else 'R'}", coll,
+                   [(-930.0, sgn * 600.0, 122.0, 175.0), (-880.0, sgn * 600.0, 122.0, 238.0),
+                    (-800.0, sgn * 600.0, 122.0, 238.0)], 10.0)
+        ep["panel_id"] = "P61" if sgn > 0 else "P62"
+        ep["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
+        made.append(ep)
+    print("  splitter end plates: 10 mm fences at Y +-600, spec X -930..-800, Z 122..238 -> P61 / P62")
+
+    # ---- 15. THE BADGE BAND AND THE BADGE, 2026-10-05 (v060). ref-09: between the two lamps a dark
+    # band about as tall as the lamps' housings, the word STATEV across its middle. Ours had the lamp
+    # slot only, and at the centre the tail's own top covers most of it from behind. So: a 20 mm
+    # recess in the tail face across |Y| < 430 (the lamps are lit outboard of that), Z 585..645,
+    # its floor parallel to the sloping face (measured at Y 0: spec X 3331 at Z 580, 3233 at 650),
+    # and the badge lying in it -- letters 4 mm proud of a 2 mm backing, one printed part, P60.
+    def tail_x(zz):
+        p_, n_ = surface_hit(mathutils.Vector((-mm(4000.0), 0.0, mm(zz))), [(-1.5, 0.0, 0.0)])
+        return -p_.x * 1000.0 if p_ is not None else None
+    BAND = dict(hw=430.0, z0=585.0, z1=645.0, depth=20.0)
+    xb0, xb1 = tail_x(BAND["z0"]), tail_x(BAND["z1"])
+    if xb0 and xb1:
+        fb = (xb0 - BAND["depth"], BAND["z0"])
+        ft = (xb1 - BAND["depth"], BAND["z1"])
+        pts = [(3600.0, -BAND["hw"], BAND["z0"]), (3600.0, BAND["hw"], BAND["z0"]),
+               (3600.0, BAND["hw"], BAND["z1"]), (3600.0, -BAND["hw"], BAND["z1"]),
+               (fb[0], -BAND["hw"], fb[1]), (fb[0], BAND["hw"], fb[1]),
+               (ft[0], BAND["hw"], ft[1]), (ft[0], -BAND["hw"], ft[1])]
+        cuts.append(hexa("CUT_BADGE_BAND", coll, pts))
+        # the badge, built flat (u across the car, v up the band, w out of it), then laid on the floor
+        sx_, sz_ = ft[0] - fb[0], ft[1] - fb[1]
+        L_ = math.hypot(sx_, sz_)
+        s_ = (sx_ / L_, sz_ / L_)                  # up the floor, in (spec X, Z)
+        n_ = (s_[1], -s_[0])                       # out of the floor: rearward and up
+        c_ = ((fb[0] + ft[0]) / 2.0, (fb[1] + ft[1]) / 2.0)
+        tc = bpy.data.curves.new("BADGE_TXT", "FONT")
+        tc.body = "STATEV"
+        tc.size = 0.046                            # ~300 mm across with the tracking, as ref-09's
+        tc.space_character = 1.9
+        tc.align_x, tc.align_y = "CENTER", "CENTER"
+        tc.extrude = 0.002                         # 4 mm deep in total, centred on the curve plane
+        to_ = bpy.data.objects.new("BADGE_TXT", tc)
+        coll.objects.link(to_)
+        bpy.context.view_layer.objects.active = to_
+        for o_ in bpy.context.selected_objects:
+            o_.select_set(False)
+        to_.select_set(True)
+        bpy.ops.object.convert(target="MESH")
+        badge = bpy.context.view_layer.objects.active
+        badge.name = "BADGE_REAR"
+        xs_ = [v.co.x for v in badge.data.vertices]
+        ys_ = [v.co.y for v in badge.data.vertices]
+        w2, h2 = (max(xs_) - min(xs_)) * 500.0 + 12.0, (max(ys_) - min(ys_)) * 500.0 + 8.0
+        bm = bmesh.new()
+        bm.from_mesh(badge.data)
+        bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-6)
+        for v in bm.verts:
+            v.co.z += 0.004                        # letters stand on the backing: w 2..6 mm
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        bm.to_mesh(badge.data)
+        bm.free()
+        back = bpy.data.meshes.new("BADGE_BACK")
+        back.from_pydata([(sx * w2 / 1000.0, sy * h2 / 1000.0, sz) for sz in (0.0, 0.0025)
+                          for sx, sy in ((-1, -1), (1, -1), (1, 1), (-1, 1))], [],
+                         [(0, 1, 2, 3), (7, 6, 5, 4), (0, 4, 5, 1), (1, 5, 6, 2), (2, 6, 7, 3), (3, 7, 4, 0)])
+        back.update()
+        bo = bpy.data.objects.new("BADGE_BACK", back)
+        coll.objects.link(bo)
+        m = badge.modifiers.new("back", "BOOLEAN")
+        m.operation, m.object, m.solver = "UNION", bo, "EXACT"
+        bpy.context.view_layer.objects.active = badge
+        bpy.ops.object.modifier_apply(modifier=m.name)
+        bpy.data.objects.remove(bo, do_unlink=True)
+        for v in badge.data.vertices:
+            u, vv, w = v.co.x * 1000.0, v.co.y * 1000.0, v.co.z * 1000.0
+            v.co = (-mm(c_[0] + vv * s_[0] + w * n_[0]), mm(-u), mm(c_[1] + vv * s_[1] + w * n_[1]))
+        badge.data.update()
+        bm = bmesh.new()
+        bm.from_mesh(badge.data)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        bm.to_mesh(badge.data)
+        bm.free()
+        badge["panel_id"] = "P60"
+        badge["stage"] = "03 element — shape ours"
+        made.append(badge)
+        print(f"  badge band: a {BAND['depth']:.0f} mm recess across |Y| < {BAND['hw']:.0f}, Z {BAND['z0']:.0f}.."
+              f"{BAND['z1']:.0f}, floor parallel to the face; STATEV {2 * w2:.0f} x {2 * h2:.0f} mm on it -> P60")
 
     # ---- 11. THE STRAKES AND THE SPLITTER LIP, 2026-09-29. ref-09's mask is faceted: from each
     # lamp's inner end a crease runs down and inward to the mouth's upper corner (the cheekbone),

@@ -8,7 +8,7 @@ P08,ROCKER_R,s01,933.4,207.9,175.5,yes,1,yes,0,90.0,-0.0,0.0,0.0,-745.5,-0.0,,03
 P08,ROCKER_R,s02,913.4,209.9,158.8,yes,1,yes,0,90.0,-0.0,0.0,0.0,-759.2,-0.0,,03_PRINT/production/P08_ROCKER_R_s02.stl
 P39,ROCKER_END_L,whole,216.4,288.3,200.2,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,332.9,,03_PRINT/production/P39_ROCKER_END_L_whole.stl
 P40,ROCKER_END_R,whole,216.4,288.3,200.2,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,332.9,,03_PRINT/production/P40_ROCKER_END_R_whole.stl
-P21,REAR_FASCIA,whole,643.4,1779.6,553.6,yes,1,yes,61377,0.0,-90.0,0.0,-2866.4,0.0,-0.0,,03_PRINT/production/P21_REAR_FASCIA_whole.stl
+P21,REAR_FASCIA,whole,643.4,1779.6,553.6,yes,1,yes,61507,0.0,-90.0,0.0,-2866.4,0.0,-0.0,,03_PRINT/production/P21_REAR_FASCIA_whole.stl
 P22,DIFFUSER,whole,553.9,1779.6,375.2,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,500.0,,03_PRINT/production/P22_DIFFUSER_whole.stl
 P05,FENDER_CHANNEL_L,whole,380.0,154.0,102.8,yes,1,yes,0,-0.0,-0.0,-0.0,0.0,0.0,712.0,,03_PRINT/production/P05_FENDER_CHANNEL_L_whole.stl
 P06,FENDER_CHANNEL_R,whole,380.0,154.0,102.8,yes,1,yes,0,-0.0,-0.0,-0.0,0.0,0.0,712.0,,03_PRINT/production/P06_FENDER_CHANNEL_R_whole.stl
@@ -25,6 +25,9 @@ P56,TAIL_VENT_GRILLE_L,whole,227.0,65.0,6.0,yes,1,yes,0,180.0,-90.0,0.0,-3198.0,
 P57,TAIL_VENT_GRILLE_R,whole,227.0,65.0,6.0,yes,1,yes,0,180.0,-90.0,0.0,-3198.0,0.0,0.0,,03_PRINT/production/P57_TAIL_VENT_GRILLE_R_whole.stl
 P58,DIFFUSER_FIN_EDGE_L,whole,250.0,149.4,16.0,yes,1,yes,0,-90.0,-0.0,-0.0,0.0,382.0,-0.0,,03_PRINT/production/P58_DIFFUSER_FIN_EDGE_L_whole.stl
 P59,DIFFUSER_FIN_EDGE_R,whole,250.0,149.4,16.0,yes,1,yes,0,90.0,-0.0,0.0,0.0,-382.0,-0.0,,03_PRINT/production/P59_DIFFUSER_FIN_EDGE_R_whole.stl
+P60,BADGE_REAR,whole,41.6,283.8,28.6,yes,1,yes,0,-0.0,-0.0,-0.0,0.0,0.0,601.7,,03_PRINT/production/P60_BADGE_REAR_whole.stl
+P61,SPLITTER_END_L,whole,130.0,116.0,10.0,yes,1,yes,0,-90.0,-0.0,-0.0,0.0,595.0,-0.0,,03_PRINT/production/P61_SPLITTER_END_L_whole.stl
+P62,SPLITTER_END_R,whole,130.0,116.0,10.0,yes,1,yes,0,90.0,-0.0,0.0,0.0,-595.0,-0.0,,03_PRINT/production/P62_SPLITTER_END_R_whole.stl
 P24,HEADLIGHT_HOUSING_L,whole,175.0,122.0,122.0,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,621.0,,03_PRINT/production/P24_HEADLIGHT_HOUSING_L_whole.stl
 P25,HEADLIGHT_HOUSING_R,whole,175.0,122.0,122.0,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,621.0,,03_PRINT/production/P25_HEADLIGHT_HOUSING_R_whole.stl
 P31,INTAKE_DUCT_L,whole,310.0,692.1,270.0,yes,1,yes,0,-0.0,-0.0,-0.0,0.0,0.0,430.0,,03_PRINT/production/P31_INTAKE_DUCT_L_whole.stl

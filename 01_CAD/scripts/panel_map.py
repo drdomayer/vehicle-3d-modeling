@@ -96,6 +96,7 @@ NOT_PANEL = {
     "X_LIP":         "the recess above the splitter lip; a shadow line, not skin",
     "X_TAIL_CORNER": "wall of the tail corner pocket under the light bar's L end",
     "X_LOUVRE":      "wall or floor of the engine-cover louvre aperture; it looks into the engine bay",
+    "X_BADGE":       "wall or floor of the badge band between the tail lamps; a dark recess, printed with P21",
 }
 
 DIFFUSER_FRONT = 2870.0   # DIFFUSER_FLOOR's first station in statev_master_volumes: the tunnel's start
@@ -118,6 +119,8 @@ POCKETS = [("X_INTAKE", 1910.0, 2180.0, 420.0, 1000.0, 440.0, 710.0),
             [(450.0, 480.0), (745.0, 480.0), (745.0, 240.0), (590.0, 240.0)]),
            # v056: the engine-cover louvre field (stage03 LOUVRE), read off ref-09's top view
            ("X_LOUVRE", 2207.0, 2893.0, 0.0, 388.0, 700.0, 1100.0),
+           # v060: the badge band, a 20 mm recess in the tail face between the lamps (stage03 BAND)
+           ("X_BADGE", 3180.0, 3500.0, 0.0, 431.0, 584.0, 646.0),
            ("X_LIP", -1000.0, -905.0, 0.0, 625.0, 148.0, 196.0),
            ("X_TAIL_CORNER", 3175.0, 3500.0, 685.0, 765.0, 347.0, 580.0)]
 

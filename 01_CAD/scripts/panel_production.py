@@ -106,6 +106,7 @@ PANELS = ["P01", "P28", "P41", "P07", "P08", "P39", "P40", "P21", "P22",
           "P44", "P45", "P46", "P47",   # P17 / P18 are SHAPE ONLY; P48..P53 retired 2026-09-29
           "P54", "P55", "P56", "P57",   # v058: the grilles
           "P58", "P59",                 # v059: the third fin pair
+          "P60", "P61", "P62",          # v060: the badge and the splitter end fences
           "P24", "P25", "P31", "P32",
           # 2026-09-21: the tail blade's housings. They were BLOCKED for having no geometry, not
           # for waiting on the car -- docs/14 locks the lamp as a thin wide blade with sharp L
@@ -200,7 +201,7 @@ SHAPE_ONLY = {
 # Stage 03 elements are built by stage03_elements.py as closed solids in their own right -- a blade
 # already HAS its thickness -- so they skip both the map and the wall and go straight to sectioning.
 STAGE03 = {"P05", "P06", "P13", "P14", "P43",
-           "P44", "P45", "P46", "P47", "P17", "P18", "P54", "P55", "P56", "P57", "P58", "P59",
+           "P44", "P45", "P46", "P47", "P17", "P18", "P54", "P55", "P56", "P57", "P58", "P59", "P60", "P61", "P62",
            "P24", "P25", "P31", "P32", "P26", "P27", "P33"}
 SCHEDULE = []
 PLACEMENT = {}   # printed file -> the 4x4 that puts it back on the car
@@ -259,7 +260,7 @@ def gather(pid):
             # X_LOUVRE (v056): the aperture's WALLS print with the cover, as every pocket's do, but
             # not its floor -- the louvres vent into the engine bay; a floor would make a tray
             wall_only = tag == "X_LOUVRE" and abs(n.z) > 0.5
-            if tag and not (tag in ("X_INTAKE", "X_FENDER_SLOT", "X_MOUTH", "X_ROCKER_CHANNEL", "X_CORNER", "X_LIP", "X_TAIL_CORNER", "X_LOUVRE")
+            if tag and not (tag in ("X_INTAKE", "X_FENDER_SLOT", "X_MOUTH", "X_ROCKER_CHANNEL", "X_CORNER", "X_LIP", "X_TAIL_CORNER", "X_LOUVRE", "X_BADGE")
                             and not wall_only and panel_of(sx, ay, z) == base):
                 # a pocket's walls are PRINTED with the panel the pocket is cut into: they are
                 # its recess, even though the skin accounting rightly does not count them as

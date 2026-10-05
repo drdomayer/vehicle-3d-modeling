@@ -42,7 +42,7 @@ PANEL_STATUS, interfaces, worst = _pa["PANEL_STATUS"], _pa["interfaces"], _pa["w
 
 # Panels that sit in or on the volume the soft top folds into. docs/14 marks DECK_SPINE BLOCKED
 # and the buttress measures a 10 mm lip against a 93 mm intent for the same reason.
-ROOF_BLOCKED = {"P17", "P18", "P19", "P42", "P20", "P23", "P33"}
+ROOF_BLOCKED = {"P17", "P18", "P19", "P42", "P20", "P33"}
 
 # Per-panel facts that are not derivable from the other three layers.
 #   pid: (design function, mounting strategy, trim allowance mm, access/service, split note)
@@ -134,8 +134,10 @@ DEF = {
     "P59": ("edge diffuser fin, right", T_OURS, 8, "off with the diffuser", "single piece"),
     "P22": ("large functional diffuser, few large fins", T_BOLT, 15,
             "first thing to ground out; replaceable alone", "splits between fin roots"),
-    "P23": ("integrated ducktail lip growing from the deck", T_OURS, 10,
-            "off without disturbing the deck", "splits at the centreline"),
+    "P60": ("STATEV badge on a 2 mm backing in the dark band", T_OURS, 4, "bonded into the band",
+            "single piece"),
+    "P61": ("splitter end fence, left", T_OURS, 8, "off with the splitter", "single piece"),
+    "P62": ("splitter end fence, right", T_OURS, 8, "off with the splitter", "single piece"),
     "P24": ("housing for a bought E-marked module", T_OURS, 6, "module replaceable from behind",
             "single piece"),
     "P25": ("housing for a bought E-marked module", T_OURS, 6, "module replaceable from behind",

@@ -17,7 +17,8 @@ import mathutils
 
 PROUD_MM = 3.0
 EXPECTED_PROUD = {"BUTTRESS": "sail standing on the haunch (shape-only, scan S2)",
-                  "DIFFUSER_FIN": "fin under the rising diffuser floor"}
+                  "DIFFUSER_FIN": "fin under the rising diffuser floor",
+                  "SPLITTER_END": "end fence standing ahead of the chamfered corner (v060)"}
 
 
 def body():

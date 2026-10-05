@@ -38,7 +38,7 @@ MIRROR_OF = {"P04": "P03", "P08": "P07", "P10": "P09", "P12": "P11", "P16": "P15
              "P18": "P17", "P41": "P28", "P40": "P39", "P42": "P19",
              "P14": "P13", "P06": "P05",
              "P25": "P24", "P32": "P31", "P45": "P44", "P47": "P46",
-             "P55": "P54", "P57": "P56", "P59": "P58"}
+             "P55": "P54", "P57": "P56", "P59": "P58", "P62": "P61"}
 
 _pm = {"__file__": os.path.join(REPO, "01_CAD/scripts/panel_map.py"), "__name__": "_pm"}
 with open(os.path.join(REPO, "01_CAD/scripts/panel_map.py"), encoding="utf-8") as f:
@@ -114,6 +114,8 @@ INTERFACE_BY_PANEL = {
     "P45": {"exhaust_and_heat_shield_clearance": None},   # SCAN
     "P46": {"rear_crash_structure": None},                # SCAN
     "P58": {"rear_crash_structure": None},                # SCAN
+    "P61": {"front_crash_structure": None},               # SCAN: the beam behind the corner
+    "P60": {},
     "P54": {"what_the_corner_intake_feeds": None},        # SCAN: 986 radiators sit in the corners
     "P56": {"rear_crash_structure": None},                # SCAN
     "P47": {"rear_crash_structure": None},                # SCAN

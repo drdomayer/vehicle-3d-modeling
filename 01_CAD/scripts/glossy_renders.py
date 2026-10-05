@@ -222,7 +222,8 @@ def clean_bodies():
 
 
 # the pockets whose inside is black on the car (v056); read from panel_map, not retyped
-INTERIOR_BLACK = ("X_MOUTH", "X_CORNER", "X_INTAKE", "X_TAIL_CORNER", "X_LOUVRE", "X_FENDER_SLOT")
+INTERIOR_BLACK = ("X_MOUTH", "X_CORNER", "X_INTAKE", "X_TAIL_CORNER", "X_LOUVRE", "X_FENDER_SLOT",
+                  "X_BADGE")
 _pmg = {"__name__": "_pm"}
 with open(os.path.join(REPO, "01_CAD", "scripts", "panel_map.py"), encoding="utf-8") as _f:
     exec(_f.read().split("\ndef main(")[0], _pmg)
@@ -458,6 +459,7 @@ def _main():
     finmats = {"paint": paint,
             "carbon": mat("GLOSSY_CARBON", (0.018, 0.018, 0.02, 1.0), 0.3, 0.32),
             "gloss black": mat("GLOSSY_GBLACK", (0.008, 0.008, 0.009, 1.0), 0.1, 0.12),
+            "satin silver": mat("GLOSSY_SILVER", (0.75, 0.75, 0.76, 1.0), 1.0, 0.25),
             "hidden": mat("GLOSSY_HIDDEN", (0.02, 0.02, 0.02, 1.0), 0.0, 0.6),
             "tan": mat("GLOSSY_TAN", (0.42, 0.21, 0.09, 1.0), 0.0, 0.55),
             "glass": mat("GLOSSY_GLASS", (0.01, 0.012, 0.012, 1.0), 0.0, 0.03),
@@ -471,6 +473,23 @@ def _main():
         o.data.materials.clear()
         pid = o.get("panel_id") or (n[len("GLOSSY_FILE_"):][:3] if n.startswith("GLOSSY_FILE_") else None)
         o.data.materials.append(finmats.get(fin.get(pid, "paint"), paint))
+        # v060: the badge is one printed part, letters standing 4 mm on a 2 mm backing -- the
+        # backing reads black (it lies in the black band), the letters silver
+        if fin.get(pid) == "satin silver":
+            o.data.materials.clear()
+            o.data.materials.append(finmats["gloss black"])
+            o.data.materials.append(finmats["satin silver"])
+            M3 = o.matrix_world.to_3x3()
+            # the backing's own plane: the normal of its largest face (an area-weighted mean is zero
+            # on a closed solid), turned to face rearward, which is repo -X
+            big_ = max(o.data.polygons, key=lambda q: q.area)
+            nrm = (M3 @ big_.normal).normalized()
+            if nrm.x > 0:
+                nrm = -nrm
+            ds = [(o.matrix_world @ poly.center).dot(nrm) for poly in o.data.polygons]
+            dmin = min(ds) if ds else 0.0
+            for poly, d_ in zip(o.data.polygons, ds):
+                poly.material_index = 1 if (d_ - dmin) * 1000.0 > 3.0 else 0
         # v056: an opening's INSIDE is black on the real car (satin black or behind a mesh), not
         # body colour -- a painted corner intake read as a green dent in every front render
         if n.startswith("GLOSSY_FILE_") and fin.get(pid, "paint") == "paint":

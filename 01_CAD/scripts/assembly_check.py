@@ -240,7 +240,7 @@ def main():
         acc += a
         cum.append(acc)
     pof = panel_of()
-    d, owner = [], []
+    d, owner, where = [], [], []
     for _ in range(SAMPLES):
         t = random.random() * total
         lo, hi = 0, len(cum) - 1
@@ -259,6 +259,7 @@ def main():
         hit = tree.find_nearest(p)
         d.append((hit[0] - p).length * 1000.0 if hit[0] is not None else 9999.0)
         owner.append(pof(f) if pof else "?")
+        where.append((-p.x * 1000.0, p.y * 1000.0, p.z * 1000.0))
     # TWO QUESTIONS, and reporting one number for both is how a sound pipeline looks broken.
     # "How much of the car exists as printable files" is a project-status question: 20 of the 42
     # parts are SCAN REQUIRED or BLOCKED and have no files at all, so most of the body is simply
@@ -272,6 +273,7 @@ def main():
     produced -= {"P17", "P18"}
     near_d = [x for i, x in enumerate(d) if owner[i] in produced]
     far_d = [x for i, x in enumerate(d) if owner[i] not in produced]
+    pts_all = list(zip(d, owner, where))   # before the sort below breaks the index pairing
     d.sort()
     covered = sum(1 for x in d if x <= NEAR) / len(d) * 100.0
     print(f"\n  master EXTERIOR SKIN {total:.3f} m2, {SAMPLES} points sampled by area")
@@ -283,6 +285,11 @@ def main():
               f"99th {nd[int(len(nd)*0.99)]:6.2f}   worst {nd[-1]:7.2f}")
         print(f"     within {NEAR:.0f} mm: {sum(1 for x in nd if x <= NEAR)/len(nd)*100:5.1f}%"
               f"   <- this is whether the PIPELINE is right")
+        # WHERE, added 2026-10-05: a worst value without a place cannot be acted on
+        bad = sorted(((x, ow, wh) for x, ow, wh in pts_all if ow in produced and x > NEAR),
+                     reverse=True)[:6]
+        for x, ow, (wx, wy, wz) in bad:
+            print(f"       {x:6.1f} mm  {ow}  at spec X {wx:.0f}  Y {wy:.0f}  Z {wz:.0f}")
     if far_d:
         fd = sorted(far_d)
         print(f"\n  ON SURFACE WITH NO FILES YET  ({len(far_d)} points, median "

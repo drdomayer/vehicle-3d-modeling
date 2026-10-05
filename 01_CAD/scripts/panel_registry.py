@@ -114,10 +114,13 @@ PARTS = [
     # 2026-10-03 (v059): the third pair, three fins each side of the exhaust box as in ref-09
     ("P58", "DIFFUSER_FIN_EDGE_L",  "L",  "REAR",  23, "-Z", "direct print", "DIFFUSER"),
     ("P59", "DIFFUSER_FIN_EDGE_R",  "R",  "REAR",  23, "-Z", "direct print", "DIFFUSER"),
-    # P23: the ducktail has been IN the tail profile since v031 and the REAR_SPOILER envelope sits
-    # 125.7 mm inside the body (stage03, 2026-09-21). A register question for the owner: absorb it
-    # into P21/P19 (one line to delete here) or keep a separate lip. Left as is until answered.
-    ("P23", "REAR_SPOILER",        "-",  "REAR",  24, "-Z", "direct print or composite", "REAR_SPOILER"),
+    # P23 REAR_SPOILER RETIRED 2026-10-05 (v060): the ducktail has been IN the tail profile since
+    # v031 and its envelope sits 125.7 mm inside the body -- it is P21/P19's own surface, not a part.
+    # Owner: "do all the outstanding things"; this was the register half of it. Number not reused.
+    # v060: the splitter end fences and the rear badge
+    ("P61", "SPLITTER_END_L",      "L",  "FRONT", 4,  "+X", "direct print", "FRONT_CLAMSHELL"),
+    ("P62", "SPLITTER_END_R",      "R",  "FRONT", 4,  "+X", "direct print", "FRONT_CLAMSHELL"),
+    ("P60", "BADGE_REAR",          "-",  "REAR",  21, "-X", "direct print", "REAR_FASCIA"),
     ("P24", "HEADLIGHT_HOUSING_L", "L",  "LIGHTS", 25, "+X", "direct print, ASA", "HEADLIGHT"),
     ("P25", "HEADLIGHT_HOUSING_R", "R",  "LIGHTS", 25, "+X", "direct print, ASA", "HEADLIGHT"),
     ("P26", "TAIL_HOUSING_L",      "L",  "LIGHTS", 26, "-X", "direct print, ASA", "TAIL_LIGHT"),
@@ -133,7 +136,7 @@ FINISH = {
     "P01": "paint", "P02": "paint", "P03": "paint", "P04": "paint", "P09": "paint",
     "P10": "paint", "P11": "paint", "P12": "paint", "P15": "paint", "P16": "paint",
     "P17": "paint", "P18": "paint", "P19": "paint", "P42": "paint", "P21": "paint",
-    "P23": "paint", "P37": "paint", "P38": "paint",
+    "P37": "paint", "P38": "paint", "P61": "carbon", "P62": "carbon", "P60": "satin silver",
     "P07": "carbon", "P08": "carbon", "P39": "carbon", "P40": "carbon", "P28": "carbon",
     "P41": "carbon", "P22": "carbon", "P44": "carbon", "P45": "carbon", "P46": "carbon",
     "P47": "carbon", "P58": "carbon", "P59": "carbon", "P13": "carbon", "P14": "carbon",
@@ -168,10 +171,10 @@ ASSEMBLY_ORDER = [
     (18, "engine cover louvres"),
     (19, "rear fascia"),
     (20, "rear corner vent grilles"),     # was the centre mask, retired 2026-09-30 (P34)
-    (21, "plate recess and its lamp"),
+    (21, "plate recess, its lamp and the rear badge"),
     (22, "diffuser"),
     (23, "exhaust surround"),
-    (24, "rear spoiler"),
+    (24, "(rear spoiler -- retired 2026-10-05, it is the tail profile)"),
     (25, "headlight modules"),
     (26, "tail light modules"),
 ]

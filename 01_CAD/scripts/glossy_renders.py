@@ -464,7 +464,7 @@ def _main():
             set_in(q, ("Emission Strength",), 12.0)
         return m
     finmats = {"paint": paint,
-            "carbon": mat("GLOSSY_CARBON", (0.018, 0.018, 0.02, 1.0), 0.3, 0.32),
+            "carbon": mat("GLOSSY_CARBON", (0.018, 0.018, 0.02, 1.0), *globals().get("GLOSSY_CARBON_MR", (0.3, 0.32))),
             "gloss black": mat("GLOSSY_GBLACK", (0.008, 0.008, 0.009, 1.0), 0.1, 0.12),
             "satin silver": mat("GLOSSY_SILVER", (0.75, 0.75, 0.76, 1.0), 1.0, 0.25),
             "hidden": mat("GLOSSY_HIDDEN", (0.02, 0.02, 0.02, 1.0), 0.0, 0.6),
@@ -480,6 +480,8 @@ def _main():
         o.data.materials.clear()
         pid = o.get("panel_id") or (n[len("GLOSSY_FILE_"):][:3] if n.startswith("GLOSSY_FILE_") else None)
         o.data.materials.append(finmats.get(fin.get(pid, "paint"), paint))
+        if globals().get("GLOSSY_DEBUG"):
+            print("   mat", n, pid, fin.get(pid, "paint"), o.data.materials[0].name)
         # v060: the badge is one printed part, letters standing 4 mm on a 2 mm backing -- the
         # backing reads black (it lies in the black band), the letters silver
         if fin.get(pid) == "satin silver":

@@ -117,7 +117,7 @@ POCKETS = [("X_INTAKE", 1910.0, 2180.0, 420.0, 1000.0, 440.0, 710.0),
            # edge leans out from Y 450 at the top to 590 at the bottom. The box test would throw
            # away the painted wedge between it and the mouth, so the polygon decides.
            ("X_CORNER", -1000.0, -745.0, 445.0, 750.0, 235.0, 485.0,
-            [(450.0, 480.0), (745.0, 480.0), (745.0, 240.0), (590.0, 240.0)]),
+            [(450.0, 462.0), (745.0, 462.0), (745.0, 240.0), (590.0, 240.0)]),
            # v056: the engine-cover louvre field (stage03 LOUVRE), read off ref-09's top view
            ("X_LOUVRE", 2207.0, 2893.0, 0.0, 388.0, 700.0, 1100.0),
            # v065: the headlamp eye (stage03 EYE), in THREE convex parts because the outline is not

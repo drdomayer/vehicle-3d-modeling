@@ -1132,14 +1132,18 @@ def main():
     # ahead of the tip to a floor at -750 opens it 40 mm deep at the outer end and ~170 at the
     # inner, leaving 20-35 mm of skin outboard. Z 240..480: the same height as the mouth, the top
     # 25 mm under the lamp slot (505).
-    CORNER = dict(x_floor=-750.0, y_in=585.0, y_out=745.0, z0=240.0, z1=480.0)
+    # v067: the top 480 -> 462. The DRL now runs UNDER the lens at Z 493 (statev_skeleton DRL_Z) and
+    # between this top and the eye's bottom (505) there were 25 mm for a 14 mm groove: 5-6 mm webs,
+    # and P01 printed a 280 x 6.5 mm strip as a second file. 18 mm off the intake's top buys a 24 mm
+    # web under the groove. The module and the eye cannot move; this could.
+    CORNER = dict(x_floor=-750.0, y_in=585.0, y_out=745.0, z0=240.0, z1=462.0)
     # 2026-10-02 (v056): the inner edge LEANS. Measured on ref-09's front view (dark runs per row,
     # 1.814 mm/px across the 1850 body): the corner intake is widest at its top, Y ~440..776 under
     # the lamp, and its inner edge moves outboard going down, to Y ~590 at the bottom. Between it
     # and the mouth that leaves a painted wedge pointing UP -- the V the front is read by. The
     # outer edge stays at 745: at 770 the box ran out through the side of the chamfered corner
     # (v048). Same floor, same heights; panel_map tests the same quad (X_CORNER).
-    CORNER_POLY = [(450.0, 480.0), (745.0, 480.0), (745.0, 240.0), (590.0, 240.0)]
+    CORNER_POLY = [(450.0, 462.0), (745.0, 462.0), (745.0, 240.0), (590.0, 240.0)]
     for sgn in (1, -1):
         cuts.append(yz_prism(f"CUT_CORNER_{'L' if sgn > 0 else 'R'}", coll, -1000.0, CORNER["x_floor"],
                              [(sgn * y, z) for (y, z) in CORNER_POLY]))
@@ -1314,7 +1318,12 @@ def main():
             # channel was wider inside than at its mouth -- an undercut whose lip faces pointed
             # backward, so solidify built their wall OUTWARD and the fascia file reached 953
             # against the locked 950. A half-round channel cannot undercut.
-            pts.append(w)
+            # v067: 0.3 mm OUT along the normal. ON the flat nose face (X -950) the ring vertices at
+            # +-90 deg lay in the face's own plane, and the EXACT difference fails on coincident
+            # geometry arbitrarily: after the path changed beyond Y 400, the RIGHT groove left the
+            # tube's outer half standing 7 mm ahead of the nose (assembly 4380). Off the plane by
+            # 0.3 mm there is no coincidence and still no undercut.
+            pts.append(w + nw * mm(0.3))
         if len(pts) < 3:
             continue
         # the groove's axis, kept for the picture (glossy_renders): the render's light line used to
@@ -1342,7 +1351,7 @@ def main():
         bm.to_mesh(cm.data)
         bm.free()
         cuts.append(cm)
-    print("  DRL groove: a radius-7 half-round along DRL_PATH, axis on the skin, Z 420 centre .. 490 corner, cut from the fascia")
+    print("  DRL groove: a radius-7 half-round along DRL_PATH, axis on the skin, Z 500 centre, 493 under the lens, up to 546 at the corner crest (Y 776)")
 
     # ---- 10. THE BUTTRESS BLADES, 2026-09-29, as SHAPE-ONLY masters. docs/14 blocks the deck:
     # its height sits in the volume the soft top folds into, and only scan S2 can say where that
@@ -1624,7 +1633,10 @@ def main():
     # corners, it pinched the fascia at four points and P01 went to print as three files.
     # Crossings (computed): mouth wall at Y 326 Z 242 and Y 372 Z 404; corner wall at Y 580 Z 257
     # and Y 462 Z 459. Depth is linear in Y alone, so the cut face stays one plane.
-    FACET = [(300.0, 240.0), (350.0, 390.0), (480.0, 470.0), (640.0, 260.0)]
+    # v067: the corner intake's top came down to 462, so the third corner moved (480, 470) ->
+    # (490, 452) to stay inside the pocket; the upper crossing is now Y 464 Z 440, 25.7 mm from
+    # the pocket's corner (450, 462).
+    FACET = [(300.0, 240.0), (350.0, 390.0), (490.0, 452.0), (640.0, 260.0)]
     FACET_DEPTH = 40.0
     def facet_x(yy):
         return -950.0 + FACET_DEPTH * (1.0 - (yy - 340.0) / (520.0 - 340.0))

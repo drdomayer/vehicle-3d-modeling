@@ -594,8 +594,21 @@ def box(name, coll, centre_mm, size_mm, color, note="", status="spec", spec_x=No
 # 2026-09-29: ends at (-762, 680), inside the corner lamp slot (Y 590..700, Z 505..625), so the
 # line of light runs INTO the lamp as in ref-09. The three points beyond it ran on up the fender
 # flank to Y 810, 95 mm past a lamp that was then on the fender top.
-DRL_PATH = [(-888, 120), (-878, 260), (-862, 400), (-838, 520), (-805, 610),
-            (-762, 680)]
+# 2026-10-05 (v067): UNDER the eye and up its lower edge to the outer tip, as ref-09 draws it. The
+# v046 path ended at (-762, 680) at Z ~548 -- inside the eye and IN FRONT OF THE LENS (Y 600..690,
+# Z 515..605): after v065 the body there is cut away, so the groove cut air, while the render drew
+# the line across the headlamp. Spec X is the measured skin (uncut, along -X) at each point; the
+# corner crest turns the face into the fender side between Y 776 and 781.
+# The first four keep their v046 targets: set ON the face (-950) they put the half-round's axis on
+# the edge where the face rolls into the bonnet at Z ~500, and P01's file stood 7 mm ahead of the
+# locked nose (4377 against 4370). Measured, reverted.
+DRL_PATH = [(-888, 120), (-878, 260), (-862, 400), (-838, 520), (-914, 560), (-887, 600),
+            (-850, 650), (-827, 700), (-810, 730), (-788, 760), (-768, 776)]
+# It ENDS at the corner crest (Y 776, Z 546). Tried on to the eye's outer tip (Y 850, Z 598): just
+# under the crest the skin is the crest's own receding underside -- at Z ~548 the half-width goes
+# 775 / 766 / 757 / 779 at spec X -768 / -740 / -710 / -681 -- so a groove that follows it zig-zags,
+# and a straight one runs up to 14 mm OUTSIDE the skin, a strip in the air. The outer run, if
+# wanted, belongs in the black eye bezel (P67/P68) along its lower edge, not in the skin.
 # 2026-09-28: the height is a TABLE by |Y|, not z_at_half_width(). The solve read the SECTIONS
 # (pre-loft data the body has left far behind) and gave 350 at the centre, 450 across, then
 # 400 / 552 / 443 toward the corner -- a zig-zag, and the centre point sat INSIDE the central
@@ -605,7 +618,10 @@ DRL_PATH = [(-888, 120), (-878, 260), (-862, 400), (-838, 520), (-805, 610),
 # 2026-09-29: up to the leading edge. Measured on v045 the face was vertical to Z ~500 with the
 # DRL at 420 -- the light 80-100 mm below the edge, and a blank wall above it. ref-09 lays the
 # line ON the edge, rising to the corner where it enters the lamp.
-DRL_Z = [(0, 500), (400, 505), (600, 530), (800, 560)]     # (|Y|, Z)
+# v067: 493 between the corner intakes' top (480) and the eye's bottom (505) over Y 560..700, a
+# 6 mm web each side of the 14 mm groove; then 12-14 mm under the eye's rising lower edge.
+DRL_Z = [(0, 500), (400, 505), (500, 500), (560, 493), (700, 493), (760, 535), (790, 556),
+         (820, 578), (850, 598)]     # (|Y|, Z)
 DRL_INSET = 15          # mm inboard of the surface so the blade sits in a recess
 DRL_SECTION = (14, 12)  # height x depth of the lit element
 

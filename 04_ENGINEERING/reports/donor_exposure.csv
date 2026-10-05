@@ -1,5 +1,5 @@
 PANEL,NAME,AREA_M2,X_MIN,X_MAX,BOUNDED_BY,BOUNDARY_DONOR_DEPENDENT,TRAVEL_MM,TRIM_MM,VERDICT
-P01,FRONT_FASCIA,0.7115,-950,-661,,no,0,15.0,boundary INDEPENDENT of every approx donor value
+P01,FRONT_FASCIA,0.7264,-950,-661,,no,0,15.0,boundary INDEPENDENT of every approx donor value
 P02,HOOD,0.8606,-644,409,cowl_x,yes,15-30,15.0,boundary travels with the estimate: 15-30 mm vs 15 mm trim
 P03,FRONT_FENDER_L,1.7131,-652,433,cowl_x;door_front_x,yes,15-30,15.0,boundary travels with the estimate: 15-30 mm vs 15 mm trim
 P07,ROCKER_L,0.8265,324,2094,,no,0,15.0,boundary INDEPENDENT of every approx donor value

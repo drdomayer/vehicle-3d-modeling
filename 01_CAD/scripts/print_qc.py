@@ -265,8 +265,10 @@ def write_readme(total, bad):
     L.append("")
     L.append("## Before printing all of it: print ONE panel")
     L.append("")
-    L.append("`04_ENGINEERING/reports/fit_test_P39.txt` names the panel (P39 ROCKER_END_L, three "
-             "sections), the six assumptions one print tests, six landmarks to measure with a "
+    # 2026-10-06: "three sections" was true of the grid mode and stayed in this text after the
+    # owner chose whole panels; the sheet itself says how many files the panel is
+    L.append("`04_ENGINEERING/reports/fit_test_P39.txt` names the panel (P39 ROCKER_END_L), the "
+             "assumptions one print tests, six landmarks to measure with a "
              "caliper at four stages, and what a change at each stage means. That test is a hard "
              "rule of this project, not a suggestion.")
     L.append("")

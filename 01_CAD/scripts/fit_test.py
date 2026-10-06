@@ -16,8 +16,11 @@ all six for the price of one print.
 
 WHY THIS PANEL. Chosen from the data, not from preference. It must be entirely ours (so a bad
 result blames the process, not a missing scan), small enough to be cheap, carry real curvature in
-two directions (a flat test panel proves nothing about a car), come in more than one section (or
-the tab joint goes untested), and sit somewhere cosmetically forgiving if it comes out wrong.
+two directions (a flat test panel proves nothing about a car), and sit somewhere cosmetically
+forgiving if it comes out wrong. (It was also to come in more than one section, so the tab joint
+got tested; since whole panels (2026-09-26) it prints as ONE file, and the sheet now says the
+joint is NOT tested by it rather than claiming it is. Its character edges are measured from its own
+file: the sheet used to quote the door lip and the front crest, which are not on this part.)
 
 WHAT THE OWNER CAN ACTUALLY MEASURE, and this is the part that makes the test real: a caliper and a
 steel rule, no scanner. So the sheet gives point-to-point distances between features that can be
@@ -44,12 +47,8 @@ DEFAULT = "P39"
 QUESTIONS = [
     ("does a 3 mm printed wall survive lamination without distorting",
      "docs/13 Q30 — the wall is a DESIGN ASSUMPTION, never tested"),
-    ("does the tab joint hold two sections in line while they are bonded",
-     "the tab is 20 mm, dropped inward by a wall plus a 1 mm bond line — decided, not proven"),
     ("does the section print at the orientation the pipeline chose",
      "docs/13 Q32/Q33 — orientation is 'lay flattest', not chosen against an overhang limit"),
-    ("do filler and paint bury the character lines",
-     "the side lip turns 67 degrees and the crest 55; nobody has seen either under paint"),
     ("is the printed part the size the file says",
      "shrinkage is assumed zero; PLA and PETG are not zero"),
     ("does the finished panel still match the design surface",
@@ -102,6 +101,52 @@ def panel_points(pid, placement):
     return pts
 
 
+def sharp_edges(pid, placement, min_deg=20.0):
+    """Dihedral angles of the OUTER surface's edges, from the panel's own files: the character
+    edges this part actually carries, which is what filler and paint can bury."""
+    out = []
+    for name, M in placement.items():
+        if not name.startswith(pid + "_"):
+            continue
+        p = os.path.join(PROD, name)
+        if not os.path.exists(p):
+            continue
+        tris = read_stl(p)
+        edges, norms = {}, []
+        for ti, t in enumerate(tris):
+            v = [tuple(round(c, 3) for c in t[k * 3:k * 3 + 3]) for k in range(3)]
+            u = [v[1][i] - v[0][i] for i in range(3)]
+            w = [v[2][i] - v[0][i] for i in range(3)]
+            n = (u[1] * w[2] - u[2] * w[1], u[2] * w[0] - u[0] * w[2], u[0] * w[1] - u[1] * w[0])
+            ln = math.sqrt(sum(c * c for c in n)) or 1.0
+            n = tuple(c / ln for c in n)
+            # outer = the radial test of panel_points, in car space
+            wn = [sum(M[r][c] * n[c] for c in range(3)) for r in range(3)]
+            cen = [sum(M[r][c] * (sum(q[c] for q in v) / 3000.0) for c in range(3)) + M[r][3] for r in range(3)]
+            outer = wn[1] * cen[1] + wn[2] * (cen[2] - 0.570) > 0.0
+            norms.append((n, outer))
+            for a, b in ((0, 1), (1, 2), (2, 0)):
+                edges.setdefault(tuple(sorted((v[a], v[b]))), []).append(ti)
+        # the shell's rim: its strip faces can pass the radial test, and their edge with the skin
+        # reads ~90 degrees -- the first run reported 96 as "the sharpest character edge". A face
+        # sharing a vertex with any inner face is rim or next to it, and is not counted.
+        inner_v = {tuple(round(c, 3) for c in tris[ti][k * 3:k * 3 + 3])
+                   for ti, (n_, o_) in enumerate(norms) if not o_ for k in range(3)}
+
+        def near_rim(ti):
+            return any(tuple(round(c, 3) for c in tris[ti][k * 3:k * 3 + 3]) in inner_v for k in range(3))
+        for fs in edges.values():
+            if len(fs) != 2 or not (norms[fs[0]][1] and norms[fs[1]][1]):
+                continue
+            if near_rim(fs[0]) or near_rim(fs[1]):
+                continue
+            d = sum(norms[fs[0]][0][i] * norms[fs[1]][0][i] for i in range(3))
+            ang = math.degrees(math.acos(max(-1.0, min(1.0, d))))
+            if ang >= min_deg:
+                out.append(ang)
+    return sorted(out, reverse=True)
+
+
 def landmarks(pts):
     """Six points a person can find on the part without a scanner: the extreme of each axis.
 
@@ -145,10 +190,23 @@ def main():
     txt.append("  CLAUDE.md hard constraint 6: one panel is printed, laminated and checked BEFORE")
     txt.append("  the rest. This is that panel, and this sheet is what the check consists of.")
     txt.append("")
+    sharp = sharp_edges(pid, placement)
+    questions = list(QUESTIONS)
+    if len(sched) > 1:
+        questions.insert(1, ("does the tab joint hold two sections in line while they are bonded",
+                             "the tab is 20 mm, dropped inward by a wall plus a 1 mm bond line — decided, not proven"))
+    if sharp:
+        questions.insert(3, ("do filler and paint bury this part's character edges",
+                             f"{len(sharp)} outer edges turn more than 20 degrees, the sharpest "
+                             f"{sharp[0]:.0f} -- measured from the file; nobody has seen them under paint"))
     txt.append("  WHAT ONE PRINT ANSWERS")
-    for q, why in QUESTIONS:
+    for q, why in questions:
         txt.append(f"    - {q}")
         txt.append(f"        {why}")
+    if len(sched) == 1:
+        txt.append("    - NOT answered by this panel: whether the tab joint holds two sections in line.")
+        txt.append("        Whole panels print as one file, so there is no joint; it is tested only if the")
+        txt.append("        shop's real bed (docs/13 Q26) forces a cut, on the first panel that gets one.")
     txt.append("")
     txt.append(f"  THE FILES — {len(sched)} section(s), print all of them")
     txt.append(f"    {'file':44s} {'L':>7s} {'W':>7s} {'H':>7s}  one piece")
@@ -182,8 +240,11 @@ def main():
     txt.append("  WHEN TO MEASURE, and what a change at each stage means")
     txt.append("    1. straight off the printer, per section   -> shrinkage, and whether the")
     txt.append("       printer built the file it was given")
-    txt.append("    2. sections bonded, before laminate        -> whether the tab joint held them")
-    txt.append("       in line; this is the number most likely to move")
+    if len(sched) > 1:
+        txt.append("    2. sections bonded, before laminate        -> whether the tab joint held them")
+        txt.append("       in line; this is the number most likely to move")
+    else:
+        txt.append("    2. (one file: no sections to bond -- skip)")
     txt.append("    3. after laminate, before filler           -> whether the wall distorted under")
     txt.append("       the resin's heat and shrinkage")
     txt.append("    4. after filler and paint                  -> the finished panel, and whether")

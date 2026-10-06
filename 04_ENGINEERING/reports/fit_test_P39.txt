@@ -8,16 +8,17 @@ FIT TEST — P39 ROCKER_END_L
   WHAT ONE PRINT ANSWERS
     - does a 3 mm printed wall survive lamination without distorting
         docs/13 Q30 — the wall is a DESIGN ASSUMPTION, never tested
-    - does the tab joint hold two sections in line while they are bonded
-        the tab is 20 mm, dropped inward by a wall plus a 1 mm bond line — decided, not proven
     - does the section print at the orientation the pipeline chose
         docs/13 Q32/Q33 — orientation is 'lay flattest', not chosen against an overhang limit
-    - do filler and paint bury the character lines
-        the side lip turns 67 degrees and the crest 55; nobody has seen either under paint
     - is the printed part the size the file says
         shrinkage is assumed zero; PLA and PETG are not zero
+    - do filler and paint bury this part's character edges
+        7 outer edges turn more than 20 degrees, the sharpest 48 -- measured from the file; nobody has seen them under paint
     - does the finished panel still match the design surface
         assembly_check says the FILES do, to a median of 0.00 mm. The PART is a different claim.
+    - NOT answered by this panel: whether the tab joint holds two sections in line.
+        Whole panels print as one file, so there is no joint; it is tested only if the
+        shop's real bed (docs/13 Q26) forces a cut, on the first panel that gets one.
 
   THE FILES — 1 section(s), print all of them
     file                                               L       W       H  one piece
@@ -58,8 +59,7 @@ FIT TEST — P39 ROCKER_END_L
   WHEN TO MEASURE, and what a change at each stage means
     1. straight off the printer, per section   -> shrinkage, and whether the
        printer built the file it was given
-    2. sections bonded, before laminate        -> whether the tab joint held them
-       in line; this is the number most likely to move
+    2. (one file: no sections to bond -- skip)
     3. after laminate, before filler           -> whether the wall distorted under
        the resin's heat and shrinkage
     4. after filler and paint                  -> the finished panel, and whether

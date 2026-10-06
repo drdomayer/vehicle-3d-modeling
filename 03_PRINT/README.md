@@ -40,7 +40,7 @@ Estimated core mass across both tiers at these assumptions: **~79.6 kg**.
 
 ## Before printing all of it: print ONE panel
 
-`04_ENGINEERING/reports/fit_test_P39.txt` names the panel (P39 ROCKER_END_L, three sections), the six assumptions one print tests, six landmarks to measure with a caliper at four stages, and what a change at each stage means. That test is a hard rule of this project, not a suggestion.
+`04_ENGINEERING/reports/fit_test_P39.txt` names the panel (P39 ROCKER_END_L), the assumptions one print tests, six landmarks to measure with a caliper at four stages, and what a change at each stage means. That test is a hard rule of this project, not a suggestion.
 
 ## Shape-only tier: what each part is still missing
 

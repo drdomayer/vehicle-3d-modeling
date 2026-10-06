@@ -190,7 +190,7 @@ def main():
     txt.append("       the character lines are still readable")
     txt.append("")
     txt.append("  WHAT PASSING MEANS, and it is a decision, not a measurement")
-    txt.append("    This project has no tolerance from anybody yet — docs/13 Q16 is unanswered — so")
+    txt.append("    This project has no tolerance from anybody yet — docs/13 Q13 (composite) and Q29 (print) are unanswered — so")
     txt.append("    no number here can be called a limit without inventing one. What the sheet can")
     txt.append("    say honestly is the SCALE the rest of the work assumes:")
     txt.append("      - the panel gaps are designed at 4 mm, so a joint that moves more than about")

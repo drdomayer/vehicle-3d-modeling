@@ -217,7 +217,7 @@ def write_readme(total, bad):
     L.append(f"| material density | {D['density_g_cm3']} g/cm³ (generic PLA, unmeasured) | Q37 |")
     L.append(f"| bonding flange | {D['flange_w_mm']:.0f} mm + {D['bond_line_mm']:.0f} mm bond line "
              f"| Q15 |")
-    L.append(f"| panel gap | {D['panel_gap_mm']:.0f} mm | Q16 |")
+    L.append(f"| panel gap | {D['panel_gap_mm']:.0f} mm | Q14 |")
     L.append(f"| joint tab | {D['tab_mm']:.0f} mm past each cut, dropped inward by wall + bond | "
              f"fit test |")
     L.append(f"| orientation | {D['orient']} | Q32 / Q33 |")

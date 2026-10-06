@@ -21,7 +21,7 @@ Every file is one printable solid, laid on its flattest face, sitting on Z = 0, 
 | wall | 3.0 mm | Q30 |
 | material density | 1.24 g/cm³ (generic PLA, unmeasured) | Q37 |
 | bonding flange | 30 mm + 1 mm bond line | Q15 |
-| panel gap | 4 mm | Q16 |
+| panel gap | 4 mm | Q14 |
 | joint tab | 20 mm past each cut, dropped inward by wall + bond | fit test |
 | orientation | smallest dimension vertical | Q32 / Q33 |
 

@@ -48,7 +48,7 @@ D = dict(
     bond_line_mm=1.0,
     # DECIDED. The gap the adhesive fills between flange and overlapping panel.
     panel_gap_mm=4.0,
-    # DECIDED. The visible gap at a shut line. Replaced by docs/13 Q16.
+    # DECIDED. The visible gap at a shut line. Replaced by docs/13 Q14 (was mis-cited as Q16, which is mounting; fixed 2026-10-06).
 
     # --- the printer
     split="whole",

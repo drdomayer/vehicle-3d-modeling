@@ -66,7 +66,7 @@ FIT TEST — P39 ROCKER_END_L
        the character lines are still readable
 
   WHAT PASSING MEANS, and it is a decision, not a measurement
-    This project has no tolerance from anybody yet — docs/13 Q16 is unanswered — so
+    This project has no tolerance from anybody yet — docs/13 Q13 (composite) and Q29 (print) are unanswered — so
     no number here can be called a limit without inventing one. What the sheet can
     say honestly is the SCALE the rest of the work assumes:
       - the panel gaps are designed at 4 mm, so a joint that moves more than about

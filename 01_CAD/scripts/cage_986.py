@@ -61,6 +61,13 @@ DIMS = {
     # P11 -> P20 = 650 px = 1228 mm (spec ~2953); cross-check via P16 = P5 + 2700 (~2408, at the rear
     # axle) + 582 = 2990. Taken as the mean, 2970, approx +-40.
     "impact_absorber_rear_y_total": (824.0, "published"),   # P20 L–R
+    # P6 = "spring strut location hole front" -- the top of the front strut tower. NOTHING about it is
+    # printed: all three coordinates are scaled off p. 5-11 (top view 3.817 mm/px; side view 2.219
+    # mm/px, calibrated so P1-P8 matches the top view, which P5-P8 then confirms to 1 %). Z is taken
+    # from P8, whose own Z is the cage's assumed 160, so it carries both bands.
+    "strut_top_front_x":           (40.0,  "approx"),   # cage X (spec −40), ±30
+    "strut_top_front_y_total":     (1000.0, "approx"),  # L–R, i.e. |Y| 500, ±15 each side
+    "strut_top_front_z":           (736.0, "approx"),   # ±40
     "jack_rear_to_impact_absorber_rear_x": (1245.0, "approx"),  # P11 → P20, ±40 (2970 − 1725)
     # STATEV 001 targets (design envelope)
     "target_length":    (4370, "target"),   # v0.1 spec 2026-09-14 (was 4400)
@@ -309,6 +316,8 @@ def build():
          "impact_absorber_rear_y_total",
          "rear impact absorber mount (M8); Y published, X scaled off the drawing (approx +-40), "
          "Z NOT KNOWN -- drawn at 400 only to be seen"),
+        ("P06_strut_top_front", d("strut_top_front_x"), d("strut_top_front_z"), "strut_top_front_y_total",
+         "front strut tower top; X, |Y| 500 and Z all SCALED off the drawing (approx), none printed"),
         ("P21_softtop_position", d("ws_top_x"), d("ws_top_z"), "softtop_pos_point_y_total",
          "convertible-top positioning point (M6) on the windshield header"),
         ("P22_softtop_lock",     d("ws_top_x"), d("ws_top_z"), "softtop_lock_y_total",

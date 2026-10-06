@@ -84,6 +84,12 @@ STRUCTURE = {
     "front crash structure": (-1007.0, -835.0,
                               "the impact absorbers and the bumper beam sit here (P1, Group 5 p. 5-11); "
                               "how deep this panel's openings may go waits on the beam's real place"),
+    # the front strut tower's top P6 (cage_986: spec X -40 +-30), scaled off the drawing: whatever
+    # is cut down over it -- the fender vent slot -- waits on its real place
+    "front strut top": (-70.0, -10.0,
+                        "the front strut tower's top P6 (Group 5 p. 5-11, scaled) is under this panel's "
+                        "opening; how deep the opening may go waits on its real place",
+                        (485.0, 515.0)),     # |Y| 500 +-15: the hood (|Y| < 380) is not over it
     # the rear: from the absorbers' mounts P20 (cage_986: 2970, approx +-40 -> 2930) to the 986's
     # rear face (blueprint approx 3308). Our tail is 112 mm behind that face, but the tail slot,
     # the lamp housings, the plate recess, the exhausts and the diffuser tunnel reach into it.
@@ -122,8 +128,11 @@ SHAPE_IS_DONOR = {
 }
 
 
+YEXT = {}   # pid -> (min |Y|, max |Y|), filled by panel_extents() for the STRUCTURE screen
+
+
 def panel_extents():
-    """spec-X span of every extracted panel object."""
+    """spec-X span of every extracted panel object (and its |Y| span, into YEXT)."""
     coll = bpy.data.collections.get("STATEV_PANELS")
     if coll is None:
         return None
@@ -132,8 +141,11 @@ def panel_extents():
         pid = ob.get("panel_id")
         if not pid:
             continue
-        xs = [-(ob.matrix_world @ v.co).x * 1000 for v in ob.data.vertices]
+        ws = [ob.matrix_world @ v.co for v in ob.data.vertices]
+        xs = [-w.x * 1000 for w in ws]
+        ays = [abs(w.y) * 1000 for w in ws]
         out[pid] = (min(xs), max(xs))
+        YEXT[pid] = (min(ays), max(ays))
     return out
 
 
@@ -160,10 +172,29 @@ def classify(pid, hits, span, measured=None):
         return 3, "roof fold envelope, which exists nowhere as data"
     if pid in SHAPE_IS_DONOR:
         return 3, SHAPE_IS_DONOR[pid]
+    # donor STRUCTURE in the panel's span: at least CONDITIONAL, and its reason is ADDED to whatever
+    # else holds the panel there (the first version returned early and P02/P03 lost "boundary moves
+    # with cowl_x"). A |Y| band, where one is known, keeps panels beside the structure out of it.
     lo, hi = span
-    for name, (a, b, what) in STRUCTURE.items():
-        if hi >= a and lo <= b:
-            return 2, f"{name}: {what}"
+    yr = YEXT.get(pid) or YEXT.get(MIRROR_PAIR.get(pid, ""))
+    struct = []
+    for name, (a, b, what, *yb) in STRUCTURE.items():
+        if not (hi >= a and lo <= b):
+            continue
+        if yb and yr and not (yr[1] >= yb[0][0] and yr[0] <= yb[0][1]):
+            continue
+        struct.append(f"{name}: {what}")
+    cat, why = _classify_rest(pid, hits, measured)
+    if struct:
+        return max(cat, 2), "; ".join(struct + ([why] if cat == 2 else []))
+    return cat, why
+
+
+MIRROR_PAIR = {"P04": "P03", "P08": "P07", "P10": "P09", "P12": "P11", "P16": "P15", "P18": "P17",
+               "P40": "P39", "P41": "P28", "P42": "P19"}
+
+
+def _classify_rest(pid, hits, measured):
     # Measured beats screened. donor_exposure.py perturbs each approx donor value by the band
     # cage_986 records for it and reports which panels actually changed; where that answer exists
     # for this panel it is the answer, because the screen can only say "nearby".

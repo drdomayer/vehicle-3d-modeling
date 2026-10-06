@@ -171,6 +171,24 @@ def main():
             "through it. Hard constraint 4: it stays. P01 / P43 / the corner grilles wait on it.")
     except (KeyError, OSError) as e:
         add("CHECK", "front openings vs crash structure", "--", "--", "cage_986", f"not measured: {e}")
+    # ---- 1b'. the fender vent slot vs the front strut top P6 (2026-10-06). All three of P6's
+    # coordinates are scaled off the drawing; the slot's box is panel_map's own X_FENDER_SLOT.
+    try:
+        sx6, sy6, sz6 = -DIMS["strut_top_front_x"][0], DIMS["strut_top_front_y_total"][0] / 2.0, DIMS["strut_top_front_z"][0]
+        _pm3 = {"__name__": "_pm3"}
+        with open(os.path.join(HERE, "panel_map.py"), encoding="utf-8") as f:
+            exec(f.read().split("\ndef main(")[0], _pm3)
+        fs = next(p for p in _pm3["POCKETS"] if p[0] == "X_FENDER_SLOT")
+        _n, fx0, fx1, fy0, fy1, fz0, fz1 = fs[:7]
+        inside = fx0 <= sx6 <= fx1 and fy0 <= sy6 <= fy1
+        add("CHECK" if inside and sz6 - 40.0 > fz0 - 15.0 else "SCAN", "fender slot vs front strut top",
+            f"Z {fz0:.0f}", f"> {sz6:.0f} + 15", "P6 scaled, all three coordinates approx",
+            f"the front strut tower's top P6 sits at spec X {sx6:.0f} +-30, |Y| {sy6:.0f} +-15, Z {sz6:.0f} +-40 -- "
+            f"{'inside' if inside else 'beside'} the fender vent slot (spec X {fx0:.0f}..{fx1:.0f}, |Y| {fy0:.0f}..{fy1:.0f}), "
+            f"which is cut down to Z {fz0:.0f} and carries the louvre comb P05/P06. Hard constraint 4: the "
+            "tower stays; and a vent over it cannot reach the wheel well (no fake vents).")
+    except (KeyError, OSError, StopIteration) as e:
+        add("CHECK", "fender slot vs front strut top", "--", "--", "cage_986", f"not measured: {e}")
     # ---- 1c. the same at the rear. P20 (rear absorbers' mounts) and the 986's rear face bound the
     # span; our openings there sit BETWEEN them, not past the absorbers, so whether they meet the beam
     # is its height -- SCAN, not CHECK.

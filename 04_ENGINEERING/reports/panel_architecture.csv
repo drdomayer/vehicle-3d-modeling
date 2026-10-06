@@ -16,8 +16,8 @@ P39,ROCKER_END_L,L,SIDE,8,-Y,printed master -> composite,OURS,C,yes,YELLOW,A2 B2
 P40,ROCKER_END_R,R,SIDE,8,+Y,printed master -> composite,OURS,C,yes,YELLOW,A2 B2 C2,"our corner behind the rear wheel; all four of its edges are ours or published, so nothing donor-derived shapes it"
 P09,DOOR_SKIN_L,L,SIDE,9,-Y,printed master -> composite,DONOR,C,yes,YELLOW,A0 B2 C3,"overlay on the OEM door skin, between two donor shut lines"
 P10,DOOR_SKIN_R,R,SIDE,9,+Y,printed master -> composite,DONOR,C,yes,YELLOW,A0 B2 C3,"overlay on the OEM door skin, between two donor shut lines"
-P37,MIRROR_CAP_L,L,SIDE,10,-Y,"direct print, ASA",DONOR,C,yes,YELLOW,A0 B2 C3,cap over the OEM mirror body — its inner surface must match it
-P38,MIRROR_CAP_R,R,SIDE,10,+Y,"direct print, ASA",DONOR,C,yes,YELLOW,A0 B2 C3,cap over the OEM mirror body — its inner surface must match it
+P37,MIRROR_CAP_L,L,SIDE,10,-Y,"direct print, ASA",MIXED,C,yes,YELLOW,A0 B2 C3,"v072: cap over a BOUGHT mirror placed per ref-09; inner form = that mirror, mount = the door"
+P38,MIRROR_CAP_R,R,SIDE,10,+Y,"direct print, ASA",MIXED,C,yes,YELLOW,A0 B2 C3,"v072: cap over a BOUGHT mirror placed per ref-09; inner form = that mirror, mount = the door"
 P11,SIDE_INTAKE_L,L,SIDE,11,-Y,printed master -> composite,DONOR,C,yes,RED,A0 B1 C3,the real opening behind it governs the mouth
 P12,SIDE_INTAKE_R,R,SIDE,11,+Y,printed master -> composite,DONOR,C,yes,RED,A0 B1 C3,the real opening behind it governs the mouth
 P31,INTAKE_DUCT_L,L,SIDE,12,-Y,direct print,DONOR,C,yes,RED,A0 B1 C3,what the eye sees through the intake; the real opening governs it

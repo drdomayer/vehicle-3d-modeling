@@ -158,12 +158,12 @@ DEF = {
             "single piece"),
     "P32": ("visible structure inside the intake", T_OURS, 6, "out through the mouth",
             "single piece"),
-    "P37": ("cap over the OEM mirror body", "clips onto the OEM mirror. Its inner surface must "
-            "match a mirror nobody has measured: SCAN REQUIRED.", 5, "clips off by hand",
-            "single piece"),
-    "P38": ("cap over the OEM mirror body", "clips onto the OEM mirror. Its inner surface must "
-            "match a mirror nobody has measured: SCAN REQUIRED.", 5, "clips off by hand",
-            "single piece"),
+    "P37": ("cap over a bought E-marked mirror (v072, owner's decision)", "clips onto the bought "
+            "mirror; its inner surface follows that mirror, chosen later; the stalk's door mount is "
+            "SCAN REQUIRED.", 5, "clips off by hand", "single piece"),
+    "P38": ("cap over a bought E-marked mirror (v072, owner's decision)", "clips onto the bought "
+            "mirror; its inner surface follows that mirror, chosen later; the stalk's door mount is "
+            "SCAN REQUIRED.", 5, "clips off by hand", "single piece"),
 }
 
 # Strategies that are the same for every panel and belong in one place, not repeated 38 times.

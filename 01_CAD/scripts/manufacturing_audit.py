@@ -100,8 +100,8 @@ SHAPE_IS_DONOR = {
     "P12": "frames the real intake opening, whose shape nobody has measured",
     "P31": "sits inside that same unmeasured opening",
     "P32": "sits inside that same unmeasured opening",
-    "P37": "clips onto the OEM mirror body; its inner form is that body",
-    "P38": "clips onto the OEM mirror body; its inner form is that body",
+    "P37": "cap over a bought mirror not yet chosen; its inner form is that mirror, its mount the door",
+    "P38": "cap over a bought mirror not yet chosen; its inner form is that mirror, its mount the door",
 }
 
 

@@ -180,6 +180,12 @@ SHAPE_ONLY = {
            "deck. It stands where the 986 stows its top; whether it lifts with the lid as on the "
            "Boxster Spyder is scan S2's answer. Print it to look at the car, not to bond.",
     "P64": "mirror of P63, same note",
+    # v072: the mirror caps, over a BOUGHT mirror placed per ref-09 (owner's decision). Outer form
+    # ours; the inner form is the mirror, still to be chosen, and the stalk's door mount is the scan's.
+    "P37": "outer form ours (a cap over a bought E-marked mirror, head spec X 630..800, |Y| 730..880); "
+           "the cap's inner face follows the chosen mirror and the stalk's door mount comes from the "
+           "scan. Print it to judge the car, not to fit.",
+    "P38": "mirror of P37, same note",
     # 2026-10-02 (v056): THE DECK AND THE ENGINE COVER, on the footing of P17/P18. The assembled
     # car had a hole behind the hoops -- the surface exists in the body (Z 920..1020) but no file
     # carried it, because all three are BLOCKED on the roof fold envelope. That reason stands and
@@ -203,7 +209,7 @@ SHAPE_ONLY = {
 # already HAS its thickness -- so they skip both the map and the wall and go straight to sectioning.
 STAGE03 = {"P05", "P06", "P13", "P14", "P43",
            "P44", "P45", "P46", "P47", "P54", "P55", "P56", "P57", "P58", "P59", "P60", "P61", "P62", "P63", "P64",
-           "P65", "P66", "P67", "P68",
+           "P65", "P66", "P67", "P68", "P37", "P38",
            "P24", "P25", "P31", "P32", "P26", "P27", "P33"}
 SCHEDULE = []
 PLACEMENT = {}   # printed file -> the 4x4 that puts it back on the car

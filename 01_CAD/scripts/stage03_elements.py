@@ -1252,12 +1252,73 @@ def main():
         made.append(d)
     print("  intake duct: mouth to plenum through the three existing envelopes -> P31 / P32")
 
-    # ---- NOT BUILT, and the reason is the point. P37 / P38 MIRROR_CAP clip onto the OEM mirror
-    # body, and there is no MIRROR box anywhere in statev_skeleton -- no envelope, no position, no
-    # size. Building one would mean inventing where the donor's mirror is, which is exactly the kind
-    # of number this project does not invent. It stays BLOCKED until the scan.
-    print("  NOT built: P37 / P38 MIRROR_CAP — the skeleton has no mirror envelope at all, so its")
-    print("    position is the donor's and inventing it is not an option")
+    # ---- 5f. THE MIRRORS, 2026-10-06 (v072), on the owner's decision: a BOUGHT E-marked mirror with
+    # a printed cap in body colour, placed as ref-09 draws it -- so the position is a design
+    # decision, not the donor's (the rule that kept P37/P38 BLOCKED was "do not invent where the
+    # 986's mirror is", and it still holds: this is not the 986's mirror).
+    # Read off ref-09 (side by the wheel centres, 2.625 mm/px at 2x; front by the body, 1.814): the
+    # head spans spec X ~630..800 and its stalk stands ~84 mm above the door top, the head ~74 tall.
+    # Its HEIGHT is taken relative to OUR door top, not as ref-09's absolute Z: the side view does not
+    # calibrate in height (CLAUDE.md: 8 % between the wheelbase and the tyre scales). Its Y is NOT the
+    # render's (639..804): the head must sit outboard of the door glass, which rises at |Y| ~700
+    # (where the cabin cut meets the door top) -- an ENGINEERING ASSUMPTION until the scan, so the
+    # head is |Y| 730..880. The stalk stands on the door top at spec X 690..750. The cap's inner form
+    # and the door mount wait on the chosen mirror and the scan: SHAPE ONLY.
+    MIRROR = dict(x0=630.0, x1=800.0, yc=805.0, a=75.0, zc=947.0, b=37.0, n=4.0,
+                  stalk_x=(690.0, 750.0), stalk_y=790.0, stalk_t=22.0)
+
+    def mirror_solid(name, sgn):
+        N, ring = 32, []
+        xs = [MIRROR["x0"] + (MIRROR["x1"] - MIRROR["x0"]) * k / 16.0 for k in range(17)]
+        for x_ in xs:
+            t = (x_ - MIRROR["x0"]) / (MIRROR["x1"] - MIRROR["x0"])
+            f = max(0.08, math.sin(min(1.0, t / 0.45) * math.pi / 2.0) ** 0.5)   # rounded nose, flat back
+            pts = []
+            for k in range(N):
+                ang = 2.0 * math.pi * k / N
+                c, s_ = math.cos(ang), math.sin(ang)
+                yy = MIRROR["yc"] + f * MIRROR["a"] * math.copysign(abs(c) ** (2.0 / MIRROR["n"]), c)
+                zz = MIRROR["zc"] + f * MIRROR["b"] * math.copysign(abs(s_) ** (2.0 / MIRROR["n"]), s_)
+                pts.append((-mm(x_), mm(sgn * yy), mm(zz)))
+            ring.append(pts)
+        verts = [v for r in ring for v in r]
+        faces = [tuple(range(N)), tuple(range(len(verts) - 1, len(verts) - 1 - N, -1))]
+        for i in range(len(ring) - 1):
+            a_, b_ = i * N, (i + 1) * N
+            faces += [(a_ + q, a_ + (q + 1) % N, b_ + (q + 1) % N, b_ + q) for q in range(N)]
+        me = bpy.data.meshes.new(name)
+        me.from_pydata(verts, [], faces)
+        me.update()
+        ob = bpy.data.objects.new(name, me)
+        coll.objects.link(ob)
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        bm.to_mesh(me)
+        bm.free()
+        return ob
+    for sgn in (1, -1):
+        side = "L" if sgn > 0 else "R"
+        head = mirror_solid(f"MIRROR_CAP_{side}", sgn)
+        # the stalk: a blade from 12 mm inside the door top up into the head
+        zb = []
+        for x_ in MIRROR["stalk_x"]:
+            zt = surface_z(x_, sgn * MIRROR["stalk_y"]) or 830.0
+            zb.append(zt - 12.0)
+        stalk = blade(f"_mirror_stalk_{side}", coll,
+                      [(x_, sgn * MIRROR["stalk_y"], z_, MIRROR["zc"]) for x_, z_ in zip(MIRROR["stalk_x"], zb)],
+                      MIRROR["stalk_t"])
+        m = head.modifiers.new("stalk", "BOOLEAN")
+        m.operation, m.object, m.solver = "UNION", stalk, "EXACT"
+        bpy.context.view_layer.objects.active = head
+        bpy.ops.object.modifier_apply(modifier=m.name)
+        bpy.data.objects.remove(stalk, do_unlink=True)
+        head["panel_id"] = "P37" if sgn > 0 else "P38"
+        head["stage"] = "03 element — SHAPE ONLY: cap over a bought mirror, door mount SCAN REQUIRED"
+        made.append(head)
+    print(f"  mirrors: bought E-marked mirror, printed cap, head spec X {MIRROR['x0']:.0f}..{MIRROR['x1']:.0f}, "
+          f"|Y| {MIRROR['yc']-MIRROR['a']:.0f}..{MIRROR['yc']+MIRROR['a']:.0f}, Z {MIRROR['zc']-MIRROR['b']:.0f}.."
+          f"{MIRROR['zc']+MIRROR['b']:.0f}, stalk on the door top -> P37 / P38 (SHAPE ONLY)")
 
     # ---- 6b. THE ROCKER CHANNEL, 2026-09-28. A DECIDED envelope since 2026-09-14 (deep undercut
     # along the sill, full door aperture, ref-08) that was never built. Now that the rocker stands

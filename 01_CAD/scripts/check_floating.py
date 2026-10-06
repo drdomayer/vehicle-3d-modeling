@@ -19,7 +19,8 @@ PROUD_MM = 3.0
 EXPECTED_PROUD = {"BUTTRESS": "sail standing on the haunch (shape-only, scan S2)",
                   "DIFFUSER_FIN": "fin under the rising diffuser floor",
                   "SPLITTER_END": "end fence standing ahead of the chamfered corner (v060)",
-                  "SEAT_HUMP": "hump behind the seat, standing on the deck (v063, shape only)"}
+                  "SEAT_HUMP": "hump behind the seat, standing on the deck (v063, shape only)",
+                  "MIRROR_CAP": "mirror on its stalk above the door top (v072, owner's decision)"}
 
 
 def body():

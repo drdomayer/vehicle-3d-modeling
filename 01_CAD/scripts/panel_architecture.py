@@ -168,8 +168,8 @@ ARCH = {
     "P45": ("OURS",  "yes", "our fin in our diffuser floor; nothing of the donor reaches it"),
     "P46": ("OURS",  "yes", "our fin in our diffuser floor; nothing of the donor reaches it"),
     "P47": ("OURS",  "yes", "our fin in our diffuser floor; nothing of the donor reaches it"),
-    "P37": ("DONOR", "yes", "cap over the OEM mirror body — its inner surface must match it"),
-    "P38": ("DONOR", "yes", "cap over the OEM mirror body — its inner surface must match it"),
+    "P37": ("MIXED", "yes", "v072: cap over a BOUGHT mirror placed per ref-09; inner form = that mirror, mount = the door"),
+    "P38": ("MIXED", "yes", "v072: cap over a BOUGHT mirror placed per ref-09; inner form = that mirror, mount = the door"),
 }
 
 # --------------------------------------------------------------- parts the render shows and the

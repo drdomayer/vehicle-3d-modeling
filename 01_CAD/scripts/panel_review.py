@@ -156,7 +156,7 @@ def main():
             else:
                 ftxt, stxt = "няма файл", "—"
             m, d, w = NOTES.get(pid, ("?", "?", "?"))
-            lines.append(f"| {pid} | {b['NAME']} | {b.get('FINISH', '?')} | {a.get('VERDICT', '?')} | "
+            lines.append(f"| {pid} | {b['NAME']} | {b.get('FINISH', '?')}{' + ' + b['FINISH_ZONES'] if b.get('FINISH_ZONES') else ''} | {a.get('VERDICT', '?')} | "
                          f"{ftxt} | {stxt} | {m} | {d} | {w} |")
         lines.append("")
     lines += ["## Сума", "",

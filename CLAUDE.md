@@ -1104,7 +1104,12 @@ branches and never let them diverge for more than one session.
   гумата (|Y| 615..755, функционален, встрани от опората; −200 mm спрямо ref-09) и нова метална
   предна греда от инженер над устата (обвивка `CRASH_BEAM_NEW`). Одит 12 / 26 / 16 / 0. `docs/14` AB.
 
-- **Текуща база: `02_DESIGN/exterior/STATEV_001_v078.blend`. Откат: v077.**
+- 2026-10-06 (local, 13): **v079 — двуцветна предница** (P01 гланцово черно под долната устна на DRL
+  канала, `FINISH_ZONES` в регистъра; рендерът реже копието си по линията — иначе трион от цели
+  триъгълници) и **presentation рендер** (`GLOSSY_PRESENT`, студийна светлина, `sheets/present/`).
+  Геометрията и файловете за печат не са пипани. `docs/14` AC.
+
+- **Текуща база: `02_DESIGN/exterior/STATEV_001_v079.blend`. Откат: v078.**
   Авторитетни източници: геометрия — `statev_master_volumes.py` (v030.blend е регенерируем от него);
   измервания — `check_goal.py` (силует, план, кривина, ръбове) и
   `04_ENGINEERING/reports/edge_test.txt`; решения — `docs/09-decision-log.md`;

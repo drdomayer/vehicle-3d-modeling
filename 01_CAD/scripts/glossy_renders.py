@@ -228,6 +228,62 @@ _pmg = {"__name__": "_pm"}
 with open(os.path.join(REPO, "01_CAD", "scripts", "panel_map.py"), encoding="utf-8") as _f:
     exec(_f.read().split("\ndef main(")[0], _pmg)
 _POCKETS, _in_poly = _pmg["POCKETS"], _pmg["in_poly"]
+_prg = {"__name__": "_prg", "__file__": os.path.join(REPO, "01_CAD", "scripts", "panel_registry.py")}
+with open(_prg["__file__"], encoding="utf-8") as _f:
+    exec(_f.read().split("\ndef main(")[0], _prg)
+FINISH_ZONES = _prg.get("FINISH_ZONES", {})
+_skg = {}
+with open(os.path.join(REPO, "01_CAD", "scripts", "statev_skeleton.py"), encoding="utf-8") as _f:
+    exec(_f.read().split("\ndef build(")[0], _skg)
+
+
+def zone_hit(zones, finish, ay, z):
+    """True when (|Y|, Z) mm lies in one of the part's FINISH_ZONES of that finish."""
+    for f_, rule, val, _w in zones:
+        if f_ != finish:
+            continue
+        if rule == "z_below" and z < val:
+            return True
+        if rule == "below_drl" and z < _skg["table_z"](_skg["DRL_Z"], ay) - val:
+            return True
+    return False
+
+
+def bisect_zones(o, zones):
+    """Cut the render copy along a FINISH_ZONES line so the colour change is a line, not the
+    saw-tooth of whole triangles either side of it (v079: the file's triangles under the DRL span
+    the line, and a face-centre test painted green teeth into the black). Render only: the print
+    file is untouched, on the car the line is the paint shop's tape along the groove."""
+    import bmesh
+    # sampled every 20 mm through table_z (PCHIP since v052): the face test below uses the same
+    # curve, and a chord between the table's knots would leave a sliver either side of it
+    tz_, knots = _skg["table_z"], _skg["DRL_Z"]
+    ys_ = [knots[0][0] + 20.0 * k for k in range(int((knots[-1][0] - knots[0][0]) / 20.0) + 1)]
+    drl = [(y, tz_(knots, y) - v) for f_, r_, v, _w in zones if r_ == "below_drl" for y in ys_]
+    flat = [v for f_, r_, v, _w in zones if r_ == "z_below"]
+    if not drl and not flat:
+        return
+    bm = bmesh.new()
+    bm.from_mesh(o.data)
+    bm.transform(o.matrix_world)
+    planes = [((0.0, 0.0, v / 1000.0), (0.0, 0.0, 1.0), None) for v in flat]
+    for (y0, z0), (y1, z1) in zip(drl, drl[1:]):
+        for sgn in (1.0, -1.0):
+            n_ = mathutils.Vector((0.0, -(z1 - z0), sgn * (y1 - y0))).normalized()
+            planes.append(((0.0, sgn * y0 / 1000.0, z0 / 1000.0), tuple(n_), (sgn, y0, y1)))
+    for co, no, band in planes:
+        geom = bm.verts[:] + bm.edges[:] + bm.faces[:]
+        if band:
+            sgn, y0, y1 = band
+            fs = [f for f in bm.faces
+                  if any(v.co.y * sgn * 1000.0 >= y0 - 5 for v in f.verts)
+                  and any(v.co.y * sgn * 1000.0 <= y1 + 5 for v in f.verts)]
+            geom = list({e for f in fs for e in f.edges}) + fs + list({v for f in fs for v in f.verts})
+        if geom:
+            bmesh.ops.bisect_plane(bm, geom=geom, dist=1e-5, plane_co=co, plane_no=no)
+    bm.transform(o.matrix_world.inverted())
+    bm.to_mesh(o.data)
+    bm.free()
 _POCKETS_XZ = _pmg.get("POCKETS_XZ", [])
 
 
@@ -397,6 +453,13 @@ def _main():
     tag_prefix = {"files": "rv_glossy_files_", "clean": "rv_glossy_clean_"}.get(source, "rv_glossy_")
     if globals().get("GLOSSY_FINAL"):
         tag_prefix = "rv_glossy_car_"
+    # PRESENTATION, 2026-10-06: the same files under ref-09's own studio, not the diagnostic light.
+    # The diagnostic renders keep a light world and floor ON PURPOSE (every flaw shows); ref-09 is a
+    # studio photograph -- a light grey seamless to the camera, a dark room in the reflections, long
+    # softboxes. Comparing the two setups mixed the light into the verdict on the shape.
+    PRESENT = bool(globals().get("GLOSSY_PRESENT"))
+    if PRESENT:
+        tag_prefix = "rv_glossy_present_"
     # TYRES AND RIMS, 2026-09-29 (v051). The cage's wheel cylinders (48 flat sides, grey) made every
     # render read as a toy and the owner said so. Four tyres are built for the render only: the
     # 19" sizes and the donor tracks from the skeleton, rounded shoulders, dark rubber, a bronze
@@ -505,9 +568,16 @@ def _main():
         if n.startswith("GLOSSY_FILE_") and fin.get(pid, "paint") == "paint":
             o.data.materials.append(finmats["gloss black"])
             inv = o.matrix_world
+            zones = FINISH_ZONES.get(pid, [])
+            if zones:
+                bisect_zones(o, zones)
             for poly in o.data.polygons:
                 c = inv @ poly.center
                 sx, ay, z = -c.x * 1000.0, abs(c.y * 1000.0), c.z * 1000.0
+                # a two-tone part (panel_registry.FINISH_ZONES); only the gloss black split exists
+                if zone_hit(zones, "gloss black", ay, z):
+                    poly.material_index = 1
+                    continue
                 # v069: side openings outlined in X-Z (the scoop); its floor looks along Y and must be
                 # strictly inside, its walls get the smoothing's slack
                 ny_ = abs((inv.to_3x3() @ poly.normal).normalized().y)
@@ -553,13 +623,53 @@ def _main():
     set_in(g, ("Base Color",), (0.62, 0.62, 0.62, 1.0))
     set_in(g, ("Roughness",), 0.9)
     gm.materials.append(gmat)
-    # lights: a large soft key above-front-left, a fill, a rim
+
+    def camera_split(nt, out_node, cam_shader, other_shader):
+        """camera rays see `cam_shader`, every other ray (reflections, bounce) sees `other_shader`"""
+        lp = nt.nodes.new("ShaderNodeLightPath")
+        mx = nt.nodes.new("ShaderNodeMixShader")
+        nt.links.new(lp.outputs["Is Camera Ray"], mx.inputs[0])
+        nt.links.new(other_shader, mx.inputs[1])
+        nt.links.new(cam_shader, mx.inputs[2])
+        nt.links.new(mx.outputs[0], out_node.inputs[0])
+    if PRESENT:
+        # the floor: light grey seamless to the camera, a dark studio floor in the car's reflections
+        nt = gmat.node_tree
+        outn = next(n for n in nt.nodes if n.type == "OUTPUT_MATERIAL")
+        bsdf = next(n for n in nt.nodes if n.type == "BSDF_PRINCIPLED")
+        # camera branch DIFFUSE: a principled floor's own specular at grazing angles mirrored the dark
+        # room and drew a black band along the horizon (first presentation render)
+        # ... plus a faint emission: lit only by the dark room and the local lights, the far floor
+        # went black (second render). The emission keeps the seamless light; the diffuse keeps the
+        # car's shadow on it.
+        seam = nt.nodes.new("ShaderNodeBsdfDiffuse")
+        seam.inputs["Color"].default_value = (0.70, 0.70, 0.71, 1.0)
+        glow = nt.nodes.new("ShaderNodeEmission")
+        glow.inputs["Color"].default_value = (0.70, 0.70, 0.71, 1.0)
+        glow.inputs["Strength"].default_value = 0.55
+        add = nt.nodes.new("ShaderNodeAddShader")
+        nt.links.new(seam.outputs[0], add.inputs[0])
+        nt.links.new(glow.outputs[0], add.inputs[1])
+        dark = nt.nodes.new("ShaderNodeBsdfDiffuse")
+        dark.inputs["Color"].default_value = (0.03, 0.03, 0.03, 1.0)
+        camera_split(nt, outn, add.outputs[0], dark.outputs[0])
+    # lights: a large soft key above-front-left, a fill, a rim -- or, for the presentation, a long
+    # softbox overhead and two strip lights along the sides, as ref-09's long highlights read
     made = [ground]
-    for nm, loc, energy, size in (("GLOSSY_KEY", (2.0, -5.0, 6.0), 4000.0, 6.0),
-                                  ("GLOSSY_FILL", (-4.0, 6.0, 4.0), 1500.0, 8.0),
-                                  ("GLOSSY_RIM", (-8.0, -2.0, 3.0), 1200.0, 4.0)):
+    rig = ((("GLOSSY_KEY", (2.0, -5.0, 6.0), 4000.0, 6.0, None),
+            ("GLOSSY_FILL", (-4.0, 6.0, 4.0), 1500.0, 8.0, None),
+            ("GLOSSY_RIM", (-8.0, -2.0, 3.0), 1200.0, 4.0, None)) if not PRESENT else
+           # the top box higher and weaker (6.0 / 900, was 4.2 / 1500): from the front and from above
+           # it lay on the bonnet as one white sheet, where ref-09 shows a soft gradient
+           (("GLOSSY_TOP", (-1.2, 0.0, 6.0), 900.0, 7.0, 1.8),
+            ("GLOSSY_STRIP_L", (-1.2, 4.5, 1.6), 750.0, 6.5, 0.6),
+            ("GLOSSY_STRIP_R", (-1.2, -4.5, 1.6), 750.0, 6.5, 0.6),
+            ("GLOSSY_FRONT", (5.0, 0.0, 1.2), 350.0, 3.0, 1.5)))
+    for nm, loc, energy, size, size_y in rig:
         ld = bpy.data.lights.new(nm, "AREA")
         ld.energy, ld.size = energy, size
+        if size_y is not None:
+            ld.shape, ld.size_y = "RECTANGLE", size_y
         lo = bpy.data.objects.new(nm, ld)
         sc.collection.objects.link(lo)
         lo.location = loc
@@ -572,6 +682,15 @@ def _main():
     bg = next(n for n in world.node_tree.nodes if n.type == "BACKGROUND")
     bg.inputs["Color"].default_value = (0.75, 0.76, 0.78, 1.0)
     bg.inputs["Strength"].default_value = 0.35 if globals().get("GLOSSY_FINAL") else 1.0
+    if PRESENT:
+        # the seamless to the camera, a dark room everywhere else
+        wout = next(n for n in world.node_tree.nodes if n.type == "OUTPUT_WORLD")
+        bg.inputs["Color"].default_value = (0.70, 0.70, 0.71, 1.0)
+        bg.inputs["Strength"].default_value = 1.0
+        bg_dark = world.node_tree.nodes.new("ShaderNodeBackground")
+        bg_dark.inputs["Color"].default_value = (0.02, 0.02, 0.022, 1.0)
+        bg_dark.inputs["Strength"].default_value = 1.0
+        camera_split(world.node_tree, wout, bg.outputs[0], bg_dark.outputs[0])
     sc.world = world
     old_engine = sc.render.engine
     engines = ("CYCLES",) if globals().get("GLOSSY_FINAL") else ("BLENDER_EEVEE_NEXT", "BLENDER_EEVEE", "CYCLES")

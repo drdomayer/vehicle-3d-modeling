@@ -141,6 +141,15 @@ PARTS = [
 # intake blade in visible carbon; vents, the mask and the louvres in gloss black; housings and
 # ducts hidden. It is a production input (which parts get a clear-coated carbon weave instead of
 # filler and paint) and glossy_renders.py uses it, so the review shows the car as specified.
+# FINISH ZONES, 2026-10-06 (v079): a part painted in two finishes, split by a line the paint shop
+# masks. ref-09's front is black everywhere below the DRL line -- the mouth surround, the facets, the
+# corner intakes' frames -- and ours was green there. (finish, rule, value, why)
+FINISH_ZONES = {
+    # the line is the DRL groove's lower lip (statev_skeleton DRL_Z minus 12 mm: the groove is a
+    # r 8 half-tube) -- a real edge the masking tape can follow, not a line drawn on a smooth skin
+    "P01": [("gloss black", "below_drl", 12.0, "below the DRL groove, as ref-09's front")],
+}
+
 FINISH = {
     "P01": "paint", "P02": "paint", "P03": "paint", "P04": "paint", "P09": "paint",
     "P10": "paint", "P11": "paint", "P12": "paint", "P15": "paint", "P16": "paint",
@@ -237,7 +246,8 @@ def main(argv):
             w.writerow(["ID", "NAME", "SIDE", "DESIGN_GROUP", "ASSEMBLY_STEP", "INSTALL_VECTOR",
                         "MANUFACTURING_METHOD", "MATERIAL", "NOMINAL_THICKNESS_MM", "PANEL_GAP_MM",
                         "FLANGE_WIDTH_MM", "OVERLAP_MM", "STATUS", "LENGTH", "WIDTH", "HEIGHT",
-                        "VOLUME", "ESTIMATED_MASS", "MOUNT_COUNT", "PRINT_SPLIT_COUNT", "FINISH"])
+                        "VOLUME", "ESTIMATED_MASS", "MOUNT_COUNT", "PRINT_SPLIT_COUNT", "FINISH",
+                        "FINISH_ZONES"])
             for pid, obj, side, grp, step, vec, method, key in PARTS:
                 mat = "ASA" if "ASA" in method else ("GRP composite" if "composite" in method else "PETG")
                 w.writerow([pid, obj, side, grp, step, vec, method, mat, NOMINAL_THICKNESS_MM,
@@ -247,7 +257,9 @@ def main(argv):
                             # 2026-10-02, so MOUNT_COUNT read NEEDS_BUILD_VOLUME and every column
                             # after it was one to the left
                             *["NEEDS_GEOMETRY"] * 6, "NEEDS_BUILD_VOLUME",
-                            FINISH.get(pid, "?")])
+                            FINISH.get(pid, "?"),
+                            "; ".join(f"{f_} {r_} {v_:g} mm ({why})"
+                                      for f_, r_, v_, why in FINISH_ZONES.get(pid, []))])
         print(f"\nwrote {out}")
     return 0
 

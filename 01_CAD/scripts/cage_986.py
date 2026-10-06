@@ -49,6 +49,13 @@ DIMS = {
     "jack_front_y_total":          (1330.0, "published"),   # P8 L–R
     "jack_rear_y_total":           (1375.0, "published"),   # P11 L–R
     "jack_front_to_rear_x":        (1375.0, "published"),   # P8 → P11 longitudinal
+    # 2026-10-06: the FRONT CRASH STRUCTURE. P1 = "impact absorber / pipe front screwed point (M8)",
+    # the rear mount of each front impact absorber on the side member. Its L-R spacing is printed on
+    # the set-up drawing (p. 5-11, 800 +-1.5). Its longitudinal place is NOT dimensioned: scaled off
+    # the same drawing at 300 dpi, calibrated on the printed 507 +-1.5 (P4-P7, 326 px -> 1.555 mm/px),
+    # P1 -> P8 is 788 px = 1225 mm. Approx, +-40 (scale reading plus P8's own derived X).
+    "impact_absorber_y_total":     ( 800.0, "published"),   # P1 L–R
+    "jack_front_to_impact_absorber_x": (1225.0, "approx"),  # P1 → P8, scaled, ±40
     # STATEV 001 targets (design envelope)
     "target_length":    (4370, "target"),   # v0.1 spec 2026-09-14 (was 4400)
     "target_width":     (1850, "target"),
@@ -288,6 +295,10 @@ def build():
          "roll-over bar front screw point (M8); X = hoop plane, fore/aft bracket spacing unknown"),
         ("P13_rollbar_mount_rear",  d("hoop_x"), 0.50, "rollbar_mount_rear_y_total",
          "roll-over bar rear screw point (M8); X = hoop plane, fore/aft bracket spacing unknown"),
+        ("P01_impact_absorber_front", door_mid + half_jack + d("jack_front_to_impact_absorber_x"), 0.40,
+         "impact_absorber_y_total",
+         "front impact absorber rear mount (M8) on the side member; Y published, X scaled off the "
+         "set-up drawing (approx +-40), Z NOT KNOWN -- drawn at 400 only to be seen"),
         ("P21_softtop_position", d("ws_top_x"), d("ws_top_z"), "softtop_pos_point_y_total",
          "convertible-top positioning point (M6) on the windshield header"),
         ("P22_softtop_lock",     d("ws_top_x"), d("ws_top_z"), "softtop_lock_y_total",

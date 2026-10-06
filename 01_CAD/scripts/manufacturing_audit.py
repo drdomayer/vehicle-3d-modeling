@@ -75,6 +75,17 @@ INFLUENCE = {
     "rear shut line":  (1625.0, 1645.0, "APPROX", "door_rear_x bounds this panel"),
 }
 
+# DONOR STRUCTURE inside our panels' span (2026-10-06). Not a boundary that moves with an estimate --
+# a volume we must not cut into (hard constraints 3 and 4), so it is checked BEFORE the measured
+# exposure, which cannot see it. The front crash structure runs from the 986's bumper face (blueprint
+# approx -1007) back to the impact absorbers' rear mounts P1 (cage_986: -875, approx +-40 -> -835).
+#   name: (x_lo, x_hi, what it means for the panel)
+STRUCTURE = {
+    "front crash structure": (-1007.0, -835.0,
+                              "the impact absorbers and the bumper beam sit here (P1, Group 5 p. 5-11); "
+                              "how deep this panel's openings may go waits on the beam's real place"),
+}
+
 # Measured exposure, written by donor_exposure.py: panel -> list of approx donor values that were
 # shown to move its boundary when perturbed by the recorded uncertainty. Absent means not measured,
 # which is not the same as measured clean, so the screen is used instead and the PROOF column says
@@ -143,6 +154,10 @@ def classify(pid, hits, span, measured=None):
         return 3, "roof fold envelope, which exists nowhere as data"
     if pid in SHAPE_IS_DONOR:
         return 3, SHAPE_IS_DONOR[pid]
+    lo, hi = span
+    for name, (a, b, what) in STRUCTURE.items():
+        if hi >= a and lo <= b:
+            return 2, f"{name}: {what}"
     # Measured beats screened. donor_exposure.py perturbs each approx donor value by the band
     # cage_986 records for it and reports which panels actually changed; where that answer exists
     # for this panel it is the answer, because the screen can only say "nearby".

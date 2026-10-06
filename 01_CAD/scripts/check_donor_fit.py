@@ -151,6 +151,27 @@ def main():
         f"the STATEV nose sits {nose - donor_nose:+.0f} mm relative to the donor's front face; "
         f"positive means INSIDE the donor's own overhang, where the crash beam and its brackets are")
 
+    # ---- 1b. how far our FRONT OPENINGS go back past the crash structure's rear mounts (2026-10-06).
+    # P1 (impact absorber rear mount): Y published (800 L-R), X scaled off the set-up drawing.
+    try:
+        p8 = -((DIMS["door_front_x"][0] + DIMS["door_rear_x"][0]) / 2.0 + DIMS["jack_front_to_rear_x"][0] / 2.0)
+        p1 = p8 - DIMS["jack_front_to_impact_absorber_x"][0]
+        _pm2 = {"__name__": "_pm2"}
+        with open(os.path.join(HERE, "panel_map.py"), encoding="utf-8") as f:
+            exec(f.read().split("\ndef main(")[0], _pm2)
+        deep = {nm: x1 for nm, x0, x1, *_r in _pm2["POCKETS"] if nm in ("X_MOUTH", "X_CORNER")}
+        worst = max(deep.values())
+        add("CHECK" if worst > p1 + 40.0 else "SCAN", "front openings vs crash structure",
+            f"{worst:.0f}", f"<= {p1:.0f}", "P1 Y published, X approx +-40",
+            "the impact absorbers' rear mounts P1 sit at spec X " + f"{p1:.0f} (|Y| "
+            f"{DIMS['impact_absorber_y_total'][0] / 2:.0f}); our openings go back to " +
+            ", ".join(f"{k[2:].lower()} {v:.0f}" for k, v in deep.items()) +
+            " -- behind them even at the +40 end of the band. The bumper beam lies between P1 and the "
+            "986's face at a height nobody has measured; at mouth height (Z 220..430) the mouth cuts "
+            "through it. Hard constraint 4: it stays. P01 / P43 / the corner grilles wait on it.")
+    except (KeyError, OSError) as e:
+        add("CHECK", "front openings vs crash structure", "--", "--", "cage_986", f"not measured: {e}")
+
     # ---- 2. does the fender crown over the tyre, at the arch crown, on the BUILT surface
     for key, (ax, radius, open_w, tod, twid) in ARCHES.items():
         track = DIMS["track_front"][0] if key == "FRONT" else DIMS["track_rear"][0]

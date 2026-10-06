@@ -149,7 +149,9 @@ def main():
         d = VEC.get(vec, (0, 0, 1))
         k = -GAP * (step - 2) / 1000.0
         ep.location = (d[0] * k, d[1] * k, d[2] * k)
-        mat = bpy.data.materials.new(f"MX_{pid}")
+        # reused, not created per run (2026-10-06): 18 runs left 916 MX_ materials, each kept "in use"
+        # by an orphaned copy of the previous run's mesh, and saved -- +1 MB in every .blend
+        mat = bpy.data.materials.get(f"MX_{pid}") or bpy.data.materials.new(f"MX_{pid}")
         mat.use_nodes = False
         r, g, b = colorsys.hsv_to_rgb(i / max(1, len(order)), 0.62, 0.92)
         mat.diffuse_color = (r, g, b, 1.0)

@@ -52,7 +52,7 @@ def main():
             if pid not in mats:
                 k = (int(pid[1:]) * 0.618034) % 1.0
                 r, g, b = colorsys.hsv_to_rgb(k, sat, 0.9)
-                m = bpy.data.materials.new(f"RVP_{pid}")
+                m = bpy.data.materials.get(f"RVP_{pid}") or bpy.data.materials.new(f"RVP_{pid}")
                 m.diffuse_color = (r, g, b, 1.0)
                 mats[pid] = m
             for o in new:

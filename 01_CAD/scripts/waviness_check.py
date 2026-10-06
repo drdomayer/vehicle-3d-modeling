@@ -47,7 +47,7 @@ with open(_ac["__file__"], encoding="utf-8") as _f:
 _pm = {"__name__": "_pm"}
 with open(os.path.join(REPO, "01_CAD/scripts/panel_map.py"), encoding="utf-8") as _f:
     exec(_f.read().split("\ndef main(")[0], _pm)
-XZ_OPENINGS = [(p, 10.0) for _n, _y0, _y1, p, _t in _pm.get("POCKETS_XZ", [])]
+XZ_OPENINGS = [(p, 30.0) for _n, _y0, _y1, p, _t in _pm.get("POCKETS_XZ", [])]   # 30: v071 lip is 25 wide
 
 
 def in_opening(x, z):

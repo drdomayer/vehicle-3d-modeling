@@ -581,6 +581,64 @@ def main():
     print(f"  side scoop: a ramp in the OEM quarter, spec X {SCOOP[0][0]}..{SCOOP[-1][0]}, "
           f"{SCOOP[0][3]} -> {SCOOP[-1][3]} mm deep, front edge leaning back (ref-09) -- depth SCAN REQUIRED")
 
+    # ---- 1c. THE SCOOP'S LIP, 2026-10-06 (v071). ref-09's door surface ROLLS into the opening over
+    # its leading edge; ours met it in a 25..130 mm vertical step. A chamfer swept ALONG the edge --
+    # the vertical front (1735, Z 345..470) and the lean up to (1925, 700) -- its section, square to
+    # the edge in the X-Z plane, LIP_W wide outward from the opening and LIP_D deep at the edge. The
+    # skin is read by ray at every point, so the chamfer follows the surface rather than a Y.
+    LIP_W, LIP_D = 25.0, 15.0
+    lip_edge = [(1735.0, 345.0), (1735.0, 470.0), (1775.0, 580.0), (1820.0, 650.0), (1870.0, 690.0),
+                (1925.0, 700.0)]
+    lip_pts = []
+    for (xa, za), (xb, zb) in zip(lip_edge, lip_edge[1:]):
+        ln = math.hypot(xb - xa, zb - za)
+        k = max(1, int(math.ceil(ln / 10.0)))
+        lip_pts += [(xa + (xb - xa) * j / k, za + (zb - za) * j / k, (xb - xa) / ln, (zb - za) / ln)
+                    for j in range(k)]
+    lip_pts.append((lip_edge[-1][0], lip_edge[-1][1], lip_pts[-1][2], lip_pts[-1][3]))
+
+    def side_y(sx, z):
+        """|Y| of the uncut skin at (spec X, Z), by ray from outboard; the cuts are applied last."""
+        best = None
+        for o in body_objects():
+            inv = o.matrix_world.inverted()
+            org = mathutils.Vector((-mm(sx), 2.0, mm(z)))
+            h, loc, _n, _i = o.ray_cast(inv @ org, (inv.to_3x3() @ mathutils.Vector((0.0, -1.0, 0.0))).normalized())
+            if h:
+                yv = (o.matrix_world @ loc).y
+                best = yv if best is None else max(best, yv)
+        return None if best is None else best * 1000.0
+    for sgn in (1, -1):
+        secs = []
+        for x_, z_, tx, tz in lip_pts:
+            nx, nz = -tz, tx                       # out of the opening: forward on the front, up on the lean
+            a = (x_ - 3.0 * nx, z_ - 3.0 * nz)     # 3 mm inside the opening, so the cut overlaps the scoop
+            b = (x_ + LIP_W * nx, z_ + LIP_W * nz)
+            ya, yb = side_y(*a), side_y(*b)
+            if ya is None or yb is None:
+                continue
+            secs.append([(-mm(a[0]), mm(sgn * (ya - LIP_D)), mm(a[1])), (-mm(b[0]), mm(sgn * (yb + 0.5)), mm(b[1])),
+                         (-mm(b[0]), mm(sgn * 1000.0), mm(b[1])), (-mm(a[0]), mm(sgn * 1000.0), mm(a[1]))])
+        if len(secs) < 3:
+            continue
+        verts = [v for q in secs for v in q]
+        faces = [(0, 1, 2, 3), (len(verts) - 1, len(verts) - 2, len(verts) - 3, len(verts) - 4)]
+        for i in range(len(secs) - 1):
+            a_, b_ = i * 4, (i + 1) * 4
+            faces += [(a_ + q, a_ + (q + 1) % 4, b_ + (q + 1) % 4, b_ + q) for q in range(4)]
+        me = bpy.data.meshes.new(f"CUT_SCOOP_LIP_{'L' if sgn > 0 else 'R'}")
+        me.from_pydata(verts, [], faces)
+        me.update()
+        lo = bpy.data.objects.new(me.name, me)
+        coll.objects.link(lo)
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        bm.to_mesh(me)
+        bm.free()
+        cuts.append(lo)
+    print(f"  scoop lip: a {LIP_W:.0f} x {LIP_D:.0f} mm chamfer swept along the leading edge, (1735, 345) -> (1925, 700)")
+
     # ---- 2. the blade standing in that mouth, the vertical element ref-05 puts across the intake
     # 2026-10-02: the bottom edge is kept 12 mm above the REAR ARCH (centre 2415 / Z 337.5,
     # radius 365, the cutter in statev_master_volumes): its rear-bottom corner stood 67 mm into

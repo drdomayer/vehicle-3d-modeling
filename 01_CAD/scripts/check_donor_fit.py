@@ -171,6 +171,20 @@ def main():
             "through it. Hard constraint 4: it stays. P01 / P43 / the corner grilles wait on it.")
     except (KeyError, OSError) as e:
         add("CHECK", "front openings vs crash structure", "--", "--", "cage_986", f"not measured: {e}")
+    # ---- 1c. the same at the rear. P20 (rear absorbers' mounts) and the 986's rear face bound the
+    # span; our openings there sit BETWEEN them, not past the absorbers, so whether they meet the beam
+    # is its height -- SCAN, not CHECK.
+    try:
+        p11 = -((DIMS["door_front_x"][0] + DIMS["door_rear_x"][0]) / 2.0 - DIMS["jack_front_to_rear_x"][0] / 2.0)
+        p20 = p11 + DIMS["jack_rear_to_impact_absorber_rear_x"][0]
+        add("SCAN", "rear openings vs crash structure", f"{p20:.0f}..3420", "beam height", "P20 Y published, X approx +-40",
+            f"the rear absorbers' mounts P20 sit at spec X {p20:.0f} (|Y| "
+            f"{DIMS['impact_absorber_rear_y_total'][0] / 2:.0f}); the 986's rear face is at ~{2415 + DIMS['rear_overhang'][0]:.0f} (blueprint, approx). "
+            "Our tail slot (to 3178, Z 593..631), the lamp housings, the plate recess, the exhausts and the "
+            "diffuser tunnel (Z <= 410) all lie in that span. Whether they meet the beam is its height, "
+            "which nobody has measured.")
+    except (KeyError, OSError) as e:
+        add("SCAN", "rear openings vs crash structure", "--", "--", "cage_986", f"not measured: {e}")
 
     # ---- 2. does the fender crown over the tyre, at the arch crown, on the BUILT surface
     for key, (ax, radius, open_w, tod, twid) in ARCHES.items():

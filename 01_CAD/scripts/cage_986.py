@@ -56,6 +56,12 @@ DIMS = {
     # P1 -> P8 is 788 px = 1225 mm. Approx, +-40 (scale reading plus P8's own derived X).
     "impact_absorber_y_total":     ( 800.0, "published"),   # P1 L–R
     "jack_front_to_impact_absorber_x": (1225.0, "approx"),  # P1 → P8, scaled, ±40
+    # P20 = "impact absorber / pipe rear screwed point (M8)", p. 5-13: L-R 824 +-1.5 printed; the
+    # longitudinal place scaled off the drawing (calibrated on the printed 485.5 +-2, 1.889 mm/px):
+    # P11 -> P20 = 650 px = 1228 mm (spec ~2953); cross-check via P16 = P5 + 2700 (~2408, at the rear
+    # axle) + 582 = 2990. Taken as the mean, 2970, approx +-40.
+    "impact_absorber_rear_y_total": (824.0, "published"),   # P20 L–R
+    "jack_rear_to_impact_absorber_rear_x": (1245.0, "approx"),  # P11 → P20, ±40 (2970 − 1725)
     # STATEV 001 targets (design envelope)
     "target_length":    (4370, "target"),   # v0.1 spec 2026-09-14 (was 4400)
     "target_width":     (1850, "target"),
@@ -299,6 +305,10 @@ def build():
          "impact_absorber_y_total",
          "front impact absorber rear mount (M8) on the side member; Y published, X scaled off the "
          "set-up drawing (approx +-40), Z NOT KNOWN -- drawn at 400 only to be seen"),
+        ("P20_impact_absorber_rear", door_mid - half_jack - d("jack_rear_to_impact_absorber_rear_x"), 0.40,
+         "impact_absorber_rear_y_total",
+         "rear impact absorber mount (M8); Y published, X scaled off the drawing (approx +-40), "
+         "Z NOT KNOWN -- drawn at 400 only to be seen"),
         ("P21_softtop_position", d("ws_top_x"), d("ws_top_z"), "softtop_pos_point_y_total",
          "convertible-top positioning point (M6) on the windshield header"),
         ("P22_softtop_lock",     d("ws_top_x"), d("ws_top_z"), "softtop_lock_y_total",

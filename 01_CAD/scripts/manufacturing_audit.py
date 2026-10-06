@@ -84,6 +84,12 @@ STRUCTURE = {
     "front crash structure": (-1007.0, -835.0,
                               "the impact absorbers and the bumper beam sit here (P1, Group 5 p. 5-11); "
                               "how deep this panel's openings may go waits on the beam's real place"),
+    # the rear: from the absorbers' mounts P20 (cage_986: 2970, approx +-40 -> 2930) to the 986's
+    # rear face (blueprint approx 3308). Our tail is 112 mm behind that face, but the tail slot,
+    # the lamp housings, the plate recess, the exhausts and the diffuser tunnel reach into it.
+    "rear crash structure": (2930.0, 3308.0,
+                             "the rear impact absorbers and beam sit here (P20, Group 5 p. 5-13) at a "
+                             "height nobody has measured; this panel's openings reach into that span"),
 }
 
 # Measured exposure, written by donor_exposure.py: panel -> list of approx donor values that were

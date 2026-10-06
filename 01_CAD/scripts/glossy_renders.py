@@ -361,6 +361,29 @@ def ctx_objects(sc):
     # v079: "hidden" (diffuse near-black), not gloss black -- from above a mirror-black field facing
     # the top softbox rendered WHITE round the louvre crate, the opposite of ref-09's dark deck
     tags[mesh("GLOSSY_CTX_DECK", vs, fs).name] = "hidden"
+    # v079: the exhaust tips -- bought parts (stage03: no surround part, P35 retired), two
+    # polished tubes in the two 104 mm openings on the EXHAUST envelope (Y +-65, Z 430), outer
+    # r 50 / inner r 45, the mouth 5 mm inside the tail skin (spec X ~3400 there, ray-measured),
+    # 150 mm deep with a dark back. ref-09's rear is read by these two rings; ours showed two holes.
+    for sgn in (1, -1):
+        yc, zc, xa, xb, n_ = sgn * 65.0, 430.0, 3245.0, 3395.0, 48
+        v_, f_ = [], []
+        for x_ in (xa, xb):
+            for r_ in (50.0, 45.0):
+                for k in range(n_):
+                    a_ = 2 * math.pi * k / n_
+                    v_.append(P_(x_, yc + r_ * math.cos(a_), zc + r_ * math.sin(a_)))
+        def ring(i):
+            return [i * n_ + k for k in range(n_)]
+        oa, ia, ob_, ib = ring(0), ring(1), ring(2), ring(3)
+        for k in range(n_):
+            k2 = (k + 1) % n_
+            f_ += [(oa[k], oa[k2], ob_[k2], ob_[k]), (ib[k], ib[k2], ia[k2], ia[k]),
+                   (ob_[k], ob_[k2], ib[k2], ib[k])]
+        tags[mesh(f"GLOSSY_CTX_EXHAUST{'L' if sgn > 0 else 'R'}", v_, f_).name] = "satin silver"
+        back = [P_(xa + 2, yc + 45.0 * math.cos(2 * math.pi * k / n_), zc + 45.0 * math.sin(2 * math.pi * k / n_))
+                for k in range(n_)]
+        tags[mesh(f"GLOSSY_CTX_EXHAUSTBACK{'L' if sgn > 0 else 'R'}", back, [tuple(range(n_))]).name] = "hidden"
     # v079: the cabin tub. The body is a shell with the cabin cut out, so from above the studio
     # floor showed white between and round the seats; the 986 tub (floor, tunnel, bulkhead) is
     # there on the car. Context only, like the seats: floor at Z 300, tunnel, rear bulkhead.
@@ -522,8 +545,11 @@ def _main():
     set_in(p, ("Coat Roughness", "Clearcoat Roughness"), 0.05)
     rubber = bpy.data.materials.new("GLOSSY_RUBBER")
     r = principled(rubber)
-    set_in(r, ("Base Color",), (0.03, 0.03, 0.03, 1.0))
-    set_in(r, ("Roughness",), 0.6)
+    # v079: darker, rougher, half the specular -- in the white studio a 0.6-rough rubber with full
+    # specular picked up the floor and the walls and read light grey; ref-09's tyres are black
+    set_in(r, ("Base Color",), (0.015, 0.015, 0.015, 1.0))
+    set_in(r, ("Roughness",), 0.85)
+    set_in(r, ("Specular IOR Level", "Specular"), 0.25)
     bronze = bpy.data.materials.new("GLOSSY_BRONZE")
     b = principled(bronze)
     set_in(b, ("Base Color",), (0.42, 0.28, 0.12, 1.0))

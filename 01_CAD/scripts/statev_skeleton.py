@@ -209,6 +209,30 @@ BOXES = [
      "this when I read the render as a plain bar — the locked intent is blade PLUS sharp L ends. "
      "Explicitly NOT a Lamborghini-style separate triangular lamp; the light stays integrated "
      "into the body."),
+    # 2026-10-06: THE REST OF THE LEGAL LIGHTING (CLAUDE.md hard constraint 5 names side-visible
+    # indicators, rear reflectors and the plate light; docs/04 planned them; nothing here had an
+    # envelope, so nothing checked them). Each sits on the MEASURED skin of v072. Envelopes only --
+    # the apertures are the next step. check_lighting.py tests each against R48 geometry.
+    ("IND_FRONT",   "04_LIGHTING", -795,  738,  520,   40,   76,   40, "PROVISIONAL",
+     "front direction indicator: the amber segment of the LEDayFlex line from |Y| 700 to the corner "
+     "crest (a switchback DRL/indicator module), where the line rises 493 -> 546"),
+    ("IND_SIDE",    "04_LIGHTING",  400,  885,  560,   60,   20,   20, "PROVISIONAL",
+     "side direction indicator, category 5, on the front fender behind the arch (skin |Y| 894 at "
+     "spec X 400 / Z 560) -- or category 6 in the bought mirror P37/P38 if the chosen one carries it"),
+    ("CHMSL",       "04_LIGHTING", 3010,    0,  866,   20,  300,   14, "PROVISIONAL",
+     "third stop lamp (S3), centred on the engine cover's rear slope; its lower edge must be >= 850 "
+     "and the cover falls 879 -> 731 between spec X 3000 and 3200, so this is as far aft as it can go. "
+     "The cover is SHAPE ONLY on the roof question (scan S2)"),
+    ("REVERSE",     "04_LIGHTING", 3378,  300,  400,   20,   80,   40, "PROVISIONAL",
+     "reversing lamps in the black lower rear, face at spec X 3388 (|Y| 300, Z 400)"),
+    ("FOG_REAR",    "04_LIGHTING", 3345,  450,  400,   20,   80,   40, "PROVISIONAL",
+     "rear fog lamps in the black lower rear, face at spec X 3355; 173 mm below the stop lamps' "
+     "lit edge (R48 asks >= 100)"),
+    ("REFLECTOR_REAR", "04_LIGHTING", 3305, 590, 330,   20,   60,   40, "PROVISIONAL",
+     "red rear retro-reflectors, E-marked, in the black lower rear (docs/04: 'hidden in the diffuser'), "
+     "face at spec X 3298..3323"),
+    ("PLATE_LAMP",  "04_LIGHTING", 3412,    0,  380,   15,  120,   12, "PROVISIONAL",
+     "rear registration plate lamp, at the top edge of the plate recess (Z 250..372), lighting down"),
     ("HOOD_VENT",   "02_BODY",     -600,  250,  610,  380,  130,   25, "SUPERSEDED",
      "SUPERSEDED 2026-09-26: ref-09's hood extractors, read off its top view at 6.5 mm/px, sit at "
      "Y 380..608 / spec X -400..+40 -- the fender vent slot (P05/P06, X_FENDER_SLOT), which now "

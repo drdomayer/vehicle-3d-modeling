@@ -78,6 +78,7 @@ def main():
               f"{('--' if top is None else f'{top:.1f}'):>18}"
               f"{('--' if hw is None else f'{hw:.1f}'):>12}{enc:>11}{wid:>10}{legal:>8}")
     bad += visibility()
+    bad += legal_geometry()
     print(f"\n{bad} problem(s).")
     if bad:
         print("A lamp that reads OUT is not recessed into the body; it protrudes by that much.")
@@ -142,6 +143,78 @@ def visibility():
     bm.free()
     print("  0 % in any direction is a problem; how much obstruction the technical service accepts is")
     print("  theirs to judge on the real lamp. The eye bezels are cut by this cone, so they add none.")
+    return bad
+
+
+# R48 MOUNTING GEOMETRY per function, added 2026-10-06 with the envelopes for the rest of the
+# legal lighting (hard constraint 5). VALUES FROM MEMORY OF UN R48 -- every number below is to be
+# confirmed by the technical service before anything is cut (hard constraint 6). The vehicle's
+# extreme outer edge is the locked half-width, 925; heights are the lit envelope's own edges.
+# h: (min, max) for both edges; outer: max distance from the vehicle's outer edge to the lamp's
+# outer edge; sep: min distance between the inner edges of the pair; front: max distance from the
+# front of the vehicle (nose, spec X -950); low: minimum height of the lower edge.
+HALF_W, NOSE_X = 925.0, -950.0
+R48 = [
+    ("PROJECTOR",      "dipped beam",            dict(h=(500, 1200), outer=400)),
+    ("IND_FRONT",      "front indicator",        dict(h=(350, 1500), outer=400, sep=600)),
+    ("IND_SIDE",       "side indicator cat 5",   dict(h=(350, 1500), front=1800)),
+    ("TAIL_END",       "rear position/stop/ind.", dict(h=(350, 1500), outer=400, sep=600)),
+    ("CHMSL",          "third stop lamp",        dict(low=850)),
+    ("REVERSE",        "reversing lamp",         dict(h=(250, 1200))),
+    ("FOG_REAR",       "rear fog lamp",          dict(h=(250, 1000), stop_gap=100)),
+    ("REFLECTOR_REAR", "rear retro-reflector",   dict(h=(250, 900), outer=400, sep=600)),
+    ("PLATE_LAMP",     "plate lamp",             dict()),
+]
+
+
+def legal_geometry():
+    box = {b[0]: b for b in BOXES}
+    tb = box.get("TAIL_BAR")
+    stop_low = tb[4] - tb[7] / 2.0 if tb else None
+    print("\nR48 MOUNTING GEOMETRY -- every function the law asks for, against its envelope")
+    print("  (R48 values from memory; the technical service confirms them -- hard constraint 6)")
+    print(f"  {'function':26s}{'envelope':16s}{'height':>14s}  checks")
+    bad = 0
+    for nm, what, r in R48:
+        b = box.get(nm)
+        if b is None:
+            print(f"  {what:26s}{nm:16s}{'--':>14s}  MISSING -- no envelope")
+            bad += 1
+            continue
+        _n, _c, x, y, z, sx, sy, sz, _st, _note = b
+        lo, hi = z - sz / 2.0, z + sz / 2.0
+        y_in, y_out = abs(y) - sy / 2.0, abs(y) + sy / 2.0
+        notes = []
+        if "h" in r:
+            ok = r["h"][0] <= lo and hi <= r["h"][1]
+            notes.append(f"height {r['h'][0]}..{r['h'][1]} {'ok' if ok else 'FAIL'}")
+            bad += not ok
+        if "low" in r:
+            ok = lo >= r["low"]
+            notes.append(f"lower edge >= {r['low']}: {lo:.0f} {'ok' if ok else 'FAIL'}")
+            bad += not ok
+        if "outer" in r and y:
+            d = HALF_W - y_out
+            ok = d <= r["outer"]
+            notes.append(f"outer edge {d:.0f} from the side (<= {r['outer']}) {'ok' if ok else 'FAIL'}")
+            bad += not ok
+        if "sep" in r and y:
+            d = 2.0 * y_in
+            ok = d >= r["sep"]
+            notes.append(f"pair {d:.0f} apart (>= {r['sep']}) {'ok' if ok else 'FAIL'}")
+            bad += not ok
+        if "front" in r:
+            d = x - NOSE_X
+            ok = d <= r["front"]
+            notes.append(f"{d:.0f} from the front (<= {r['front']}) {'ok' if ok else 'FAIL'}")
+            bad += not ok
+        if "stop_gap" in r and stop_low is not None:
+            d = stop_low - hi
+            ok = d >= r["stop_gap"]
+            notes.append(f"{d:.0f} below the stop lamps (>= {r['stop_gap']}) {'ok' if ok else 'FAIL'}")
+            bad += not ok
+        print(f"  {what:26s}{nm:16s}{f'{lo:.0f}..{hi:.0f}':>14s}  " + "; ".join(notes or ["present"]))
+    print("  Envelopes only: the apertures, the modules' E-marks and their photometry are not checked here.")
     return bad
 
 

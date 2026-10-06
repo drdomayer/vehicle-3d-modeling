@@ -249,6 +249,54 @@ def zone_hit(zones, finish, ay, z):
     return False
 
 
+# stage03 5c's EYE outline, (|Y|, Z low, Z high); the cutter runs along X from 20 mm ahead of the
+# skin to 40 mm behind it, measured at each station's mid-height (EYE_OUT, EYE_DEPTH)
+EYE_OUTLINE = [(520.0, 548.0, 576.0), (560.0, 522.0, 608.0), (600.0, 505.0, 625.0), (700.0, 505.0, 627.0),
+               (760.0, 548.0, 632.0), (820.0, 592.0, 637.0), (850.0, 612.0, 640.0)]
+EYE_DEPTH, EYE_OUT = 40.0, 20.0
+
+
+def measure_eye_floor():
+    """[(|Y|, spec X of the eye's floor)], by a ray along +spec X at each station's mid-height on the
+    master front volume -- the eye is cut in it, so the first hit is the floor."""
+    ob = bpy.data.objects.get("STATEV_FRONT_VOLUME")
+    if ob is None:
+        return []
+    inv = ob.matrix_world.inverted()
+    d_ = (inv.to_3x3() @ mathutils.Vector((-1.0, 0.0, 0.0))).normalized()
+    out = []
+    for (ya, za0, za1), (yb, zb0, zb1) in zip(EYE_OUTLINE, EYE_OUTLINE[1:]):
+        for j in range(6):
+            t_ = j / 6.0
+            y, zm = ya + (yb - ya) * t_, ((za0 + (zb0 - za0) * t_) + (za1 + (zb1 - za1) * t_)) / 2.0
+            if 588.0 < y < 698.0:
+                continue      # the module's own slot (PROJECTOR, Y 590..700) is deeper than the eye
+            hit, loc, _n, _i = ob.ray_cast(inv @ mathutils.Vector((1.5, y / 1000.0, zm / 1000.0)), d_)
+            if hit:
+                out.append((y, -(ob.matrix_world @ loc).x * 1000.0))
+    return out
+
+
+_EYE_FLOOR = []
+
+
+def in_eye_x(sx, ay):
+    """Is spec X inside the eye cutter's X window at this |Y| -- [floor - 60, floor] with 4 mm for
+    the print smoothing. The (|Y|, Z) outline alone took the nose face 200 mm AHEAD of the eye
+    (spec X ~-900 under the inboard tip) and painted it black in ragged patches (v079)."""
+    if not _EYE_FLOOR:
+        return True
+    pts = _EYE_FLOOR
+    if ay <= pts[0][0]:
+        fx = pts[0][1]
+    elif ay >= pts[-1][0]:
+        fx = pts[-1][1]
+    else:
+        fx = next(xa + (xb - xa) * (ay - ya) / (yb - ya)
+                  for (ya, xa), (yb, xb) in zip(pts, pts[1:]) if ya <= ay <= yb)
+    return fx - EYE_DEPTH - EYE_OUT - 4.0 <= sx <= fx + 4.0
+
+
 def bisect_zones(o, zones):
     """Cut the render copy along a FINISH_ZONES line so the colour change is a line, not the
     saw-tooth of whole triangles either side of it (v079: the file's triangles under the DRL span
@@ -384,6 +432,36 @@ def ctx_objects(sc):
         back = [P_(xa + 2, yc + 45.0 * math.cos(2 * math.pi * k / n_), zc + 45.0 * math.sin(2 * math.pi * k / n_))
                 for k in range(n_)]
         tags[mesh(f"GLOSSY_CTX_EXHAUSTBACK{'L' if sgn > 0 else 'R'}", back, [tuple(range(n_))]).name] = "hidden"
+    # v079: the headlamp modules -- bought, E-marked, never modified (CLAUDE.md), so context like
+    # the tips: a Hella 90 mm bi-LED face at stage03's LENS (spec X -675, |Y| 645, Z 560): a domed
+    # lens r 45 standing 10 mm proud of the face, in a polished ring r 45..49. Without it the eye
+    # rendered as an empty black cavity; ref-09's eye is read by the lamp in it.
+    lx, ly, lz, n_ = -675.0, 645.0, 560.0, 48
+    for sgn in (1, -1):
+        yc = sgn * ly
+        rv, rf = [], []
+        for r_ in (49.0, 45.0):
+            for k in range(n_):
+                a_ = 2 * math.pi * k / n_
+                rv.append(P_(lx, yc + r_ * math.cos(a_), lz + r_ * math.sin(a_)))
+        for k in range(n_):
+            k2 = (k + 1) % n_
+            rf.append((k, k2, n_ + k2, n_ + k))
+        tags[mesh(f"GLOSSY_CTX_LAMPRING{'L' if sgn > 0 else 'R'}", rv, rf).name] = "satin silver"
+        dv, df, rings = [], [], 6
+        for j in range(rings + 1):
+            t_ = j / rings
+            r_, dx_ = 45.0 * math.cos(t_ * math.pi / 2), 10.0 * math.sin(t_ * math.pi / 2)
+            for k in range(n_):
+                a_ = 2 * math.pi * k / n_
+                dv.append(P_(lx - dx_, yc + r_ * math.cos(a_), lz + r_ * math.sin(a_)))
+        for j in range(rings):
+            for k in range(n_):
+                k2 = (k + 1) % n_
+                df.append((j * n_ + k, j * n_ + k2, (j + 1) * n_ + k2, (j + 1) * n_ + k))
+        lo = mesh(f"GLOSSY_CTX_LENS{'L' if sgn > 0 else 'R'}", dv, df)
+        lo.data.shade_smooth() if hasattr(lo.data, "shade_smooth") else None
+        tags[lo.name] = "glass"
     # v079: the cabin tub. The body is a shell with the cabin cut out, so from above the studio
     # floor showed white between and round the seats; the 986 tub (floor, tunnel, bulkhead) is
     # there on the car. Context only, like the seats: floor at Z 300, tunnel, rear bulkhead.
@@ -575,6 +653,9 @@ def _main():
             "light white": mat("GLOSSY_LW", (1, 1, 1, 1), 0.0, 0.3, (0.9, 0.95, 1.0, 1.0)),
             "light red": mat("GLOSSY_LR", (1, 0, 0, 1), 0.0, 0.3, (1.0, 0.03, 0.02, 1.0))}
     fin = finish_map()
+    _EYE_FLOOR[:] = measure_eye_floor()
+    print(f"  eye floor: {len(_EYE_FLOOR)} stations, spec X "
+          f"{min((x for _y, x in _EYE_FLOOR), default=0):.0f}..{max((x for _y, x in _EYE_FLOOR), default=0):.0f}")
     saved = {}
     for n in body:
         o = bpy.data.objects[n]
@@ -626,6 +707,8 @@ def _main():
                     continue
                 for nm, x0, x1, y0, y1, z0, z1, *pl in _POCKETS:
                     if nm not in INTERIOR_BLACK:
+                        continue
+                    if nm == "X_EYE" and not in_eye_x(sx, ay):
                         continue
                     # a WALL lies on the polygon's edge (15 mm: the print smoothing rounds it); a face
                     # looking along X is skin or the floor and must be strictly inside -- with the

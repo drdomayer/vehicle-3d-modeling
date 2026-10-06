@@ -958,6 +958,32 @@ def main():
             if len(run) < 2:
                 continue
             zlo, zhi = run[0][0], run[-1][0]
+            # v079: the run's ends were quantised to the 25-sample grid, so the bezel's top and
+            # bottom edges jumped by (z1 - z0) / 24 from station to station -- a staircase in the
+            # glossy render. Each end is refined by bisection to the true edge of the valid range.
+            def valid(z):
+                x = skin_x(sgn * y_, z)
+                return x is not None and x - mm(BEZEL["front"]) - bx >= mm(2.0)
+            dz = (z1 - z0 - 2 * BEZEL["gap"]) / 24.0
+            for end in ("lo", "hi"):
+                good = zlo if end == "lo" else zhi
+                bad = good - dz if end == "lo" else good + dz
+                lim = z0 + BEZEL["gap"] if end == "lo" else z1 - BEZEL["gap"]
+                if (end == "lo" and bad < lim) or (end == "hi" and bad > lim):
+                    bad = lim
+                    if valid(bad):
+                        good = bad
+                if good != bad:
+                    for _ in range(7):
+                        mid = (good + bad) / 2.0
+                        if valid(mid):
+                            good = mid
+                        else:
+                            bad = mid
+                if end == "lo":
+                    zlo = good
+                else:
+                    zhi = good
             prof = []
             for k in range(N):
                 z = zlo + (zhi - zlo) * k / (N - 1)

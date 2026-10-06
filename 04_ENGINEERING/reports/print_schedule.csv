@@ -28,8 +28,8 @@ P59,DIFFUSER_FIN_EDGE_R,whole,250.0,149.4,16.0,yes,1,yes,0,90.0,-0.0,0.0,0.0,-38
 P60,BADGE_REAR,whole,41.6,283.8,28.6,yes,1,yes,0,-0.0,-0.0,-0.0,0.0,0.0,601.7,,03_PRINT/production/P60_BADGE_REAR_whole.stl
 P61,SPLITTER_END_L,whole,130.0,116.0,10.0,yes,1,yes,0,-90.0,-0.0,-0.0,0.0,595.0,-0.0,,03_PRINT/production/P61_SPLITTER_END_L_whole.stl
 P62,SPLITTER_END_R,whole,130.0,116.0,10.0,yes,1,yes,0,90.0,-0.0,0.0,0.0,-595.0,-0.0,,03_PRINT/production/P62_SPLITTER_END_R_whole.stl
-P65,EYE_BEZEL_IN_L,whole,120.9,73.5,68.6,yes,1,yes,0,-0.0,-0.0,-0.0,0.0,0.0,508.3,,03_PRINT/production/P65_EYE_BEZEL_IN_L_whole.stl
-P66,EYE_BEZEL_IN_R,whole,120.9,73.5,68.6,yes,1,yes,0,-0.0,-0.0,-0.0,0.0,0.0,508.3,,03_PRINT/production/P66_EYE_BEZEL_IN_R_whole.stl
+P65,EYE_BEZEL_IN_L,whole,120.9,73.5,69.0,yes,1,yes,0,-0.0,-0.0,-0.0,0.0,0.0,508.3,,03_PRINT/production/P65_EYE_BEZEL_IN_L_whole.stl
+P66,EYE_BEZEL_IN_R,whole,120.9,73.5,69.0,yes,1,yes,0,-0.0,-0.0,-0.0,0.0,0.0,508.3,,03_PRINT/production/P66_EYE_BEZEL_IN_R_whole.stl
 P67,EYE_BEZEL_OUT_L,whole,275.8,208.7,133.0,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,639.0,,03_PRINT/production/P67_EYE_BEZEL_OUT_L_whole.stl
 P68,EYE_BEZEL_OUT_R,whole,275.8,208.7,133.0,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,639.0,,03_PRINT/production/P68_EYE_BEZEL_OUT_R_whole.stl
 P24,HEADLIGHT_HOUSING_L,whole,175.0,122.0,122.0,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,621.0,,03_PRINT/production/P24_HEADLIGHT_HOUSING_L_whole.stl

@@ -166,9 +166,10 @@ def main():
             "the impact absorbers' rear mounts P1 sit at spec X " + f"{p1:.0f} (|Y| "
             f"{DIMS['impact_absorber_y_total'][0] / 2:.0f}); our openings go back to " +
             ", ".join(f"{k[2:].lower()} {v:.0f}" for k, v in deep.items()) +
-            " -- behind them even at the +40 end of the band. The bumper beam lies between P1 and the "
-            "986's face at a height nobody has measured; at mouth height (Z 220..430) the mouth cuts "
-            "through it. Hard constraint 4: it stays. P01 / P43 / the corner grilles wait on it.")
+            f" -- behind them even at the +40 end of the band. The absorbers are at Z ~"
+            f"{DIMS['impact_absorber_front_z'][0]:.0f} +-40 (scaled), INSIDE the mouth's height (220..430) and the "
+            "corner intakes' (240..462): the beam between them and the 986's face is where the mouth is cut. "
+            "Hard constraint 4: it stays. P01 / P43 / the corner grilles wait on it.")
     except (KeyError, OSError) as e:
         add("CHECK", "front openings vs crash structure", "--", "--", "cage_986", f"not measured: {e}")
     # ---- 1b'. the fender vent slot vs the front strut top P6 (2026-10-06). All three of P6's
@@ -189,6 +190,30 @@ def main():
             "tower stays; and a vent over it cannot reach the wheel well (no fake vents).")
     except (KeyError, OSError, StopIteration) as e:
         add("CHECK", "fender slot vs front strut top", "--", "--", "cage_986", f"not measured: {e}")
+    # ---- 1b''. the deck / haunch over the rear strut tower top P15 (2026-10-06): Y published, X and Z
+    # scaled. Our surface over it is the roof-blocked deck, so this is information for that work.
+    try:
+        sx15, sy15, sz15 = -DIMS["strut_top_rear_x"][0], DIMS["strut_top_rear_y_total"][0] / 2.0, DIMS["strut_top_rear_z"][0]
+        # a ray from above at the point itself; the first version took the highest vertex within
+        # 60 mm and read the haunch crest beside it (+211 mm of air that was not there)
+        import mathutils
+        from mathutils.bvhtree import BVHTree
+        vs_, fs_ = [], []
+        for o in bpy.data.collections["STATEV_MASTER"].all_objects:
+            if o.type == "MESH" and "VOLUME" in o.name:
+                b0 = len(vs_)
+                vs_ += [o.matrix_world @ v.co for v in o.data.vertices]
+                fs_ += [[b0 + i for i in pl.vertices] for pl in o.data.polygons]
+        hit = BVHTree.FromPolygons(vs_, fs_).ray_cast(
+            mathutils.Vector((-sx15 / 1000.0, sy15 / 1000.0, 3.0)), mathutils.Vector((0.0, 0.0, -1.0)))
+        near = [hit[0].z * 1000.0] if hit[0] is not None else []
+        if near:
+            air = max(near) - 3.0 - sz15
+            add("SCAN", "deck over rear strut top", f"+{air:.0f}", ">= 15", "P15 Y published, X/Z approx +-40",
+                f"the rear strut tower top P15 at spec X {sx15:.0f}, |Y| {sy15:.0f}, Z {sz15:.0f}; our skin over it "
+                f"is at Z {max(near):.0f} -- {air:.0f} mm of air under a 3 mm wall. The deck is roof-blocked (S2).")
+    except (KeyError, OSError) as e:
+        add("SCAN", "deck over rear strut top", "--", "--", "cage_986", f"not measured: {e}")
     # ---- 1c. the same at the rear. P20 (rear absorbers' mounts) and the 986's rear face bound the
     # span; our openings there sit BETWEEN them, not past the absorbers, so whether they meet the beam
     # is its height -- SCAN, not CHECK.
@@ -198,9 +223,10 @@ def main():
         add("SCAN", "rear openings vs crash structure", f"{p20:.0f}..3420", "beam height", "P20 Y published, X approx +-40",
             f"the rear absorbers' mounts P20 sit at spec X {p20:.0f} (|Y| "
             f"{DIMS['impact_absorber_rear_y_total'][0] / 2:.0f}); the 986's rear face is at ~{2415 + DIMS['rear_overhang'][0]:.0f} (blueprint, approx). "
-            "Our tail slot (to 3178, Z 593..631), the lamp housings, the plate recess, the exhausts and the "
-            "diffuser tunnel (Z <= 410) all lie in that span. Whether they meet the beam is its height, "
-            "which nobody has measured.")
+            f"The absorbers are at Z ~{DIMS['impact_absorber_rear_z'][0]:.0f} +-40 (scaled): the tail slot "
+            "and lamp housings (from 593) and the badge band (from 585) are ~100 above them, the plate "
+            "recess (to 372) and the tunnel ceiling (<= 410) ~70..110 below. Likely clear -- but the "
+            "beam's own height and depth are not known, so it stays a scan question.")
     except (KeyError, OSError) as e:
         add("SCAN", "rear openings vs crash structure", "--", "--", "cage_986", f"not measured: {e}")
 

@@ -65,6 +65,15 @@ DIMS = {
     # printed: all three coordinates are scaled off p. 5-11 (top view 3.817 mm/px; side view 2.219
     # mm/px, calibrated so P1-P8 matches the top view, which P5-P8 then confirms to 1 %). Z is taken
     # from P8, whose own Z is the cage's assumed 160, so it carries both bands.
+    # HEIGHTS of P1, P20 and P15, scaled off the side views (p. 5-11: 2.219 mm/px; p. 5-13: 2.569, on
+    # the printed 485.5) relative to the jacking points P8/P11, whose Z is the cage's assumed 160 --
+    # so +-40 each. The absorbers' height is what decides whether our front and rear openings meet
+    # the beams.
+    "impact_absorber_front_z":     (411.0, "approx"),   # P1, ±40
+    "impact_absorber_rear_z":      (481.0, "approx"),   # P20, ±40
+    "strut_top_rear_x":            (-2313.0, "approx"), # P15, cage X; scaled, ±40
+    "strut_top_rear_y_total":      (998.2, "published"),# P15 L–R
+    "strut_top_rear_z":            (802.0, "approx"),   # P15, ±40
     "strut_top_front_x":           (40.0,  "approx"),   # cage X (spec −40), ±30
     "strut_top_front_y_total":     (1000.0, "approx"),  # L–R, i.e. |Y| 500, ±15 each side
     "strut_top_front_z":           (736.0, "approx"),   # ±40
@@ -308,14 +317,15 @@ def build():
          "roll-over bar front screw point (M8); X = hoop plane, fore/aft bracket spacing unknown"),
         ("P13_rollbar_mount_rear",  d("hoop_x"), 0.50, "rollbar_mount_rear_y_total",
          "roll-over bar rear screw point (M8); X = hoop plane, fore/aft bracket spacing unknown"),
-        ("P01_impact_absorber_front", door_mid + half_jack + d("jack_front_to_impact_absorber_x"), 0.40,
-         "impact_absorber_y_total",
-         "front impact absorber rear mount (M8) on the side member; Y published, X scaled off the "
-         "set-up drawing (approx +-40), Z NOT KNOWN -- drawn at 400 only to be seen"),
-        ("P20_impact_absorber_rear", door_mid - half_jack - d("jack_rear_to_impact_absorber_rear_x"), 0.40,
-         "impact_absorber_rear_y_total",
-         "rear impact absorber mount (M8); Y published, X scaled off the drawing (approx +-40), "
-         "Z NOT KNOWN -- drawn at 400 only to be seen"),
+        ("P01_impact_absorber_front", door_mid + half_jack + d("jack_front_to_impact_absorber_x"),
+         d("impact_absorber_front_z"), "impact_absorber_y_total",
+         "front impact absorber rear mount (M8) on the side member; Y published, X and Z scaled off "
+         "the set-up drawing (approx +-40)"),
+        ("P20_impact_absorber_rear", door_mid - half_jack - d("jack_rear_to_impact_absorber_rear_x"),
+         d("impact_absorber_rear_z"), "impact_absorber_rear_y_total",
+         "rear impact absorber mount (M8); Y published, X and Z scaled off the drawing (approx +-40)"),
+        ("P15_strut_top_rear", d("strut_top_rear_x"), d("strut_top_rear_z"), "strut_top_rear_y_total",
+         "rear strut tower top; Y published (998.2), X and Z scaled off p. 5-13 (approx +-40)"),
         ("P06_strut_top_front", d("strut_top_front_x"), d("strut_top_front_z"), "strut_top_front_y_total",
          "front strut tower top; X, |Y| 500 and Z all SCALED off the drawing (approx), none printed"),
         ("P21_softtop_position", d("ws_top_x"), d("ws_top_z"), "softtop_pos_point_y_total",

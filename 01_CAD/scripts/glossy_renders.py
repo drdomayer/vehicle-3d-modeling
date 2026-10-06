@@ -358,7 +358,19 @@ def ctx_objects(sc):
         vs += [P_(x, -560, z), P_(x, 560, z)]
         if i:
             fs.append((2 * i - 2, 2 * i - 1, 2 * i + 1, 2 * i))
-    tags[mesh("GLOSSY_CTX_DECK", vs, fs).name] = "gloss black"
+    # v079: "hidden" (diffuse near-black), not gloss black -- from above a mirror-black field facing
+    # the top softbox rendered WHITE round the louvre crate, the opposite of ref-09's dark deck
+    tags[mesh("GLOSSY_CTX_DECK", vs, fs).name] = "hidden"
+    # v079: the cabin tub. The body is a shell with the cabin cut out, so from above the studio
+    # floor showed white between and round the seats; the 986 tub (floor, tunnel, bulkhead) is
+    # there on the car. Context only, like the seats: floor at Z 300, tunnel, rear bulkhead.
+    tub = [((420, -700, 300), (1760, 700, 300)), ((420, -110, 300), (1740, 110, 520)),
+           ((1720, -700, 300), (1760, 700, 880))]
+    for k, ((x0, y0, z0), (x1, y1, z1)) in enumerate(tub):
+        v_ = [P_(x0, y0, z0), P_(x1, y0, z0), P_(x1, y1, z0), P_(x0, y1, z0),
+              P_(x0, y0, z1), P_(x1, y0, z1), P_(x1, y1, z1), P_(x0, y1, z1)]
+        f_ = [(0, 3, 2, 1), (4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)]
+        tags[mesh(f"GLOSSY_CTX_TUB{k}", v_, f_).name] = "hidden"
     # DRL along DRL_PATH at DRL_Z, both sides joined on the centreline
     # v056: on the GROOVE's axis (stage03 stores it), not on DRL_PATH as written -- that path's
     # spec X is 60 mm inside the nose face, so the line was inside the body in every render
@@ -736,6 +748,12 @@ def _main():
             # ref-09's plan has the nose on the LEFT; rolled 180 so the sheets compare like for like
             q_ = q_ @ mathutils.Quaternion((0.0, 0.0, 1.0), math.pi)
         cam.rotation_euler = q_.to_euler()
+        # v079: a camera straight under the top softbox sees it mirrored in every flat panel -- the
+        # deck and the bonnet rendered as white sheets in the plan. In the plan view only, the top
+        # light lights the car but is not seen in reflections (as a studio flags it off for a plan)
+        top_l = bpy.data.objects.get("GLOSSY_TOP")
+        if top_l is not None:
+            top_l.visible_glossy = not (PRESENT and tag == "top")
         sc.render.filepath = os.path.join(OUT, f"{tag_prefix}{tag}.png")
         bpy.ops.render.render(write_still=True)
         print(f"  wrote {sc.render.filepath}")

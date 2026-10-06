@@ -159,11 +159,15 @@ FINISH = {
     "P41": "carbon", "P22": "carbon", "P44": "carbon", "P45": "carbon", "P46": "carbon",
     "P47": "carbon", "P58": "carbon", "P59": "carbon", "P13": "carbon", "P14": "carbon",
     "P05": "gloss black", "P06": "gloss black", "P43": "gloss black",
-    "P33": "gloss black", "P54": "gloss black", "P55": "gloss black", "P56": "gloss black",
+    "P54": "gloss black", "P55": "gloss black", "P56": "gloss black",
     "P57": "gloss black",
     # v056: the cover is BODY COLOUR around a black louvre field (ref-09 top and rear); it was
     # gloss black, and the assembled car showed a 1.0 x 1.1 m black slab behind the hoops
     "P20": "paint",
+    # v079: carbon (satin), not gloss black -- the crate's horizontal slats face the sky, and a
+    # mirror-black top under any overhead light reads white (it did in the studio render), where
+    # ref-09 shows a dark field between the slats
+    "P33": "carbon",
     # v066: the headlamp housings are SEEN through the eye's module aperture, so they are black
     # like the bezels round them; in v065 they rendered as grey boxes in the eye
     "P24": "gloss black", "P25": "gloss black", "P26": "hidden", "P27": "hidden", "P31": "hidden",

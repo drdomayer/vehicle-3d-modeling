@@ -332,6 +332,8 @@ def bisect_zones(o, zones):
     bm.transform(o.matrix_world.inverted())
     bm.to_mesh(o.data)
     bm.free()
+
+
 _POCKETS_XZ = _pmg.get("POCKETS_XZ", [])
 
 
@@ -376,24 +378,51 @@ def ctx_objects(sc):
     def P_(sx, y, z):
         return (-sx / 1000.0, y / 1000.0, z / 1000.0)
     tags = {}
-    # windscreen (donor): base at the cowl (420, Z 970), header (1055, Z 1255)
-    g = mesh("GLOSSY_CTX_GLASS", [P_(420, -650, 968), P_(420, 650, 968), P_(1055, 570, 1255),
-                                  P_(1055, -570, 1255)], [(0, 1, 2, 3)])
+    # windscreen (donor): base at the cowl (420), header (1055, Z 1255). v080: the base follows the
+    # skin, measured by a ray from above at spec X 420 -- it was a straight edge at Z 968, which is
+    # the cowl's height on the centreline only; the skin falls to ~870 at |Y| 600, so the glass
+    # hung ~100 mm over the fender tops at its corners with the cabin showing under it.
+    def skin_top(sx, y):
+        best = None
+        for nm_ in ("STATEV_FRONT_VOLUME", "STATEV_SIDE_VOLUME"):
+            ob = bpy.data.objects.get(nm_)
+            if ob is None:
+                continue
+            inv = ob.matrix_world.inverted()
+            h, loc, _n, _i = ob.ray_cast(inv @ mathutils.Vector(P_(sx, y, 2000.0)),
+                                         (inv.to_3x3() @ mathutils.Vector((0.0, 0.0, -1.0))).normalized())
+            if h:
+                z_ = (ob.matrix_world @ loc).z * 1000.0
+                best = z_ if best is None else max(best, z_)
+        return 968.0 if best is None else min(968.0, best + 3.0)
+    base = [P_(420, y, skin_top(420, y)) for y in range(-650, 651, 50)]
+    nb = len(base)
+    top_ = [P_(1055, -570 + 1140 * k / (nb - 1), 1255) for k in range(nb)]
+    g = mesh("GLOSSY_CTX_GLASS", base + top_, [(k, k + 1, nb + k + 1, nb + k) for k in range(nb - 1)])
     tags[g.name] = "glass"
-    tags[tube("GLOSSY_CTX_FRAME", [P_(420, -650, 968), P_(1055, -570, 1255), P_(1055, 570, 1255),
-                                   P_(420, 650, 968)], 0.022).name] = "gloss black"
+    tags[tube("GLOSSY_CTX_FRAME", [base[0], P_(1055, -570, 1255), P_(1055, 570, 1255), base[-1]],
+              0.022).name] = "gloss black"
     for sgn in (1, -1):
         y = sgn * 350.0
         tags[tube("GLOSSY_CTX_HOOP", [P_(1760, y - 180, 880), P_(1760, y - 170, 1200),
                                       P_(1760, y - 120, 1235), P_(1760, y + 120, 1235),
                                       P_(1760, y + 170, 1200), P_(1760, y + 180, 880)], 0.028).name] = "gloss black"
-        x0, x1 = 1250.0, 1680.0
-        s_ = mesh("GLOSSY_CTX_SEAT", [P_(x0, y - 240, 650), P_(x0, y + 240, 650), P_(x1, y + 240, 660),
-                                      P_(x1, y - 240, 660), P_(x1 + 60, y - 240, 1180),
-                                      P_(x1 + 60, y + 240, 1180), P_(x1 - 40, y + 240, 1180),
-                                      P_(x1 - 40, y - 240, 1180)],
-                  [(0, 1, 2, 3), (3, 2, 5, 4), (7, 6, 1, 0), (4, 5, 6, 7), (0, 3, 4, 7), (1, 6, 5, 2)])
-        tags[s_.name] = "tan"
+        # v080: a bucket seat by its side profile instead of a slab at Z 650 -- the slab floated
+        # 350 mm over the tub floor and read as a box in every 3/4 view. Cushion top 440 -> 405
+        # (front -> rear), back leaning ~7 deg up to an integral headrest at 1080, all in front of
+        # the bulkhead (1720) and the hoops (1760); bolsters 55 mm proud of the centre, as ref-09.
+        # Context, like the glass: the interior is its own work and its own decisions.
+        centre = [(1250, 380), (1250, 440), (1600, 405), (1655, 425), (1700, 1040), (1705, 1080),
+                  (1740, 1080), (1740, 1000), (1715, 420), (1690, 380)]
+        bolster = [(1270, 380), (1270, 495), (1560, 465), (1600, 470), (1648, 1000), (1690, 1000),
+                   (1712, 420), (1690, 380)]
+        for prof, ya, yb in ((centre, -185.0, 185.0), (bolster, -245.0, -185.0), (bolster, 185.0, 245.0)):
+            n_ = len(prof)
+            v_ = [P_(x, y + ya, z) for x, z in prof] + [P_(x, y + yb, z) for x, z in prof]
+            f_ = [tuple(range(n_ - 1, -1, -1)), tuple(range(n_, 2 * n_))]
+            f_ += [(k, (k + 1) % n_, n_ + (k + 1) % n_, n_ + k) for k in range(n_)]
+            s_ = mesh("GLOSSY_CTX_SEAT", v_, f_)
+            tags[s_.name] = "tan"
     # deck zone between the buttresses: BLOCKED geometry, drawn as a dark field at the spine
     sk = {}
     with open(os.path.join(REPO, "01_CAD", "scripts", "statev_skeleton.py"), encoding="utf-8") as f:
@@ -462,6 +491,16 @@ def ctx_objects(sc):
         lo = mesh(f"GLOSSY_CTX_LENS{'L' if sgn > 0 else 'R'}", dv, df)
         lo.data.shade_smooth() if hasattr(lo.data, "shade_smooth") else None
         tags[lo.name] = "glass"
+    # v080: the dashboard (donor) -- under the glass the cabin showed straight through to the tub
+    # floor; a dark wedge behind the skin's rear edge (450, Z 860) back to the driver (720, Z 835),
+    # down to Z 650, across |Y| 630 -- under the skin everywhere it overlaps (min 864 at |Y| 650,
+    # ray-measured). Context like the tub.
+    prof = [(450, 650), (450, 860), (580, 855), (720, 835), (720, 650)]
+    n_ = len(prof)
+    v_ = [P_(x, -630.0, z) for x, z in prof] + [P_(x, 630.0, z) for x, z in prof]
+    f_ = [tuple(range(n_ - 1, -1, -1)), tuple(range(n_, 2 * n_))]
+    f_ += [(k, (k + 1) % n_, n_ + (k + 1) % n_, n_ + k) for k in range(n_)]
+    tags[mesh("GLOSSY_CTX_DASH", v_, f_).name] = "hidden"
     # v079: the cabin tub. The body is a shell with the cabin cut out, so from above the studio
     # floor showed white between and round the seats; the 986 tub (floor, tunnel, bulkhead) is
     # there on the car. Context only, like the seats: floor at Z 300, tunnel, rear bulkhead.

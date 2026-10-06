@@ -110,7 +110,8 @@ DIFFUSER_FRONT = 2870.0   # DIFFUSER_FLOOR's first station in statev_master_volu
 # The Stage 03 pockets, as stage03_elements.py cuts them. Named here so the rejection can be read
 # against its source instead of against four bare numbers.
 POCKETS = [("X_INTAKE", 1910.0, 2180.0, 420.0, 1000.0, 440.0, 710.0),
-           ("X_FENDER_SLOT", -250.0, 180.0, 375.0, 560.0, 690.0, 1000.0),
+           # v078: moved outboard over the tyre (stage03 3, SLOT_Y 615..755)
+           ("X_FENDER_SLOT", -250.0, 180.0, 605.0, 765.0, 690.0, 1000.0),
            # v056: the TRAPEZOID (stage03 MOUTH: hw 320 at Z 220, 380 at Z 430), not its box. The
            # box claimed the fascia's own skin beside the lower corners as mouth wall -- in the
            # render, as black triangles at both bottom corners of the mouth.

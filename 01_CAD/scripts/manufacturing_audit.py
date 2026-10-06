@@ -84,12 +84,9 @@ STRUCTURE = {
     "front crash structure": (-1007.0, -835.0,
                               "the impact absorbers and the bumper beam sit here (P1, Group 5 p. 5-11); "
                               "how deep this panel's openings may go waits on the beam's real place"),
-    # the front strut tower's top P6 (cage_986: spec X -40 +-30), scaled off the drawing: whatever
-    # is cut down over it -- the fender vent slot -- waits on its real place
-    "front strut top": (-70.0, -10.0,
-                        "the front strut tower's top P6 (Group 5 p. 5-11, scaled) is under this panel's "
-                        "opening; how deep the opening may go waits on its real place",
-                        (485.0, 515.0)),     # |Y| 500 +-15: the hood (|Y| < 380) is not over it
+    # "front strut top" (P6) was a zone here from v076 to v078: the fender vent slot was cut down over
+    # the tower. v078 moved the slot outboard over the tyre, so nothing is cut over P6 any more;
+    # check_donor_fit still measures the slot against P6 on every run.
     # the rear: from the absorbers' mounts P20 (cage_986: 2970, approx +-40 -> 2930) to the 986's
     # rear face (blueprint approx 3308). Our tail is 112 mm behind that face, but the tail slot,
     # the lamp housings, the plate recess, the exhausts and the diffuser tunnel reach into it.

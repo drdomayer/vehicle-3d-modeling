@@ -186,8 +186,11 @@ def main():
             f"Z {fz0:.0f}", f"> {sz6:.0f} + 15", "P6 scaled, all three coordinates approx",
             f"the front strut tower's top P6 sits at spec X {sx6:.0f} +-30, |Y| {sy6:.0f} +-15, Z {sz6:.0f} +-40 -- "
             f"{'inside' if inside else 'beside'} the fender vent slot (spec X {fx0:.0f}..{fx1:.0f}, |Y| {fy0:.0f}..{fy1:.0f}), "
-            f"which is cut down to Z {fz0:.0f} and carries the louvre comb P05/P06. Hard constraint 4: the "
-            "tower stays; and a vent over it cannot reach the wheel well (no fake vents).")
+            f"which is cut down to Z {fz0:.0f} and carries the louvre comb P05/P06. " +
+            ("Hard constraint 4: the tower stays; and a vent over it cannot reach the wheel well (no fake vents)."
+             if inside else
+             f"Its inboard wall is {fy0 - sy6:.0f} mm outboard of the tower's centre; the tower's own radius "
+             "is not known, so A7 in docs/20 decides the margin."))
     except (KeyError, OSError, StopIteration) as e:
         add("CHECK", "fender slot vs front strut top", "--", "--", "cage_986", f"not measured: {e}")
     # ---- 1b''. the deck / haunch over the rear strut tower top P15 (2026-10-06): Y published, X and Z

@@ -10,8 +10,8 @@ P39,ROCKER_END_L,whole,220.2,294.6,205.4,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,3
 P40,ROCKER_END_R,whole,220.2,294.6,205.4,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,332.9,,03_PRINT/production/P40_ROCKER_END_R_whole.stl
 P21,REAR_FASCIA,whole,627.2,1767.1,421.5,yes,1,yes,84800,0.0,-90.0,0.0,-2998.5,0.0,-0.0,,03_PRINT/production/P21_REAR_FASCIA_whole.stl
 P22,DIFFUSER,whole,553.9,1779.6,375.2,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,500.0,,03_PRINT/production/P22_DIFFUSER_whole.stl
-P05,FENDER_CHANNEL_L,whole,380.0,154.0,103.0,yes,1,yes,0,-0.0,-0.0,-0.0,0.0,0.0,712.0,,03_PRINT/production/P05_FENDER_CHANNEL_L_whole.stl
-P06,FENDER_CHANNEL_R,whole,380.0,154.0,103.0,yes,1,yes,0,-0.0,-0.0,-0.0,0.0,0.0,712.0,,03_PRINT/production/P06_FENDER_CHANNEL_R_whole.stl
+P05,FENDER_CHANNEL_L,whole,380.0,134.0,98.6,yes,1,yes,0,-0.0,-0.0,-0.0,0.0,0.0,712.0,,03_PRINT/production/P05_FENDER_CHANNEL_L_whole.stl
+P06,FENDER_CHANNEL_R,whole,380.0,134.0,98.6,yes,1,yes,0,-0.0,-0.0,-0.0,0.0,0.0,712.0,,03_PRINT/production/P06_FENDER_CHANNEL_R_whole.stl
 P13,INTAKE_BLADE_L,whole,165.0,340.0,16.0,yes,1,yes,0,-90.0,-0.0,-0.0,0.0,868.0,-0.0,,03_PRINT/production/P13_INTAKE_BLADE_L_whole.stl
 P14,INTAKE_BLADE_R,whole,165.0,340.0,16.0,yes,1,yes,0,90.0,-0.0,0.0,0.0,-868.0,-0.0,,03_PRINT/production/P14_INTAKE_BLADE_R_whole.stl
 P43,FRONT_MASK,whole,210.0,760.0,22.0,yes,1,yes,0,180.0,-90.0,0.0,830.0,-0.0,-0.0,,03_PRINT/production/P43_FRONT_MASK_whole.stl

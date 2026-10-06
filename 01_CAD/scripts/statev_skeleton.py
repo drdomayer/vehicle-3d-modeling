@@ -213,6 +213,14 @@ BOXES = [
     # indicators, rear reflectors and the plate light; docs/04 planned them; nothing here had an
     # envelope, so nothing checked them). Each sits on the MEASURED skin of v072. Envelopes only --
     # the apertures are the next step. check_lighting.py tests each against R48 geometry.
+    # 2026-10-06 (v078): the front crash beam, decided. Our nose is 57 mm shorter than the 986's, so
+    # its absorber + beam stack cannot stay as it is anyway; the mouth (Z 220..430, |Y| <= 380) is
+    # where the OEM beam would be. A professionally made METAL beam (hard constraint 4: never a print)
+    # routed ABOVE the mouth, carried by shortened absorbers at P1 (|Y| 400). This box reserves its
+    # room so nothing of ours cuts it: 20 mm over the mouth, 22 mm behind the nose face, clear of the
+    # corner intakes (|Y| >= 450) and the eyes (|Y| >= 520). Its section is the engineer's to size.
+    ("CRASH_BEAM_NEW", "05_MECHANICAL", -900, 0, 500,   50,  860,  100, "DECIDED",
+     "front crash beam, metal, professionally engineered, above the mouth on shortened absorbers at P1"),
     ("IND_FRONT",   "04_LIGHTING", -795,  738,  520,   40,   76,   40, "PROVISIONAL",
      "front direction indicator: the amber segment of the LEDayFlex line from |Y| 700 to the corner "
      "crest (a switchback DRL/indicator module), where the line rises 493 -> 546"),

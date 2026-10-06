@@ -676,12 +676,20 @@ def main():
     # fender CREST, which sits at Y 590, so it ate 18 mm off the crown line -- the very line the
     # crest field was added in v021 to get right. A fender vent belongs inboard of the crown, on the
     # inner shoulder, venting down into the arch. Y 385 to 545 puts it there.
+    # MOVED OUTBOARD 2026-10-06 (v078), a forced change recorded in docs/14 AB: at |Y| 385..545 the
+    # whole slot stood over the front strut tower's top (Group 5 P6, scaled: |Y| ~500, Z ~736), which
+    # stays (hard constraint 4) and leaves no path to the arch (no fake vents). Over the TYRE, at
+    # |Y| 615..755, it is a real through-cut into the wheel well again, ~30 mm outboard of the tower
+    # top at today's estimate and 25 mm inboard of the fender crest (780, v037). The cost: ~200 mm
+    # outboard of ref-09's vent.
+    SLOT_Y = (615.0, 755.0)
     fs = [(-235, 700, 980), (-110, 700, 985), (40, 700, 985), (165, 700, 975)]
     for sgn in (1, -1):
         c = prism(f"CUT_FENDER_SLOT_{'L' if sgn > 0 else 'R'}", coll,
-                  [(s[0], s[1], s[2]) for s in fs], sgn * 545, sgn * 385)
+                  [(s[0], s[1], s[2]) for s in fs], sgn * SLOT_Y[1], sgn * SLOT_Y[0])
         cuts.append(c)
-    print(f"  fender slot: spec X {fs[0][0]}..{fs[-1][0]}, Y 385..545, cut down from Z 985 to 700")
+    print(f"  fender slot: spec X {fs[0][0]}..{fs[-1][0]}, |Y| {SLOT_Y[0]:.0f}..{SLOT_Y[1]:.0f} (over the tyre), "
+          f"cut down from Z 985 to 700")
     # the channel's own liner, a shallow U standing inside the slot: registered P05 / P06
     # The liner's top FOLLOWS THE SURFACE and sits 12 mm under it. Written as a fixed 974 it stood
     # 75 to 109 mm proud of a body whose crown there is 865 to 899 -- a fin out of the bonnet, which
@@ -720,19 +728,21 @@ def main():
         for sx in (-215, -161, -107, -53, 1, 55, 145):
             # the lowest skin along the whole slat, not at the slot centre: measured at Y 465
             # the outboard end of each slat stood 6.5 mm above the bonnet (check_floating.py)
-            ts = [t for t in (surface_z(sx, 391), surface_z(sx, 465), surface_z(sx + 90, 539),
-                              surface_z(sx, 539)) if t]
+            ya_, yb_ = SLOT_Y[0] + 6.0, SLOT_Y[1] - 6.0
+            ts = [t for t in (surface_z(sx, ya_), surface_z(sx, (ya_ + yb_) / 2.0), surface_z(sx + 90, yb_),
+                              surface_z(sx, yb_)) if t]
             tops[sx] = (min(ts) - 12.0) if ts else 860.0
         z_top_rail = min(tops.values())
         # two rails along the slot walls, 4 mm off them, and four diagonal slats between
-        comb = slab(f"FENDER_CHANNEL_{tag}", (-225.0, sgn * 391.0), (155.0, sgn * 391.0),
+        ri, ro = SLOT_Y[0] + 6.0, SLOT_Y[1] - 6.0     # the rails 6 mm off the walls (was 391 / 539)
+        comb = slab(f"FENDER_CHANNEL_{tag}", (-225.0, sgn * ri), (155.0, sgn * ri),
                     712.0, z_top_rail, 6.0)
-        parts = [slab(f"_rail2_{tag}", (-225.0, sgn * 539.0), (155.0, sgn * 539.0),
+        parts = [slab(f"_rail2_{tag}", (-225.0, sgn * ro), (155.0, sgn * ro),
                       712.0, z_top_rail, 6.0)]
         # v059: SIX slats at a 54 mm pitch instead of four at 90 -- ref-09's vent carries 5..6;
         # the first and last stay where they were, so the comb still ends inside the slot
         for sx in (-215, -161, -107, -53, 1, 55):
-            parts.append(slab(f"_slat_{tag}_{sx}", (sx, sgn * 391.0), (sx + 90.0, sgn * 539.0),
+            parts.append(slab(f"_slat_{tag}_{sx}", (sx, sgn * ri), (sx + 90.0, sgn * ro),
                               712.0, tops[sx], 6.0))
         for p in parts:
             m = comb.modifiers.new("u", "BOOLEAN")

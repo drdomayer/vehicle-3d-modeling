@@ -1061,7 +1061,10 @@ branches and never let them diverge for more than one session.
   четвъртта).** Рампа 1735..1925, 25 → 130 mm, влива се в донорския отвор; дълбочината SCAN
   REQUIRED. P11 1700..2170. 56/56 чисти, нищо не е регресирало. `docs/14` Z.
 
-- **Текуща база: `02_DESIGN/exterior/STATEV_001_v069.blend`. Откат: v068.**
+- 2026-10-06 (local): **v070 — лопатката P13/P14 на наклонения преден ръб на шахтата** (16 mm,
+  Y 876, ≥ 4 mm въздух). Устната по ръба — не. 56/56 чисти, нищо не е регресирало.
+
+- **Текуща база: `02_DESIGN/exterior/STATEV_001_v070.blend`. Откат: v069.**
   Авторитетни източници: геометрия — `statev_master_volumes.py` (v030.blend е регенерируем от него);
   измервания — `check_goal.py` (силует, план, кривина, ръбове) и
   `04_ENGINEERING/reports/edge_test.txt`; решения — `docs/09-decision-log.md`;

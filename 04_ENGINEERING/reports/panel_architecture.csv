@@ -22,8 +22,8 @@ P11,SIDE_INTAKE_L,L,SIDE,11,-Y,printed master -> composite,DONOR,C,yes,RED,A0 B1
 P12,SIDE_INTAKE_R,R,SIDE,11,+Y,printed master -> composite,DONOR,C,yes,RED,A0 B1 C3,the real opening behind it governs the mouth
 P31,INTAKE_DUCT_L,L,SIDE,12,-Y,direct print,DONOR,C,yes,RED,A0 B1 C3,what the eye sees through the intake; the real opening governs it
 P32,INTAKE_DUCT_R,R,SIDE,12,+Y,direct print,DONOR,C,yes,RED,A0 B1 C3,what the eye sees through the intake; the real opening governs it
-P13,INTAKE_BLADE_L,L,SIDE,13,-Y,direct print or CNC,OURS,C,yes,RED,A0 B1 C3,blade inside our own mouth
-P14,INTAKE_BLADE_R,R,SIDE,13,+Y,direct print or CNC,OURS,C,yes,RED,A0 B1 C3,blade inside our own mouth
+P13,INTAKE_BLADE_L,L,SIDE,13,-Y,direct print or CNC,OURS,C,yes,RED,A0 B1 C3,vane on our scoop's leading edge (v070)
+P14,INTAKE_BLADE_R,R,SIDE,13,+Y,direct print or CNC,OURS,C,yes,RED,A0 B1 C3,vane on our scoop's leading edge (v070)
 P15,REAR_HAUNCH_L,L,REAR,14,-Y,printed master -> composite,DONOR,C,no,RED,A3 B0 C3,overlay bonded to the welded quarter; the quarter governs it
 P16,REAR_HAUNCH_R,R,REAR,14,+Y,printed master -> composite,DONOR,C,no,RED,A3 B0 C3,overlay bonded to the welded quarter; the quarter governs it
 P63,SEAT_HUMP_L,L,REAR,16,-Z,printed master -> composite,MIXED,C,yes,RED,A0 B3 C3,"our hump, but it stands in the roof fold volume"

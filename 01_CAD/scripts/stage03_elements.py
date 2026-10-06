@@ -591,17 +591,26 @@ def main():
     def above_arch(x, z):
         dx = abs(x - ax_)
         return z if dx >= rad_ else max(z, zc_ + math.sqrt(rad_ * rad_ - dx * dx) + 12.0)
+    # v070: MOVED to the scoop's leaning front edge (stage03 1b), as ref-09's carbon vane stands --
+    # a parallelogram in X-Z from bottom-front (1790, 350) to top-rear (1905, 690), 60 mm wide along
+    # X, so its edges run parallel to the scoop's leading edge; 16 mm thick at Y 876 (868..884) -- at
+    # 22 mm / Y 880 its face stood 3.3 mm proud where the door channel's valley brings the skin to
+    # 883..889 (check_floating) -- with the ramp's floor 4 mm behind it at the front (Y 864 at 1795)
+    # and the through-cut
+    # mouth behind it from 1925. It stood in the old mouth (1975..2120) since v024, 200 mm aft of
+    # where the render puts it. above_arch() stays: the blade now ends at 1960, clear of the arch.
+    BLADE_K = 340.0 / 115.0
+    blade_st = [(x_, max(350.0, 350.0 + (x_ - 1850.0) * BLADE_K), min(690.0, 350.0 + (x_ - 1790.0) * BLADE_K))
+                for x_ in range(1795, 1961, 15)]
     for sgn in (1, -1):
         b = blade(f"INTAKE_BLADE_{'L' if sgn > 0 else 'R'}", coll,
-                  [(sx_, sgn * (y_surf - yo), above_arch(sx_, z0_), z1_) for sx_, yo, z0_, z1_ in
-                   ((1975, 30, 470, 686), (2030, 46, 455, 696), (2075, 50, 452, 694),
-                    (2120, 44, 470, 680))],
-                  22.0)
+                  [(sx_, sgn * 876.0, above_arch(sx_, z0_), z1_) for sx_, z0_, z1_ in blade_st],
+                  16.0)
         b["panel_id"] = "P13" if sgn > 0 else "P14"
         b["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
         made.append(b)
-    print("  intake blade: a 22 mm wall standing inside the mouth with air behind it"
-          "  -> registered P13 / P14 INTAKE_BLADE")
+    print("  intake blade: a 16 mm vane on the scoop's leaning front edge, (1790, 350) -> (1905, 690), 60 wide,"
+          " Y 876 -> registered P13 / P14 INTAKE_BLADE")
 
     # ---- 3. the fender channel as a real slot through the fender top into the wheel well. This one
     # IS a through-cut: it vents the arch, which is what AIRFLOW in statev_skeleton says it does.

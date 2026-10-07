@@ -115,26 +115,34 @@ def wheel_parts(sc, spec_x, od, wdt, half_track, sgn, sidewall):
     bv.width, bv.segments, bv.limit_method = 0.03, 6, "ANGLE"
     disc("GLOSSY_RIMLIP", rr + 0.004, rr - 0.018, yo - sgn * 0.004, yo + sgn * 0.010, "bronze")
     disc("GLOSSY_BARREL", rr - 0.004, rr - 0.012, yo - sgn * 0.20, yo - sgn * 0.004, "dark")
-    disc("GLOSSY_HUB", 0.062, 0.018, yo - sgn * 0.02, yo + sgn * 0.012, "bronze", 36)
+    disc("GLOSSY_HUB", 0.062, 0.018, yo - sgn * 0.05, yo - sgn * 0.018, "bronze", 36)   # v080 (3): at the concave face
     disc("GLOSSY_BRAKEDISC", rr - 0.05, 0.07, yo - sgn * 0.075, yo - sgn * 0.050, "disc")
-    for k in range(10):
-        a = 2 * math.pi * k / 10 + 0.1
-        ca, sa = math.cos(a), math.sin(a)
-        tx, tz = -sa, ca
-        w0, w1 = 0.016, 0.011
-        r0, r1 = 0.058, rr - 0.012
+    # v080 (3): ref-09's wheel -- ten spokes that FORK into two arms from mid-radius to the rim, and a
+    # concave face (the hub sits 30 mm inboard of the lip). The straight 22 mm bars read as a
+    # wire wheel next to the render's forged rim.
+    def seg(r0, a0, w0, y0, r1, a1, w1, y1):
         v = []
-        for r, w in ((r0, w0), (r1, w1)):
+        for r, a_, w, yy in ((r0, a0, w0, y0), (r1, a1, w1, y1)):
+            ca_, sa_ = math.cos(a_), math.sin(a_)
             for s_ in (-1, 1):
-                for y in (yo - sgn * t, yo + sgn * 0.004):
-                    v.append((cx + r * ca + s_ * w * tx, y, cz + r * sa + s_ * w * tz))
+                for y in (yy - sgn * t, yy + sgn * 0.004):
+                    v.append((cx + r * ca_ - s_ * w * sa_, y, cz + r * sa_ + s_ * w * ca_))
         f = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]
         add("GLOSSY_SPOKE", v, f, "bronze")
+    conc = 0.030                                   # hub face this far inboard of the lip
+    r_hub, r_mid, r_rim = 0.058, 0.52 * rr, rr - 0.012
+    y_at = lambda r: yo - sgn * conc * (1.0 - (r - r_hub) / (r_rim - r_hub))
+    for k in range(10):
+        a = 2 * math.pi * k / 10 + 0.1
+        seg(r_hub, a, 0.022, y_at(r_hub), r_mid, a, 0.019, y_at(r_mid))
+        for da in (-0.085, 0.085):
+            seg(r_mid, a + da * 0.3, 0.011, y_at(r_mid), r_rim, a + da, 0.010, y_at(r_rim))
     # caliper: a block at the rear-upper quadrant of the disc
     a = math.radians(120 if spec_x < 1000 else 60)
     ccx, ccz = cx + (rr - 0.07) * math.cos(a), cz + (rr - 0.07) * math.sin(a)
     yc0, yc1 = yo - sgn * 0.10, yo - sgn * 0.035
-    v = [(ccx + dx, y, ccz + dz) for dx in (-0.06, 0.06) for y in (yc0, yc1) for dz in (-0.035, 0.035)]
+    # v080 (3): the size of ref-09's six-piston caliper (~170 x 90 mm in side view), not a 120 x 70 block
+    v = [(ccx + dx, y, ccz + dz) for dx in (-0.085, 0.085) for y in (yc0, yc1) for dz in (-0.045, 0.045)]
     f = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]
     add("GLOSSY_CALIPER", v, f, "caliper")
     return out
@@ -501,6 +509,19 @@ def ctx_objects(sc):
     f_ = [tuple(range(n_ - 1, -1, -1)), tuple(range(n_, 2 * n_))]
     f_ += [(k, (k + 1) % n_, n_ + (k + 1) % n_, n_ + k) for k in range(n_)]
     tags[mesh("GLOSSY_CTX_DASH", v_, f_).name] = "hidden"
+    # v080 (3): the wheelhouses (donor). The body is an open shell, so through every arch the camera saw
+    # straight into the hollow body -- in the front 3/4 view the tan seats showed above the front
+    # tyre. A dark liner over each tyre: the upper half-cylinder at the tyre radius + 45 mm, from
+    # |Y| 440 out to 905 (inside the 925 skin), closed by its inboard wall.
+    for wx, od in ((0.0, 647.0), (2415.0, 675.0)):
+        R, zc, n_ = od / 2.0 + 45.0, od / 2.0, 24
+        for sgn in (1, -1):
+            arc = [(wx + R * math.cos(math.pi * k / n_), zc + R * math.sin(math.pi * k / n_)) for k in range(n_ + 1)]
+            v_ = [P_(x, sgn * 440.0, z) for x, z in arc] + [P_(x, sgn * 905.0, z) for x, z in arc]
+            f_ = [(k, k + 1, n_ + 1 + k + 1, n_ + 1 + k) for k in range(n_)]
+            v_ += [P_(wx, sgn * 440.0, zc)]
+            f_ += [(k, k + 1, len(v_) - 1) for k in range(n_)]
+            tags[mesh("GLOSSY_CTX_WHEELHOUSE", v_, f_).name] = "hidden"
     # v079: the cabin tub. The body is a shell with the cabin cut out, so from above the studio
     # floor showed white between and round the seats; the 986 tub (floor, tunnel, bulkhead) is
     # there on the car. Context only, like the seats: floor at Z 300, tunnel, rear bulkhead.
@@ -669,9 +690,11 @@ def _main():
     set_in(r, ("Specular IOR Level", "Specular"), 0.25)
     bronze = bpy.data.materials.new("GLOSSY_BRONZE")
     b = principled(bronze)
-    set_in(b, ("Base Color",), (0.42, 0.28, 0.12, 1.0))
-    set_in(b, ("Metallic",), 0.9)
-    set_in(b, ("Roughness",), 0.35)
+    # v080 (3): darker copper-bronze -- 0.42/0.28/0.12 at metallic 0.9 mirrored the white studio and read
+    # pale gold-grey in the side view; ref-09's wheels are a deep satin bronze
+    set_in(b, ("Base Color",), (0.30, 0.17, 0.07, 1.0))
+    set_in(b, ("Metallic",), 1.0)
+    set_in(b, ("Roughness",), 0.32)
     def mat(name, col, metal, rough, emit=None):
         m = bpy.data.materials.new(name)
         q = principled(m)

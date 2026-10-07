@@ -41,7 +41,10 @@ VIEWS = [("side", (-1.2, 9.0, 0.7), (-1.2, 0.0, 0.45), 55, "PERSP"),
 
 # the poster's two hero angles, rendered in the final mode only
 HERO = [("hero_front", (4.4, 3.3, 0.85), (-1.0, 0.0, 0.42), 38, "PERSP"),
-        ("hero_rear", (-6.2, 3.5, 1.25), (-2.0, 0.0, 0.48), 38, "PERSP")]
+        ("hero_rear", (-6.2, 3.5, 1.25), (-2.0, 0.0, 0.48), 38, "PERSP"),
+        # v081: the left eye close up, as ref-09's front-mask detail frames it -- the eye is judged
+        # here, not in a whole-car frame where it is 60 px wide
+        ("eye", (2.3, 1.55, 0.95), (0.68, 0.66, 0.56), 70, "PERSP")]
 
 
 def principled(mat):
@@ -245,6 +248,19 @@ with open(os.path.join(REPO, "01_CAD", "scripts", "statev_skeleton.py"), encodin
     exec(_f.read().split("\ndef build(")[0], _skg)
 
 
+def clear_mat():
+    """v081: the eye cover's clear polycarbonate -- full transmission, a glass-like coat."""
+    m = bpy.data.materials.get("GLOSSY_CLEAR") or bpy.data.materials.new("GLOSSY_CLEAR")
+    m.use_nodes = True
+    q = principled(m)
+    set_in(q, ("Base Color",), (1.0, 1.0, 1.0, 1.0))
+    set_in(q, ("Roughness",), 0.02)
+    set_in(q, ("Metallic",), 0.0)
+    set_in(q, ("Transmission Weight", "Transmission"), 1.0)
+    set_in(q, ("IOR",), 1.58)
+    return m
+
+
 def zone_hit(zones, finish, ay, z):
     """True when (|Y|, Z) mm lies in one of the part's FINISH_ZONES of that finish."""
     for f_, rule, val, _w in zones:
@@ -257,8 +273,8 @@ def zone_hit(zones, finish, ay, z):
     return False
 
 
-# stage03 5c's EYE outline, (|Y|, Z low, Z high); the cutter runs along X from 20 mm ahead of the
-# skin to 40 mm behind it, measured at each station's mid-height (EYE_OUT, EYE_DEPTH)
+# stage03 5c's EYE outline, (|Y|, Z low, Z high); since v081 the cutter runs along X from the air to
+# a floor 10 mm behind the skin at the outline's top edge
 EYE_OUTLINE = [(520.0, 548.0, 576.0), (560.0, 522.0, 608.0), (600.0, 505.0, 625.0), (700.0, 505.0, 627.0),
                (760.0, 548.0, 632.0), (820.0, 592.0, 637.0), (850.0, 612.0, 640.0)]
 EYE_DEPTH, EYE_OUT = 40.0, 20.0
@@ -302,7 +318,9 @@ def in_eye_x(sx, ay):
     else:
         fx = next(xa + (xb - xa) * (ay - ya) / (yb - ya)
                   for (ya, xa), (yb, xb) in zip(pts, pts[1:]) if ya <= ay <= yb)
-    return fx - EYE_DEPTH - EYE_OUT - 4.0 <= sx <= fx + 4.0
+    # v081: the eye is cut from the AIR to the floor (stage03 5c, through the slope), so everything
+    # inside the outline in front of the floor is cavity -- no front limit any more
+    return sx <= fx + 4.0
 
 
 def bisect_zones(o, zones):
@@ -709,6 +727,7 @@ def _main():
             "carbon": mat("GLOSSY_CARBON", (0.018, 0.018, 0.02, 1.0), *globals().get("GLOSSY_CARBON_MR", (0.3, 0.32))),
             "gloss black": mat("GLOSSY_GBLACK", (0.008, 0.008, 0.009, 1.0), 0.1, 0.12),
             "satin silver": mat("GLOSSY_SILVER", (0.75, 0.75, 0.76, 1.0), 1.0, 0.25),
+            "clear": clear_mat(),
             "hidden": mat("GLOSSY_HIDDEN", (0.02, 0.02, 0.02, 1.0), 0.0, 0.6),
             "tan": mat("GLOSSY_TAN", (0.42, 0.21, 0.09, 1.0), 0.0, 0.55),
             "glass": mat("GLOSSY_GLASS", (0.01, 0.012, 0.012, 1.0), 0.0, 0.03),
@@ -778,6 +797,9 @@ def _main():
                     # as a saw-tooth
                     nx_ = abs((inv.to_3x3() @ poly.normal).normalized().x)
                     tol_ = 15.0 if nx_ < 0.5 else 0.0
+                    if nm == "X_EYE":
+                        tol_ = min(tol_, 4.0)   # v081: walls ON the outline (cut along X); the skin
+                                                # round the eye is now within the X window too
                     if x0 <= sx <= x1 and y0 <= ay <= y1 and z0 <= z <= z1 and \
                             (not pl or _in_poly(ay, z, pl[0], tol_)):
                         poly.material_index = 1

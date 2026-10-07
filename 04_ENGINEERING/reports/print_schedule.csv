@@ -1,5 +1,5 @@
 PANEL,NAME,SECTION,X_MM,Y_MM,Z_MM,FITS_BED,PIECES_IN_FILE,CLASS_A_UP,DROPPED_MM2,PLACE_RX,PLACE_RY,PLACE_RZ,PLACE_X_MM,PLACE_Y_MM,PLACE_Z_MM,WHAT_IS_MISSING,FILE
-P01,FRONT_FASCIA,whole,516.1,1658.5,300.6,yes,1,yes,7103,180.0,-90.0,0.0,652.4,-0.0,-0.0,,03_PRINT/production/P01_FRONT_FASCIA_whole.stl
+P01,FRONT_FASCIA,whole,516.1,1658.5,300.7,yes,1,yes,7104,180.0,-90.0,0.0,652.3,-0.0,-0.0,,03_PRINT/production/P01_FRONT_FASCIA_whole.stl
 P28,FRONT_SPLITTER_L,whole,295.2,787.2,75.5,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,195.5,,03_PRINT/production/P28_FRONT_SPLITTER_L_whole.stl
 P41,FRONT_SPLITTER_R,whole,295.2,787.2,75.5,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,195.5,,03_PRINT/production/P41_FRONT_SPLITTER_R_whole.stl
 P07,ROCKER_L,s01,923.8,206.8,129.5,yes,1,yes,0,-90.0,-0.0,-0.0,0.0,793.3,-0.0,,03_PRINT/production/P07_ROCKER_L_s01.stl
@@ -28,10 +28,12 @@ P59,DIFFUSER_FIN_EDGE_R,whole,250.0,149.4,16.0,yes,1,yes,0,90.0,-0.0,0.0,0.0,-38
 P60,BADGE_REAR,whole,41.6,283.8,28.6,yes,1,yes,0,-0.0,-0.0,-0.0,0.0,0.0,601.7,,03_PRINT/production/P60_BADGE_REAR_whole.stl
 P61,SPLITTER_END_L,whole,130.0,116.0,10.0,yes,1,yes,0,-90.0,-0.0,-0.0,0.0,595.0,-0.0,,03_PRINT/production/P61_SPLITTER_END_L_whole.stl
 P62,SPLITTER_END_R,whole,130.0,116.0,10.0,yes,1,yes,0,90.0,-0.0,0.0,0.0,-595.0,-0.0,,03_PRINT/production/P62_SPLITTER_END_R_whole.stl
-P65,EYE_BEZEL_IN_L,whole,120.9,73.5,69.0,yes,1,yes,0,-0.0,-0.0,-0.0,0.0,0.0,508.3,,03_PRINT/production/P65_EYE_BEZEL_IN_L_whole.stl
-P66,EYE_BEZEL_IN_R,whole,120.9,73.5,69.0,yes,1,yes,0,-0.0,-0.0,-0.0,0.0,0.0,508.3,,03_PRINT/production/P66_EYE_BEZEL_IN_R_whole.stl
-P67,EYE_BEZEL_OUT_L,whole,275.8,208.7,133.0,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,639.0,,03_PRINT/production/P67_EYE_BEZEL_OUT_L_whole.stl
-P68,EYE_BEZEL_OUT_R,whole,275.8,208.7,133.0,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,639.0,,03_PRINT/production/P68_EYE_BEZEL_OUT_R_whole.stl
+P65,EYE_BEZEL_IN_L,whole,203.4,106.4,100.8,yes,1,yes,0,-0.0,-0.0,-0.0,0.0,0.0,522.0,,03_PRINT/production/P65_EYE_BEZEL_IN_L_whole.stl
+P66,EYE_BEZEL_IN_R,whole,203.4,106.4,100.8,yes,1,yes,0,-0.0,-0.0,-0.0,0.0,0.0,522.0,,03_PRINT/production/P66_EYE_BEZEL_IN_R_whole.stl
+P67,EYE_BEZEL_OUT_L,whole,251.2,142.0,92.4,yes,1,yes,0,-0.0,-0.0,-0.0,0.0,0.0,546.6,,03_PRINT/production/P67_EYE_BEZEL_OUT_L_whole.stl
+P68,EYE_BEZEL_OUT_R,whole,251.2,142.0,92.4,yes,1,yes,0,-0.0,-0.0,-0.0,0.0,0.0,546.6,,03_PRINT/production/P68_EYE_BEZEL_OUT_R_whole.stl
+P69,EYE_COVER_L,whole,399.2,328.0,133.0,yes,1,yes,0,-0.0,-0.0,-0.0,0.0,0.0,506.0,,03_PRINT/production/P69_EYE_COVER_L_whole.stl
+P70,EYE_COVER_R,whole,399.2,328.0,133.0,yes,1,yes,0,-0.0,-0.0,-0.0,0.0,0.0,506.0,,03_PRINT/production/P70_EYE_COVER_R_whole.stl
 P24,HEADLIGHT_HOUSING_L,whole,175.0,122.0,122.0,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,621.0,,03_PRINT/production/P24_HEADLIGHT_HOUSING_L_whole.stl
 P25,HEADLIGHT_HOUSING_R,whole,175.0,122.0,122.0,yes,1,yes,0,-180.0,-0.0,-0.0,0.0,-0.0,621.0,,03_PRINT/production/P25_HEADLIGHT_HOUSING_R_whole.stl
 P31,INTAKE_DUCT_L,whole,310.0,688.8,270.0,yes,1,yes,0,-0.0,-0.0,-0.0,0.0,0.0,430.0,,03_PRINT/production/P31_INTAKE_DUCT_L_whole.stl

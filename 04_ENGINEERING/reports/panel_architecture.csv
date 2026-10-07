@@ -50,6 +50,8 @@ P65,EYE_BEZEL_IN_L,L,LIGHTS,25,+X,"direct print, ASA",OURS,C,yes,YELLOW,A0 B0 C2
 P66,EYE_BEZEL_IN_R,R,LIGHTS,25,+X,"direct print, ASA",OURS,C,yes,YELLOW,A0 B0 C2,"our bezel in our eye, cut by the lens's R48 visibility cone"
 P67,EYE_BEZEL_OUT_L,L,LIGHTS,25,+X,"direct print, ASA",OURS,C,yes,YELLOW,A0 B0 C2,"our bezel in our eye, cut by the lens's R48 visibility cone"
 P68,EYE_BEZEL_OUT_R,R,LIGHTS,25,+X,"direct print, ASA",OURS,C,yes,YELLOW,A0 B0 C2,"our bezel in our eye, cut by the lens's R48 visibility cone"
+P69,EYE_COVER_L,L,LIGHTS,26,+X,thermoformed clear PC over a printed buck,OURS,C,yes,YELLOW,A0 B0 C2,v081: clear cover on our skin over our eye; LEGAL check pending (cover before an E-marked module)
+P70,EYE_COVER_R,R,LIGHTS,26,+X,thermoformed clear PC over a printed buck,OURS,C,yes,YELLOW,A0 B0 C2,v081: clear cover on our skin over our eye; LEGAL check pending (cover before an E-marked module)
 P25,HEADLIGHT_HOUSING_R,R,LIGHTS,25,+X,"direct print, ASA",OURS,C,yes,YELLOW,A0 B0 C2,housing around a bought E-marked module; the module is fixed
 P26,TAIL_HOUSING_L,L,LIGHTS,26,-X,"direct print, ASA",OURS,C,yes,YELLOW,A0 B0 C1,housing around a bought E-marked module; the module is fixed
 P27,TAIL_HOUSING_R,R,LIGHTS,26,-X,"direct print, ASA",OURS,C,yes,YELLOW,A0 B0 C1,housing around a bought E-marked module; the module is fixed

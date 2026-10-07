@@ -146,6 +146,8 @@ ARCH = {
     "P66": ("OURS",  "yes", "our bezel in our eye, cut by the lens's R48 visibility cone"),
     "P67": ("OURS",  "yes", "our bezel in our eye, cut by the lens's R48 visibility cone"),
     "P68": ("OURS",  "yes", "our bezel in our eye, cut by the lens's R48 visibility cone"),
+    "P69": ("OURS",  "yes", "v081: clear cover on our skin over our eye; LEGAL check pending (cover before an E-marked module)"),
+    "P70": ("OURS",  "yes", "v081: clear cover on our skin over our eye; LEGAL check pending (cover before an E-marked module)"),
     "P25": ("OURS",  "yes", "housing around a bought E-marked module; the module is fixed"),
     "P26": ("OURS",  "yes", "housing around a bought E-marked module; the module is fixed"),
     "P27": ("OURS",  "yes", "housing around a bought E-marked module; the module is fixed"),

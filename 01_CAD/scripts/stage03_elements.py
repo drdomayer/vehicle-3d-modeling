@@ -832,6 +832,27 @@ def main():
         eye_st += [(ya + (yb - ya) * j / k, za0 + (zb0 - za0) * j / k, za1 + (zb1 - za1) * j / k)
                    for j in range(k)]
     eye_st.append(EYE[-1])
+    # v081: THROUGH THE SLOPE. The skin here is the nose's ~50 deg chamfer -- at |Y| 645 it runs from
+    # spec X -851 at Z 500 to -655 at Z 640 -- and a box 60 mm long in X placed at the mid-height skin
+    # met that slope only in a band round mid-height: above it the box stood in the air, below it
+    # inside the body, so the eye opened as a slot with skin left over it and under it, and the
+    # bezels sat in a half-open cave (the close-up render showed blocks and steps). The cutter now
+    # runs along X from the air (spec -1000) to a floor EYE_BEHIND_TOP behind the skin at the
+    # outline's TOP edge: the opening on the skin is the whole outline, the walls stay ON the
+    # outline (panel_map's X_EYE polygons hold), and the cavity is deep where the skin is low.
+    EYE_BEHIND_TOP = 10.0
+
+    def _skin_rx(y_mm, z_mm):
+        best = None
+        for o in body_objects():
+            inv = o.matrix_world.inverted()
+            h, loc, _n, _i = o.ray_cast(inv @ mathutils.Vector((2.0, mm(y_mm), mm(z_mm))),
+                                        (inv.to_3x3() @ mathutils.Vector((-1.0, 0.0, 0.0))).normalized())
+            if h:
+                x = (o.matrix_world @ loc).x
+                best = x if best is None else max(best, x)
+        return best
+
     eye_hits = {1: [], -1: []}
     for sgn in (1, -1):
         quads = []
@@ -839,12 +860,14 @@ def main():
             zm = (z0 + z1) / 2.0
             p_, n_ = surface_hit(mathutils.Vector((mm(1000.0), mm(sgn * yy), mm(zm))),
                                  [(1.5, 0.0, 0.0), (0.0, sgn * 1.5, 0.0)])
-            if p_ is None:
+            xt = _skin_rx(sgn * yy, z1 - 1.0)
+            if p_ is None or xt is None:
                 continue
-            ax = mathutils.Vector((1.0, 0.0, 0.0))     # repo +X is spec forward, out of the face
-            eye_hits[sgn].append((yy, z0, z1, p_.x))
-            o_, i_ = p_ + ax * mm(EYE_OUT), p_ - ax * mm(EYE_DEPTH)
-            quads.append([(o_.x, o_.y, mm(z0)), (i_.x, i_.y, mm(z0)), (i_.x, i_.y, mm(z1)), (o_.x, o_.y, mm(z1))])
+            fl = xt - mm(EYE_BEHIND_TOP)                 # repo X of the floor (spec: behind)
+            eye_hits[sgn].append((yy, z0, z1, p_.x, fl))
+            ox = mm(1000.0)
+            quads.append([(ox, mm(sgn * yy), mm(z0)), (fl, mm(sgn * yy), mm(z0)),
+                          (fl, mm(sgn * yy), mm(z1)), (ox, mm(sgn * yy), mm(z1))])
         if len(quads) < 3:
             continue
         verts = [v for q in quads for v in q]
@@ -863,7 +886,10 @@ def main():
         bm.to_mesh(me)
         bm.free()
         cuts.append(eo)
-    print(f"  eye: a {EYE_DEPTH:.0f} mm black wedge recess along the skin, Y {EYE[0][0]:.0f}..{EYE[-1][0]:.0f}, "
+    print(f"  eye: cut along X through the slope to {EYE_BEHIND_TOP:.0f} mm behind the top edge's skin, "
+          f"floor spec X {min(-h[4] for v in eye_hits.values() for h in v) * 1000:.0f}.."
+          f"{max(-h[4] for v in eye_hits.values() for h in v) * 1000:.0f}")
+    print(f"  eye: Y {EYE[0][0]:.0f}..{EYE[-1][0]:.0f}, "
           f"{EYE[3][2]-EYE[3][1]:.0f} mm tall at the module tapering to {EYE[-1][2]-EYE[-1][1]:.0f} outboard")
 
 
@@ -879,7 +905,7 @@ def main():
     # the lens, so a CLOSED frame round the module is not possible; the bezel is two parts a side,
     # an inboard tip and the outboard blade. Gloss black, 6 mm under the skin so the eye keeps a
     # sharp lip; back face on the eye floor; 1 mm clearance to the pocket all round.
-    BEZEL = dict(front=6.0, back=39.5, gap=1.0)
+    BEZEL = dict(front=6.0, back=39.5, gap=1.0, plate=20.0)
     LENS = dict(sx=-675.0, y=645.0, z=560.0, r=48.0)    # PROJECTOR face; Hella 90 mm lens + 3 mm
     R48 = dict(out=45.0, inb=10.0, up=15.0, down=10.0)
 
@@ -926,7 +952,7 @@ def main():
         st = []
         for a, b in zip(eye_hits[sgn], eye_hits[sgn][1:]):
             k = max(1, int(math.ceil(abs(b[0] - a[0]) / 5.0)))
-            st += [tuple(a[q] + (b[q] - a[q]) * j / k for q in range(4)) for j in range(k)]
+            st += [tuple(a[q] + (b[q] - a[q]) * j / k for q in range(5)) for j in range(k)]
         if eye_hits[sgn]:
             st.append(eye_hits[sgn][-1])
         if len(st) < 3:
@@ -938,9 +964,13 @@ def main():
         # 2 mm + front ahead of the eye floor; where the eye never opened, there is no bezel.
         N = 9
         profiles = []
-        for i, (yy, z0, z1, px) in enumerate(st):
+        for i, (yy, z0, z1, px, fl) in enumerate(st):
             y_ = yy + (BEZEL["gap"] if i == 0 else -BEZEL["gap"] if i == len(st) - 1 else 0.0)
-            bx = px - mm(BEZEL["back"])
+            # v081: the back on the eye's floor (the cut now reaches it through the slope), but in
+            # front of the lamp housing where the module sits (P24 front spec -686, + 4 mm)
+            bx = fl
+            if 580.0 <= yy <= 710.0:
+                bx = max(fl, mm(690.0))
             zs = [z0 + BEZEL["gap"] + (z1 - z0 - 2 * BEZEL["gap"]) * k / 24.0 for k in range(25)]
             ok = [(z, skin_x(sgn * y_, z)) for z in zs]
             ok = [(z, x) for z, x in ok if x is not None and x - mm(BEZEL["front"]) - bx >= mm(2.0)]
@@ -989,7 +1019,11 @@ def main():
                 z = zlo + (zhi - zlo) * k / (N - 1)
                 x = skin_x(sgn * y_, z) or (bx + mm(BEZEL["front"] + 2.0))
                 prof.append((max(x - mm(BEZEL["front"]), bx + mm(2.0)), mm(sgn * y_), mm(z)))
-            prof += [(bx, mm(sgn * y_), mm(zhi - (zhi - zlo) * k / (N - 1))) for k in range(N)]
+            # v081: a PLATE that follows the face, BEZEL["plate"] thick, not a block to the floor --
+            # with the eye cut through the slope the floor is up to 190 mm behind the skin, and a
+            # bezel down to it was one 850 cm3 lump the cone no longer split into tip and blade
+            prof += [(max(prof[N - 1 - k][0] - mm(BEZEL["plate"]), bx), mm(sgn * y_),
+                      mm(zhi - (zhi - zlo) * k / (N - 1))) for k in range(N)]
             profiles.append(prof)
         if len(profiles) < 2:
             continue
@@ -1012,7 +1046,11 @@ def main():
         bm.free()
         cone = vis_cone(f"_r48_cone_{side}", sgn)
         m = bz.modifiers.new("r48", "BOOLEAN")
-        m.operation, m.object, m.solver = "DIFFERENCE", cone, "EXACT"
+        # v081: MANIFOLD, not EXACT. With the bezel a 20 mm plate, EXACT dropped the whole outboard
+        # blade (457 cm3 of loft -> 74 cm3, the tip only) and its in_skin intersect cut the right
+        # side 17 % smaller than the left; FLOAT did not cut at all. MANIFOLD on these two closed,
+        # manifold inputs gives tip 74.0 / 74.5 and blade 142.7 / 140.9 cm3, left / right.
+        m.operation, m.object, m.solver = "DIFFERENCE", cone, "MANIFOLD"
         bpy.context.view_layer.objects.active = bz
         bpy.ops.object.modifier_apply(modifier=m.name)
         bpy.data.objects.remove(cone, do_unlink=True)
@@ -1023,7 +1061,7 @@ def main():
         fronts = [o for o in body_objects() if "FRONT" in o.name]
         if fronts:
             m = bz.modifiers.new("in_skin", "BOOLEAN")
-            m.operation, m.object, m.solver = "INTERSECT", fronts[0], "EXACT"
+            m.operation, m.object, m.solver = "INTERSECT", fronts[0], "MANIFOLD"    # v081: see the cone
             bpy.context.view_layer.objects.active = bz
             bpy.ops.object.modifier_apply(modifier=m.name)
         # one object per connected piece; the inboard one is the tip, the outboard one the blade
@@ -1144,6 +1182,75 @@ def main():
         eye_drl.append(f"{side} {len(pts)} pts")
     print("  DRL in the eye: a radius-7 rebate along the outboard bezel's lower edge, Y 778..846 -> " +
           ", ".join(eye_drl))
+
+    # ---- 5f. THE EYE COVER, 2026-10-07 (v081). ref-09's eye is a flush dark-glazed wedge: the black
+    # bezel and the lamp are seen THROUGH a cover that is the skin itself. Without it the eye is a
+    # cavity in a 50 deg slope, and no form of bezel reads as anything but a cave. A clear cover,
+    # 3 mm, its outer face ON the uncut skin over the eye's outline, 1 mm gap all round: thermoformed
+    # polycarbonate over a printed buck (this file is the buck). The module is untouched behind it.
+    # LEGAL, NOT DECIDED HERE: an outer cover in front of an E-marked module changes what the
+    # technical service tests (photometry through the cover) -- hard constraint 6. If it is refused,
+    # P69/P70 are dropped and the eye stays open with the same cut and bezels.
+    COVER = dict(t=3.0, gap=1.0, nz=12)
+    cov_made = []
+    for sgn in (1, -1):
+        st = []
+        for a, b in zip(eye_hits[sgn], eye_hits[sgn][1:]):
+            k = max(1, int(math.ceil(abs(b[0] - a[0]) / 5.0)))
+            st += [tuple(a[q] + (b[q] - a[q]) * j / k for q in range(3)) for j in range(k)]
+        if eye_hits[sgn]:
+            st.append(tuple(eye_hits[sgn][-1][:3]))
+        rows = []
+        for i, (yy, z0, z1) in enumerate(st):
+            y_ = yy + (COVER["gap"] if i == 0 else -COVER["gap"] if i == len(st) - 1 else 0.0)
+            row = []
+            for k in range(COVER["nz"]):
+                z = z0 + COVER["gap"] + (z1 - z0 - 2 * COVER["gap"]) * k / (COVER["nz"] - 1)
+                x = skin_x(sgn * y_, z)
+                if x is None:
+                    row = None
+                    break
+                row.append((x, mm(sgn * y_), mm(z)))
+            if row:
+                rows.append(row)
+        if len(rows) < 2:
+            continue
+        R, N = len(rows), COVER["nz"]
+        verts = [v for r in rows for v in r] + [(v[0] - mm(COVER["t"]), v[1], v[2]) for r in rows for v in r]
+        o_ = lambda i, k: i * N + k
+        n_ = lambda i, k: R * N + i * N + k
+        faces = []
+        for i in range(R - 1):
+            for k in range(N - 1):
+                faces.append((o_(i, k), o_(i + 1, k), o_(i + 1, k + 1), o_(i, k + 1)))
+                faces.append((n_(i, k + 1), n_(i + 1, k + 1), n_(i + 1, k), n_(i, k)))
+            faces.append((o_(i, 0), n_(i, 0), n_(i + 1, 0), o_(i + 1, 0)))
+            faces.append((o_(i + 1, N - 1), n_(i + 1, N - 1), n_(i, N - 1), o_(i, N - 1)))
+        for k in range(N - 1):
+            faces.append((o_(0, k + 1), n_(0, k + 1), n_(0, k), o_(0, k)))
+            faces.append((o_(R - 1, k), n_(R - 1, k), n_(R - 1, k + 1), o_(R - 1, k + 1)))
+        side = "L" if sgn > 0 else "R"
+        nm = f"EYE_COVER_{side}"
+        stale = bpy.data.meshes.get(nm)
+        if stale is not None and stale.users == 0:
+            bpy.data.meshes.remove(stale)
+        me = bpy.data.meshes.new(nm)
+        me.from_pydata(verts, [], faces)
+        me.update()
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        vol = abs(bm.calc_volume()) * 1e6
+        bm.to_mesh(me)
+        bm.free()
+        co = bpy.data.objects.new(nm, me)
+        coll.objects.link(co)
+        co["panel_id"] = "P69" if sgn > 0 else "P70"
+        co["stage"] = "03 element — clear PC over a printed buck; LEGAL check pending"
+        made.append(co)
+        cov_made.append(f"{nm} {R}x{N}, {vol:.1f} cm3")
+    print(f"  eye cover: {COVER['t']:.0f} mm on the uncut skin over the eye's outline, {COVER['gap']:.0f} mm gap -> "
+          + ", ".join(cov_made) + "  (LEGAL: cover in front of an E-marked module -- technical service)")
 
     # ---- 6. the lamp housing behind the blade. PROJECTOR is a DECIDED envelope at spec X -600,
     # Y +-560, Z 570, 150 x 110 x 110 for one Hella 90 mm bi-LED module, and the module itself may

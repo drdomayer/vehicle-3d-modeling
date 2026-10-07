@@ -114,6 +114,10 @@ def visibility():
         for o in c.all_objects:
             if o.type != "MESH" or o.name.startswith(("CUT_", "_")):
                 continue
+            # v081: the eye cover is CLEAR -- not an obstruction to the geometric view; what it does
+            # to the photometry is the technical service's question (docs/14 AD), not this test's
+            if o.name.startswith("EYE_COVER"):
+                continue
             ev = o.evaluated_get(dg)
             me = ev.to_mesh()
             me.transform(o.matrix_world)

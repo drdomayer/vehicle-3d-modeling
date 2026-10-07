@@ -39,7 +39,8 @@ MIRROR_OF = {"P04": "P03", "P08": "P07", "P10": "P09", "P12": "P11", "P16": "P15
              "P14": "P13", "P06": "P05",
              "P25": "P24", "P32": "P31", "P45": "P44", "P47": "P46",
              "P55": "P54", "P57": "P56", "P59": "P58", "P62": "P61", "P64": "P63",
-             "P66": "P65", "P68": "P67", "P38": "P37"}
+             "P66": "P65", "P68": "P67", "P38": "P37",
+             "P70": "P69"}
 
 _pm = {"__file__": os.path.join(REPO, "01_CAD/scripts/panel_map.py"), "__name__": "_pm"}
 with open(os.path.join(REPO, "01_CAD/scripts/panel_map.py"), encoding="utf-8") as f:

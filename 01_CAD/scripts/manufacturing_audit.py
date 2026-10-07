@@ -125,6 +125,15 @@ SHAPE_IS_DONOR = {
 }
 
 
+# v081: parts whose SHAPE is ours and provable but whose USE waits on a legal answer. At least
+# CONDITIONAL, with the question as the reason, until the technical service answers.
+LEGAL_PENDING = {
+    "P69": "LEGAL: a clear outer cover in front of an E-marked Hella module -- the technical service "
+           "decides whether photometry through it is acceptable (docs/14 AD)",
+    "P70": "LEGAL: a clear outer cover in front of an E-marked Hella module -- the technical service "
+           "decides whether photometry through it is acceptable (docs/14 AD)",
+}
+
 YEXT = {}   # pid -> (min |Y|, max |Y|), filled by panel_extents() for the STRUCTURE screen
 
 
@@ -182,6 +191,8 @@ def classify(pid, hits, span, measured=None):
             continue
         struct.append(f"{name}: {what}")
     cat, why = _classify_rest(pid, hits, measured)
+    if pid in LEGAL_PENDING:
+        struct.append(LEGAL_PENDING[pid])
     if struct:
         return max(cat, 2), "; ".join(struct + ([why] if cat == 2 else []))
     return cat, why

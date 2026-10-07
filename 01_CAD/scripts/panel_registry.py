@@ -131,6 +131,10 @@ PARTS = [
     ("P66", "EYE_BEZEL_IN_R",      "R",  "LIGHTS", 25, "+X", "direct print, ASA", "HEADLIGHT"),
     ("P67", "EYE_BEZEL_OUT_L",     "L",  "LIGHTS", 25, "+X", "direct print, ASA", "HEADLIGHT"),
     ("P68", "EYE_BEZEL_OUT_R",     "R",  "LIGHTS", 25, "+X", "direct print, ASA", "HEADLIGHT"),
+    # v081: the eye's clear cover, flush with the skin over the bezels (ref-09's glazed eye).
+    # LEGAL check pending: an outer cover in front of the E-marked module (docs/14 AD).
+    ("P69", "EYE_COVER_L",         "L",  "LIGHTS", 26, "+X", "thermoformed clear PC over a printed buck", "HEADLIGHT"),
+    ("P70", "EYE_COVER_R",         "R",  "LIGHTS", 26, "+X", "thermoformed clear PC over a printed buck", "HEADLIGHT"),
     ("P25", "HEADLIGHT_HOUSING_R", "R",  "LIGHTS", 25, "+X", "direct print, ASA", "HEADLIGHT"),
     ("P26", "TAIL_HOUSING_L",      "L",  "LIGHTS", 26, "-X", "direct print, ASA", "TAIL_LIGHT"),
     ("P27", "TAIL_HOUSING_R",      "R",  "LIGHTS", 26, "-X", "direct print, ASA", "TAIL_LIGHT"),
@@ -173,6 +177,7 @@ FINISH = {
     "P24": "gloss black", "P25": "gloss black", "P26": "hidden", "P27": "hidden", "P31": "hidden",
     "P32": "hidden",
     "P65": "gloss black", "P66": "gloss black", "P67": "gloss black", "P68": "gloss black",
+    "P69": "clear", "P70": "clear",
 }
 
 ASSEMBLY_ORDER = [
@@ -253,7 +258,8 @@ def main(argv):
                         "VOLUME", "ESTIMATED_MASS", "MOUNT_COUNT", "PRINT_SPLIT_COUNT", "FINISH",
                         "FINISH_ZONES"])
             for pid, obj, side, grp, step, vec, method, key in PARTS:
-                mat = "ASA" if "ASA" in method else ("GRP composite" if "composite" in method else "PETG")
+                mat = ("polycarbonate, clear" if "PC" in method else "ASA" if "ASA" in method
+                       else ("GRP composite" if "composite" in method else "PETG"))
                 w.writerow([pid, obj, side, grp, step, vec, method, mat, NOMINAL_THICKNESS_MM,
                             PANEL_GAP_MM, f"{FLANGE_WIDTH_MM[0]}-{FLANGE_WIDTH_MM[1]}",
                             f"{OVERLAP_MM[0]}-{OVERLAP_MM[1]}", PANEL_STATUS.get(key, "?"),

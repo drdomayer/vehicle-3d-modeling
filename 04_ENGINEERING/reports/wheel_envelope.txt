@@ -1,0 +1,27 @@
+================================================================================================
+WHEEL ENVELOPE — every part against the tyre steered and in bump
+================================================================================================
+  front  centre specX 0 |Y| 732.5, r 323.6, width 235, bump 0..80 (ASSUMED), steer +-35
+  rear   centre specX 2415 |Y| 764.0, r 337.6, width 275, bump 0..90 (ASSUMED), steer +-0
+
+  part  object                    wheel    min mm  no bump   at specX, Y, Z   verdict
+  P03   P03_FRONT_FENDER_L        front      -0.6     63.8       80,   925,  674   INSIDE (only with the assumed bump)
+  P04   P04_FRONT_FENDER_R        front      -0.6     63.8       80,  -925,  674   INSIDE (only with the assumed bump)
+  P05   P05_FENDER_CHANNEL_L      front      15.6     93.2     -123,   747,  730   ok
+  P06   P06_FENDER_CHANNEL_R      front      15.6     93.2     -123,  -747,  730   ok
+  P31   P31_INTAKE_DUCT_L         rear       16.0     29.9     2063,   619,  441   ok
+  P32   P32_INTAKE_DUCT_R         rear       16.0     29.9     2063,  -619,  441   ok
+  P11   P11_SIDE_INTAKE_L         rear       16.1     29.0     2066,   912,  443   ok
+  P12   P12_SIDE_INTAKE_R         rear       16.1     29.0     2066,  -912,  443   ok
+  P15   P15_REAR_HAUNCH_L         rear       16.1     91.4     2447,   918,  764   ok
+  P16   P16_REAR_HAUNCH_R         rear       16.1     91.4     2447,  -918,  764   ok
+  P07   P07_ROCKER_L              front      20.2     20.2      315,   792,  150   ok
+  P08   P08_ROCKER_R              front      20.2     20.2      315,  -792,  150   ok
+  P39   P39_ROCKER_END_L          rear       26.9     26.9     2779,   848,  320   ok
+  P40   P40_ROCKER_END_R          rear       26.9     26.9     2779,  -848,  320   ok
+  P07   P07_ROCKER_L              rear       26.9     26.9     2080,   847,  194   ok
+  P08   P08_ROCKER_R              rear       26.9     26.9     2080,  -847,  194   ok
+
+  2 part(s) closer than 15 mm to the moving tyre. Parts more than 40 mm away are not listed.
+  The steer axis is vertical through the wheel centre (conservative); the bump travel is an
+  ASSUMPTION until docs/20 A8 / B5 are measured.

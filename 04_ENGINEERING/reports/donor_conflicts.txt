@@ -16,7 +16,7 @@ STATEV 001 v0.1  vs  Porsche 986 donor — conflict report
     S11 rear: body max 925.0 vs tyre outer 901.5 -> +23.5 | at the arch crown Z 702 the body is 898.0
 
 [wheel arches]
-  FRONT: R 350 vs tyre R 323.5 -> radial +26.5 | opening 350 vs tyre 235 -> axial +57.5 each side | outer edge Y 907.5 vs body 949.8077104542856 at S05 -> +42.3
+  FRONT: R 360 vs tyre R 323.5 -> radial +36.5 | opening 350 vs tyre 235 -> axial +57.5 each side | outer edge Y 907.5 vs body 949.8077104542856 at S05 -> +42.3
   REAR: R 365 vs tyre R 337.5 -> radial +27.5 | opening 370 vs tyre 275 -> axial +47.5 each side | outer edge Y 949.0 vs body 925.0 at S11 -> -24.0
 
 [body vs donor skin]  (donor plan ±30 mm)

@@ -141,6 +141,29 @@ PANELS = ["P01", "P28", "P41", "P07", "P08", "P39", "P40", "P21", "P22",
 TRIM_W_MM = 30.0
 
 
+
+_skw = {"__file__": os.path.join(REPO, "01_CAD/scripts/statev_skeleton.py"), "__name__": "_skw"}
+with open(_skw["__file__"], encoding="utf-8") as _f:
+    exec(_f.read().split("\ndef build(")[0], _skw)
+_WM = _skw["WHEEL_MOTION"]
+
+
+def front_tyre_distance(sx, ay, z, r=647.1 / 2.0, w=235.0, yc=732.5):
+    """mm from (spec X, |Y|, Z) to the front tyre steered +-steer and raised 0..bump (WHEEL_MOTION);
+    the same envelope check_wheel_envelope.py measures every part against."""
+    best = 1e9
+    na = int(round(_WM["steer"] / 2.5))
+    for k in range(int(round(_WM["bump_front"] / 10.0)) + 1):
+        dz = z - r - 10.0 * k
+        for j in range(-na, na + 1):
+            th = math.radians(2.5 * j)
+            u = sx * math.cos(th) + (ay - yc) * math.sin(th)
+            v = -sx * math.sin(th) + (ay - yc) * math.cos(th)
+            rad, axd = math.hypot(u, dz) - r, abs(v) - w / 2.0
+            d = max(rad, axd) if (rad <= 0 and axd <= 0) else math.hypot(max(rad, 0.0), max(axd, 0.0))
+            best = min(best, d)
+    return best
+
 def trim_at(base):
     """The allowances for a base panel. A function, because panel_map (and its B) is loaded
     further down this file and a table here would read it before it exists."""
@@ -269,6 +292,12 @@ def gather(pid):
             # X_LOUVRE (v056): the aperture's WALLS print with the cover, as every pocket's do, but
             # not its floor -- the louvres vent into the engine bay; a floor would make a tray
             wall_only = tag == "X_LOUVRE" and abs(n.z) > 0.5
+            # 2026-11-12: the fender slot is cut through a SOLID body, so its walls ran 140 mm down
+            # to the arch -- a sleeve into the tyre's path (check_wheel_envelope: -47.5 mm with the
+            # assumed bump). On the composite fender it is a return flange: it stops CLEAR above
+            # the tyre steered and in bump (WHEEL_MOTION in the skeleton), and goes no deeper.
+            if tag == "X_FENDER_SLOT" and front_tyre_distance(sx, ay, z) < _WM["clear"] + 1.0:
+                continue
             if tag and not (tag in ("X_INTAKE", "X_FENDER_SLOT", "X_MOUTH", "X_ROCKER_CHANNEL", "X_CORNER", "X_LIP", "X_TAIL_CORNER", "X_LOUVRE", "X_BADGE", "X_EYE")
                             and not wall_only and panel_of(sx, ay, z) == base):
                 # a pocket's walls are PRINTED with the panel the pocket is cut into: they are

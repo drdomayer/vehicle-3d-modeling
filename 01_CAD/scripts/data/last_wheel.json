@@ -1,0 +1,103 @@
+{
+  "wheel_tight": 2,
+  "wheel_tight_static": 0,
+  "when": 1794440110.426294,
+  "rows": [
+    {
+      "part": "P03",
+      "wheel": "front",
+      "min_mm": -0.6,
+      "no_bump_mm": 63.8
+    },
+    {
+      "part": "P04",
+      "wheel": "front",
+      "min_mm": -0.6,
+      "no_bump_mm": 63.8
+    },
+    {
+      "part": "P05",
+      "wheel": "front",
+      "min_mm": 15.6,
+      "no_bump_mm": 93.2
+    },
+    {
+      "part": "P06",
+      "wheel": "front",
+      "min_mm": 15.6,
+      "no_bump_mm": 93.2
+    },
+    {
+      "part": "P07",
+      "wheel": "front",
+      "min_mm": 20.2,
+      "no_bump_mm": 20.2
+    },
+    {
+      "part": "P07",
+      "wheel": "rear",
+      "min_mm": 26.9,
+      "no_bump_mm": 26.9
+    },
+    {
+      "part": "P08",
+      "wheel": "front",
+      "min_mm": 20.2,
+      "no_bump_mm": 20.2
+    },
+    {
+      "part": "P08",
+      "wheel": "rear",
+      "min_mm": 26.9,
+      "no_bump_mm": 26.9
+    },
+    {
+      "part": "P11",
+      "wheel": "rear",
+      "min_mm": 16.1,
+      "no_bump_mm": 29.0
+    },
+    {
+      "part": "P12",
+      "wheel": "rear",
+      "min_mm": 16.1,
+      "no_bump_mm": 29.0
+    },
+    {
+      "part": "P15",
+      "wheel": "rear",
+      "min_mm": 16.1,
+      "no_bump_mm": 91.4
+    },
+    {
+      "part": "P16",
+      "wheel": "rear",
+      "min_mm": 16.1,
+      "no_bump_mm": 91.4
+    },
+    {
+      "part": "P31",
+      "wheel": "rear",
+      "min_mm": 16.0,
+      "no_bump_mm": 29.9
+    },
+    {
+      "part": "P32",
+      "wheel": "rear",
+      "min_mm": 16.0,
+      "no_bump_mm": 29.9
+    },
+    {
+      "part": "P39",
+      "wheel": "rear",
+      "min_mm": 26.9,
+      "no_bump_mm": 26.9
+    },
+    {
+      "part": "P40",
+      "wheel": "rear",
+      "min_mm": 26.9,
+      "no_bump_mm": 26.9
+    }
+  ]
+}

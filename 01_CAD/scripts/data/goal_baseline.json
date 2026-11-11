@@ -10,5 +10,7 @@
   "surf_z_mm": 7.311,
   "curvature": 0.3225,
   "removal_fouls": 0.0,
-  "floating": 0.0
+  "floating": 0.0,
+  "wheel_tight_static": 0.0,
+  "wheel_tight": 2.0
 }

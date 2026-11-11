@@ -387,12 +387,25 @@ def clip_to(ob, cutter):
 
 
 def duct(name, coll, stations, wall):
-    """A lofted rectangular duct through (spec_x, y_c, z_c, half_w, half_h) stations, hollow."""
+    """A lofted rectangular duct through (spec_x, y_c, z_c, half_w, half_h) stations, hollow.
+    2026-11-12: each section is PERPENDICULAR TO THE PATH in plan (half_w along the path's in-plane
+    normal), not in the Y-Z plane. With Y-Z sections a route that runs along Y (the duct turning
+    inboard ahead of the rear tyre) put neighbouring sections on top of each other and the loft
+    crossed itself: 20 non-manifold edges and a 172 x 91 x 6 mm crumb split off."""
+    pts = [(sx, yc) for sx, yc, _z, _w, _h in stations]
+    frames = []
+    for i in range(len(pts)):
+        a, b = pts[max(0, i - 1)], pts[min(len(pts) - 1, i + 1)]
+        tx, ty = b[0] - a[0], b[1] - a[1]
+        L_ = math.hypot(tx, ty) or 1.0
+        frames.append((-ty / L_, tx / L_))      # in-plane normal (spec X, Y)
+
     def tube(shrink):
         v, f = [], []
-        for sx, yc, zc, hw, hh in stations:
+        for (sx, yc, zc, hw, hh), (nx_, ny_) in zip(stations, frames):
             for dy, dz in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
-                v.append((-mm(sx), mm(yc + dy * (hw - shrink)), mm(zc + dz * (hh - shrink))))
+                w_ = dy * (hw - shrink)
+                v.append((-mm(sx + nx_ * w_), mm(yc + ny_ * w_), mm(zc + dz * (hh - shrink))))
         n = 4
         for i in range(len(stations) - 1):
             a, b = i * n, (i + 1) * n
@@ -733,17 +746,42 @@ def main():
                               surface_z(sx, yb_)) if t]
             tops[sx] = (min(ts) - 12.0) if ts else 860.0
         z_top_rail = min(tops.values())
+        # 2026-11-12: the comb's bottom was 712 everywhere -- 65 mm over the static tread, inside
+        # the tyre's path with 80 mm of bump. Each piece now stops CLEAR above the tyre envelope
+        # (steered +-35 deg, raised by the bump -- WHEEL_MOTION in the skeleton) over its own
+        # footprint, never below the old 712.
+        WM = _sk["WHEEL_MOTION"]
+        R_f, W_f, Y_f = PACKAGE["tyre_front_od"] / 2.0, 235.0, 732.5
+
+        def env_top(sx, ay):
+            h = -1e9
+            k = int(round(WM["steer"] / 2.5))
+            for j in range(-k, k + 1):
+                th = math.radians(2.5 * j)
+                dx, dy = sx, ay - Y_f
+                u = dx * math.cos(th) + dy * math.sin(th)
+                v = -dx * math.sin(th) + dy * math.cos(th)
+                rr = R_f + WM["clear"] + 1.0     # +1: the footprint is sampled, not swept
+                if abs(v) <= W_f / 2.0 + WM["clear"] and abs(u) < rr:
+                    h = max(h, R_f + WM["bump_front"] + math.sqrt(rr * rr - u * u))
+            return h
+
+        def bottom_over(x0, y0, x1, y1):
+            zs = [env_top(x0 + (x1 - x0) * t / 10.0, abs(y0 + (y1 - y0) * t / 10.0)) for t in range(11)]
+            return max([712.0] + zs)
         # two rails along the slot walls, 4 mm off them, and four diagonal slats between
         ri, ro = SLOT_Y[0] + 6.0, SLOT_Y[1] - 6.0     # the rails 6 mm off the walls (was 391 / 539)
+        zb_i, zb_o = bottom_over(-225.0, ri, 155.0, ri), bottom_over(-225.0, ro, 155.0, ro)
         comb = slab(f"FENDER_CHANNEL_{tag}", (-225.0, sgn * ri), (155.0, sgn * ri),
-                    712.0, z_top_rail, 6.0)
+                    zb_i, z_top_rail, 6.0)
         parts = [slab(f"_rail2_{tag}", (-225.0, sgn * ro), (155.0, sgn * ro),
-                      712.0, z_top_rail, 6.0)]
+                      zb_o, z_top_rail, 6.0)]
         # v059: SIX slats at a 54 mm pitch instead of four at 90 -- ref-09's vent carries 5..6;
         # the first and last stay where they were, so the comb still ends inside the slot
         for sx in (-215, -161, -107, -53, 1, 55):
+            zb = min(bottom_over(sx, ri, sx + 90.0, ro), tops[sx] - 20.0)
             parts.append(slab(f"_slat_{tag}_{sx}", (sx, sgn * ri), (sx + 90.0, sgn * ro),
-                              712.0, tops[sx], 6.0))
+                              zb, tops[sx], 6.0))
         for p in parts:
             m = comb.modifiers.new("u", "BOOLEAN")
             m.operation, m.object, m.solver = "UNION", p, "EXACT"
@@ -753,7 +791,9 @@ def main():
         comb["panel_id"] = "P05" if sgn > 0 else "P06"
         comb["stage"] = "03 element — shape ours, mounting SCAN REQUIRED"
         made.append(comb)
-    print("  fender vent: a louvre comb -- six diagonal 6 mm slats on two rails, one part -> P05 / P06")
+    print(f"  fender vent: a louvre comb -- six diagonal 6 mm slats on two rails, one part -> P05 / P06; "
+          f"rails' bottom {zb_i:.0f} / {zb_o:.0f} (was 712): {WM['clear']:.0f} mm over the tyre steered and in "
+          f"{WM['bump_front']:.0f} mm bump")
 
 
     # ---- 4. the rear. In ref-05 the tail is not a wall: a recessed centre mask sits between the
@@ -1420,9 +1460,17 @@ def main():
     # the duct's SHAPE is ours and its ROUTE is not.
     for sgn in (1, -1):
         d = duct(f"INTAKE_DUCT_{'L' if sgn > 0 else 'R'}", coll,
-                 [(1990, sgn * 870, 520, 55, 90), (2070, sgn * 800, 520, 70, 90),
-                  (2150, sgn * 650, 520, 90, 90), (2230, sgn * 470, 560, 90, 95),
-                  (2300, sgn * 300, 600, 75, 100)], 4.0)
+                 # 2026-11-12: re-routed AHEAD of the rear tyre. The guess ran over the tyre's front
+                 # shoulder (station 2150 / Y 650): 29.6 mm static, 32 mm INSIDE with the assumed
+                 # 90 mm bump. With bump the tread's front edge is at spec X 2077..2131 over Z
+                 # 430..610, so the duct turns inboard while still ahead of ~2060 and runs back to
+                 # the same plenum end only inboard of the tyre (|Y| < 611). Still PROVISIONAL.
+                 # A ROUNDED bend: four stations turning ~90 deg in 130 mm self-intersected the loft
+                 # (print_qc: 20 non-manifold edges, the duct in two pieces).
+                 [(1990, sgn * 870, 520, 55, 90), (1991, sgn * 790, 520, 58, 90),
+                  (1994, sgn * 715, 522, 54, 90), (2000, sgn * 655, 526, 52, 90),
+                  (2022, sgn * 570, 535, 58, 92), (2090, sgn * 545, 550, 70, 95),
+                  (2170, sgn * 455, 575, 78, 97), (2300, sgn * 300, 600, 75, 100)], 4.0)
         d["panel_id"] = "P31" if sgn > 0 else "P32"
         d["stage"] = "03 element — shape ours, ROUTE provisional, mounting SCAN REQUIRED"
         made.append(d)

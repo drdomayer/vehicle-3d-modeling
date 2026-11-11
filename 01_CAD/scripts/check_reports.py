@@ -94,6 +94,11 @@ WRITER = {
     "fit_test_P39.txt": "(P) fit_test.py P39",
     "overhang.csv": "(P) overhang_report.py",
     "waviness.txt": "(B) waviness_check.py",
+    # 2026-11-12: the three counts check_goal now gates, and the wheel report
+    "last_assembly.json": "(B) exploded_assembly.py",
+    "last_floating.json": "(B) check_floating.py",
+    "last_wheel.json": "(B) check_wheel_envelope.py",
+    "wheel_envelope.txt": "(B) check_wheel_envelope.py",
 }
 
 NOT_A_REPORT = {

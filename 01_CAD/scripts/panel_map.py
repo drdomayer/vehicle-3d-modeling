@@ -162,7 +162,13 @@ POCKETS_XZ = [("X_INTAKE", 760.0, 1000.0,
 # The cabin cutter and the arch cutters, as statev_master_volumes actually builds them. Named here
 # so the cap rules below can be read against their source instead of against bare numbers.
 CABIN = dict(x0=420.0, x1=1760.0, y=700.0, z=640.0)      # cowl_x .. hoop_x, |Y| < 700, Z 640 up
-ARCH_CUTS = ((0.0, 350.0, 323.5), (2415.0, 365.0, 337.5))  # spec X, radius, centre Z (tod/2)
+# spec X, radius, centre Z (tod/2) -- READ from the skeleton since 2026-11-12. It was a typed copy,
+# and when the front arch went 350 -> 360 the copy did not: the wheel well's ceiling at r 360 was
+# no longer recognised as a wall and reached P03 as "skin" (check_wheel_envelope: -47.5 mm).
+_ska = {"__file__": os.path.join(REPO, "01_CAD/scripts/statev_skeleton.py"), "__name__": "_ska"}
+with open(_ska["__file__"], encoding="utf-8") as _f:
+    exec(_f.read().split("\ndef build(")[0], _ska)
+ARCH_CUTS = tuple((float(ax), float(r), tod / 2.0) for ax, r, _w, tod, _tw in _ska["ARCHES"].values())
 CAP_TOL = 12.0   # a boolean leaves its cap ON the cut plane; this is slack, not a search radius
 
 

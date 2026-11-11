@@ -149,8 +149,20 @@ AXLE_WIDENING = [
 
 # wheel arch apertures (msg1 §4): key -> (spec_x, radius, opening_width_y, tyre_od, tyre_width)
 # radius is measured from the wheel centre; opening width is the axial size of the aperture.
+# WHEEL MOTION, 2026-11-12 -- one place for what the tyre does, read by stage03 (the louvres are
+# trimmed to it) and check_wheel_envelope.py (every part is measured against it).
+#   steer  35 deg: PUBLISHED-derived -- turning circle 10.9 m (Group 0a) on 2415 / 1465 gives
+#          ~26 deg outer, ~35 inner. Swung about a vertical axis through the wheel centre
+#          (conservative: the real axis is raked, near the tyre's centre plane at the ground).
+#   bump   80 front / 90 rear: ASSUMED, not in the manuals we have; docs/20 A8 / B5 measure it.
+#   clear  15 mm: hard constraint 3.
+WHEEL_MOTION = dict(steer=35.0, bump_front=80.0, bump_rear=90.0, clear=15.0)
+
 ARCHES = {
-    "FRONT": (0,    350, 350, 647, 235),
+    # 2026-11-12: front radius 350 -> 360. At full lock (35 deg) the tyre's rear-lower corner came
+    # 9.6 mm from the rocker's front end at Z 153 -- the arch's own trailing edge -- with no bump at
+    # all; 10 mm more radius is the smallest change that holds 15 mm there. docs/14 AF.
+    "FRONT": (0,    360, 350, 647, 235),
     "REAR":  (2415, 365, 370, 675, 275),
 }
 

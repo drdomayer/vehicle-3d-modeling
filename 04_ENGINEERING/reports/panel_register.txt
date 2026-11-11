@@ -14,8 +14,8 @@ P55  CORNER_GRILLE_R       R     FRONT   4     +X   RED     direct print
 P02  HOOD                  -     FRONT   5     -Z   YELLOW  printed master -> composite
 P03  FRONT_FENDER_L        L     FRONT   5     -Y   YELLOW  printed master -> composite
 P04  FRONT_FENDER_R        R     FRONT   5     +Y   YELLOW  printed master -> composite
-P05  FENDER_CHANNEL_L      L     FRONT   6     -Y   YELLOW  direct print
-P06  FENDER_CHANNEL_R      R     FRONT   6     +Y   YELLOW  direct print
+P05  FENDER_CHANNEL_L      L     FRONT   6     +Z   YELLOW  direct print
+P06  FENDER_CHANNEL_R      R     FRONT   6     +Z   YELLOW  direct print
 P07  ROCKER_L              L     SIDE    8     -Y   YELLOW  printed master -> composite
 P08  ROCKER_R              R     SIDE    8     +Y   YELLOW  printed master -> composite
 P39  ROCKER_END_L          L     SIDE    8     -Y   YELLOW  printed master -> composite
@@ -26,8 +26,8 @@ P37  MIRROR_CAP_L          L     SIDE    10    -Y   YELLOW  direct print, ASA
 P38  MIRROR_CAP_R          R     SIDE    10    +Y   YELLOW  direct print, ASA
 P11  SIDE_INTAKE_L         L     SIDE    11    -Y   RED     printed master -> composite
 P12  SIDE_INTAKE_R         R     SIDE    11    +Y   RED     printed master -> composite
-P31  INTAKE_DUCT_L         L     SIDE    12    -Y   RED     direct print
-P32  INTAKE_DUCT_R         R     SIDE    12    +Y   RED     direct print
+P31  INTAKE_DUCT_L         L     SIDE    12    +Y   RED     direct print
+P32  INTAKE_DUCT_R         R     SIDE    12    -Y   RED     direct print
 P13  INTAKE_BLADE_L        L     SIDE    13    -Y   RED     direct print or CNC
 P14  INTAKE_BLADE_R        R     SIDE    13    +Y   RED     direct print or CNC
 P15  REAR_HAUNCH_L         L     REAR    14    -Y   RED     printed master -> composite
@@ -40,27 +40,27 @@ P20  ENGINE_COVER          -     REAR    17    -Z   RED     printed master -> co
 P33  ENGINE_COVER_LOUVRES  -     REAR    18    -Z   RED     direct print
 P21  REAR_FASCIA           -     REAR    19    -X   YELLOW  printed master -> composite
 P22  DIFFUSER              -     REAR    22    -X   RED     printed master -> composite
-P56  TAIL_VENT_GRILLE_L    L     REAR    20    -X   YELLOW  direct print
-P57  TAIL_VENT_GRILLE_R    R     REAR    20    -X   YELLOW  direct print
-P44  DIFFUSER_FIN_INNER_L  L     REAR    23    -Z   RED     direct print
-P45  DIFFUSER_FIN_INNER_R  R     REAR    23    -Z   RED     direct print
-P46  DIFFUSER_FIN_OUTER_L  L     REAR    23    -Z   RED     direct print
-P47  DIFFUSER_FIN_OUTER_R  R     REAR    23    -Z   RED     direct print
-P58  DIFFUSER_FIN_EDGE_L   L     REAR    23    -Z   RED     direct print
-P59  DIFFUSER_FIN_EDGE_R   R     REAR    23    -Z   RED     direct print
+P56  TAIL_VENT_GRILLE_L    L     REAR    20    +X   YELLOW  direct print
+P57  TAIL_VENT_GRILLE_R    R     REAR    20    +X   YELLOW  direct print
+P44  DIFFUSER_FIN_INNER_L  L     REAR    23    +Z   RED     direct print
+P45  DIFFUSER_FIN_INNER_R  R     REAR    23    +Z   RED     direct print
+P46  DIFFUSER_FIN_OUTER_L  L     REAR    23    +Z   RED     direct print
+P47  DIFFUSER_FIN_OUTER_R  R     REAR    23    +Z   RED     direct print
+P58  DIFFUSER_FIN_EDGE_L   L     REAR    23    +Z   RED     direct print
+P59  DIFFUSER_FIN_EDGE_R   R     REAR    23    +Z   RED     direct print
 P61  SPLITTER_END_L        L     FRONT   4     +X   RED     direct print
 P62  SPLITTER_END_R        R     FRONT   4     +X   RED     direct print
 P60  BADGE_REAR            -     REAR    21    -X   YELLOW  direct print
-P24  HEADLIGHT_HOUSING_L   L     LIGHTS  25    +X   YELLOW  direct print, ASA
+P24  HEADLIGHT_HOUSING_L   L     LIGHTS  25    -X   YELLOW  direct print, ASA
 P65  EYE_BEZEL_IN_L        L     LIGHTS  25    +X   YELLOW  direct print, ASA
 P66  EYE_BEZEL_IN_R        R     LIGHTS  25    +X   YELLOW  direct print, ASA
 P67  EYE_BEZEL_OUT_L       L     LIGHTS  25    +X   YELLOW  direct print, ASA
 P68  EYE_BEZEL_OUT_R       R     LIGHTS  25    +X   YELLOW  direct print, ASA
 P69  EYE_COVER_L           L     LIGHTS  26    +X   YELLOW  thermoformed clear PC over a printed buck
 P70  EYE_COVER_R           R     LIGHTS  26    +X   YELLOW  thermoformed clear PC over a printed buck
-P25  HEADLIGHT_HOUSING_R   R     LIGHTS  25    +X   YELLOW  direct print, ASA
-P26  TAIL_HOUSING_L        L     LIGHTS  26    -X   YELLOW  direct print, ASA
-P27  TAIL_HOUSING_R        R     LIGHTS  26    -X   YELLOW  direct print, ASA
+P25  HEADLIGHT_HOUSING_R   R     LIGHTS  25    -X   YELLOW  direct print, ASA
+P26  TAIL_HOUSING_L        L     LIGHTS  19    +X   YELLOW  direct print, ASA
+P27  TAIL_HOUSING_R        R     LIGHTS  19    +X   YELLOW  direct print, ASA
 
 ASSEMBLY ORDER
    1. donor hardpoints verified against the scan
@@ -81,14 +81,14 @@ ASSEMBLY ORDER
   16. rear deck
   17. engine cover
   18. engine cover louvres
-  19. rear fascia
+  19. rear fascia, with the tail lamp housings bonded into it on the bench (P26/P27)
   20. rear corner vent grilles
   21. plate recess, its lamp and the rear badge
   22. diffuser
   23. exhaust surround
   24. (rear spoiler -- retired 2026-10-05, it is the tail profile)
   25. headlight modules
-  26. tail light modules
+  26. tail light modules, from inside the housings; eye covers (P69/P70)
 
 REMOVAL: the reverse of the install vector, and the reverse of the assembly order.
 Every part must come off without removing another, except: the intake blade comes out

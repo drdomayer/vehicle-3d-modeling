@@ -945,7 +945,7 @@ def main():
         return best
 
     bez_made = []
-    for sgn in (1, -1):
+    for sgn in (1,):     # 2026-11-12: the LEFT is built; the right is its mirror (below)
         # every 5 mm, not the eye's 15: across the nose's corner crease (Y ~750) a 15 mm chord of
         # the face stood up to 5 mm outside the skin. The eye floor between its stations is linear
         # (the cutter is lofted straight), so interpolating px keeps the back on the floor exactly.
@@ -1061,7 +1061,11 @@ def main():
         fronts = [o for o in body_objects() if "FRONT" in o.name]
         if fronts:
             m = bz.modifiers.new("in_skin", "BOOLEAN")
-            m.operation, m.object, m.solver = "INTERSECT", fronts[0], "MANIFOLD"    # v081: see the cone
+            # 2026-11-12: EXACT. MANIFOLD needs a manifold operand and the body is not one, so it
+            # left 8 vertices 3.6-6.0 mm proud on the corner crest (check_floating: P67/P68
+            # FLOATING). EXACT clips them on the left; on the right it lost 17 % of the blade
+            # (asymmetric tessellation), which is why the right is now the left's mirror.
+            m.operation, m.object, m.solver = "INTERSECT", fronts[0], "EXACT"
             bpy.context.view_layer.objects.active = bz
             bpy.ops.object.modifier_apply(modifier=m.name)
         # one object per connected piece; the inboard one is the tip, the outboard one the blade
@@ -1118,6 +1122,35 @@ def main():
             made.append(po)
             bez_made.append((po.name, round(vol_cm3, 1), round(ymid)))
         bpy.data.objects.remove(bz, do_unlink=True)
+    # the right bezels: the left ones mirrored in Y -- the car is symmetric by construction (the
+    # panel map builds its right half the same way), and two independent booleans on a body whose
+    # tessellation is not mirrored gave two different parts
+    for where, pl, pr in (("IN", "P65", "P66"), ("OUT", "P67", "P68")):
+        src_o = bpy.data.objects.get(f"EYE_BEZEL_{where}_L")
+        if src_o is None:
+            continue
+        nm = f"EYE_BEZEL_{where}_R"
+        old_o = bpy.data.objects.get(nm)
+        if old_o is not None:
+            bpy.data.objects.remove(old_o, do_unlink=True)
+        stale = bpy.data.meshes.get(nm)
+        if stale is not None and stale.users == 0:
+            bpy.data.meshes.remove(stale)
+        bm = bmesh.new()
+        bm.from_mesh(src_o.data)
+        bm.transform(mathutils.Matrix.Diagonal((1.0, -1.0, 1.0, 1.0)))
+        bmesh.ops.reverse_faces(bm, faces=bm.faces)
+        vol_cm3 = abs(bm.calc_volume()) * 1e6
+        pm = bpy.data.meshes.new(nm)
+        bm.to_mesh(pm)
+        bm.free()
+        po = bpy.data.objects.new(nm, pm)
+        po.matrix_world = src_o.matrix_world.copy()
+        coll.objects.link(po)
+        po["panel_id"] = pr
+        po["stage"] = src_o["stage"]
+        made.append(po)
+        bez_made.append((po.name, round(vol_cm3, 1), "mirror"))
     print(f"  eye bezels: gloss black, {BEZEL['front']:.0f} mm under the skin (flush over the corner crest), minus the R48 visibility cone "
           f"of the lens (45 out / 10 in / 15 up / 10 down) -> " +
           ", ".join(f"{n} {v} cm3 at |Y| {y}" for n, v, y in bez_made))
@@ -1596,6 +1629,7 @@ def main():
                 z = (o.matrix_world @ loc).z * 1000.0
                 best = z if best is None else min(best, z)
         return best
+    FIN_BOND = 1.0
     # v059: re-spaced 150/330 -> 120/255 so three fit EVENLY in the flat tunnel, which is
     # measured flat only to |Y| ~400..450 (outboard of that the floor drops into the legs' wall)
     for pid_l, pid_r, y, x_end, nm in (("P44", "P45", 120.0, 3400.0, "INNER"),
@@ -1609,7 +1643,10 @@ def main():
                     continue
                 # v055: the fin's lower edge on the legs' line, so it stands IN the tunnel
                 # between the legs instead of hanging 150-190 mm below a raised floor
-                st.append((x, sgn * y, _sk["table_z"](_sk["DIFFUSER_LEGS"]["leg_z"], x), fz + 12.0))
+                # 2026-11-12: top 1 mm UNDER the floor (a bond line, as the flanges' 1 mm), not
+                # 12 mm into it -- the fins are separate prints, and the removal test read them
+                # buried in P22 from every direction
+                st.append((x, sgn * y, _sk["table_z"](_sk["DIFFUSER_LEGS"]["leg_z"], x), fz - FIN_BOND))
             if len(st) < 2:
                 continue
             b = blade(f"DIFFUSER_FIN_{nm}_{'L' if sgn > 0 else 'R'}", coll, st, 16.0)
@@ -1628,7 +1665,7 @@ def main():
         if f0 is None or fy is None or abs(fy - f0) > 3.0:
             break
         for sgn in (1, -1):
-            st_e[sgn].append((x, sgn * 390.0, _sk["table_z"](_sk["DIFFUSER_LEGS"]["leg_z"], x), f0 + 12.0))
+            st_e[sgn].append((x, sgn * 390.0, _sk["table_z"](_sk["DIFFUSER_LEGS"]["leg_z"], x), f0 - FIN_BOND))
     for sgn in (1, -1):
         if len(st_e[sgn]) >= 3:
             b = blade(f"DIFFUSER_FIN_EDGE_{'L' if sgn > 0 else 'R'}", coll, st_e[sgn], 16.0)

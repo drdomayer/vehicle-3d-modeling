@@ -448,8 +448,9 @@ PANEL_SEAMS = {
                              rail(330, 440, 1635)),
     "REAR_HAUNCH_to_DOOR":  ("panel removal; the haunch is an overlay on welded quarter",
                              station(1635, 250, 820)),
+    # 2026-11-12: 2000 -> 2190, behind the seat humps' tails (2185) -- see panel_map B.cover_front
     "ENGINE_COVER_to_DECK": ("engine access — must open",
-                             profile(2000, [0, 400, 560], "upper")),
+                             profile(2190, [0, 400, 560], "upper")),
     "REAR_FASCIA_to_DECK":  ("exhaust and diffuser access; separate from the cover",
                              profile(3000, [0, 450, 700], "upper")),
     # The diffuser's top edge. It was three points on a straight line at Z 330 running through the

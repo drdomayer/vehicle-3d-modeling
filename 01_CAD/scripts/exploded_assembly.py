@@ -13,13 +13,13 @@ on the extracted parts and are done here. The fourth is not exact and is not pre
                        Exact given the wall and the density, and BOTH of those are assumptions --
                        3.0 mm and 1.24 g/cm3 -- so the mass is provisional and the BALANCE is the
                        useful part, because a ratio survives a wrong density.
-    REMOVAL SCREEN     the register claims every part comes off without removing another. That is a
-                       swept-volume question and this is NOT a swept-volume test. It is a screen:
-                       the part's footprint perpendicular to its install vector, against the
-                       footprint of every part fitted earlier, plus their order along that vector.
-                       It can raise a false alarm where panels nest without touching, and it cannot
-                       see a part that fouls only after rotating. It says "look here", never "this
-                       is fine".
+    REMOVAL TEST       the register claims every part comes off without removing another. Two
+                       stages: the footprint screen (perpendicular extents + order along the
+                       vector) picks the candidate pairs, then rays from the part's vertices along
+                       the removal direction, as far as the part must travel to be free, decide
+                       which of them really foul (2026-11-12; the screen alone had grown to 51
+                       pairs, every one an insert nested in its host). It cannot see a part that
+                       must rotate to come off.
 
     import bpy; exec(open(".../exploded_assembly.py").read())
 """
@@ -96,6 +96,40 @@ def footprint(ob, axis):
             (min(g(ax)), max(g(ax))))
 
 
+_BVH = {}
+
+
+def world_bvh(ob):
+    """BVH of the object's mesh in WORLD coordinates, cached per object for one run."""
+    from mathutils.bvhtree import BVHTree
+    if ob.name not in _BVH:
+        bm = bmesh.new()
+        bm.from_mesh(ob.data)
+        bm.transform(ob.matrix_world)
+        _BVH[ob.name] = BVHTree.FromBMesh(bm)
+        bm.free()
+    return _BVH[ob.name]
+
+
+def blocked_fraction(ob, other, d, start_mm=2.0, clear_m=0.10, samples=400):
+    """2026-11-12: the swept test the screen never was. A ray from each (sampled) vertex of `ob`
+    along the removal direction `d` (repo axes, unit): the fraction that meets `other` is how much
+    of the part would foul it on the way off. A part nested in a pocket whose walls run along `d`
+    comes out at 0; a real undercut does not."""
+    import mathutils
+    tree = world_bvh(other)
+    dv = mathutils.Vector(d)
+    vs = [ob.matrix_world @ v.co for v in ob.data.vertices]
+    # how far the part must travel to be free: its own length along d plus 100 mm -- not across the
+    # car (a 3 m reach had the headlamp housing "foul" the side intake duct 2 m behind it)
+    proj = [p.dot(dv) for p in vs]
+    reach_m = (max(proj) - min(proj)) + clear_m
+    step = max(1, len(vs) // samples)
+    vs = vs[::step]
+    hit = sum(1 for p in vs if tree.ray_cast(p + dv * (start_mm / 1000.0), dv, reach_m)[0] is not None)
+    return hit / max(1, len(vs)), len(vs)
+
+
 def overlap(a, b, slack=0.0):
     return a[0] - slack < b[1] and b[0] - slack < a[1]
 
@@ -169,10 +203,10 @@ def main():
     print("  survives a wrong density; the kilograms do not.")
 
     # ---- removal screen
-    print("\nREMOVAL SCREEN — a screen, not a swept-volume test. It asks whether a part fitted")
-    print("EARLIER sits in the corridor this part travels through on its way OFF the car, which is")
-    print("the reverse of its install vector.")
-    flags = 0
+    print("\nREMOVAL TEST — does a part fitted EARLIER sit in the corridor this part travels through")
+    print("on its way OFF the car (the reverse of its install vector)? Footprint screen, then rays.")
+    flags, nested = 0, 0
+    BLOCK = 0.02           # >= 2 % of the part's vertices meet the earlier part on the way off
     for i, pid in enumerate(order):
         vec = PARTS[pid][5]
         # REMOVAL travels the reverse of the install vector -- the register says so in as many
@@ -193,13 +227,32 @@ def main():
             # is the earlier part beyond this one along the travel direction?
             ahead = (qspan[1] > span[1]) if sgn > 0 else (qspan[0] < span[0])
             if ahead:
-                flags += 1
+                # 2026-11-12: the footprint screen raised 51 pairs (it was 0 on 2026-09-16) -- every
+                # insert added since sits in a pocket of its host, so their footprints overlap by
+                # construction. The rays decide which of them actually foul.
+                frac, n = blocked_fraction(have[pid], have[earlier], tuple(-c for c in iv))
                 back = {"+X": "-X", "-X": "+X", "+Y": "-Y", "-Y": "+Y",
                         "+Z": "-Z", "-Z": "+Z"}[vec]
-                print(f"   {pid} ({PARTS[pid][1]}, step {PARTS[pid][4]}, comes off {back}) passes the "
-                      f"footprint of {earlier} ({PARTS[earlier][1]}, step {PARTS[earlier][4]})")
-    print(f"   {flags} pair(s) raised. Each needs a look at the real surfaces before it means")
-    print("   anything: nesting panels overlap in footprint without touching.")
+                if frac < BLOCK:
+                    nested += 1
+                    continue
+                flags += 1
+                print(f"   {pid} ({PARTS[pid][1]}, step {PARTS[pid][4]}, comes off {back}) FOULS "
+                      f"{earlier} ({PARTS[earlier][1]}, step {PARTS[earlier][4]}): "
+                      f"{frac * 100:.0f} % of {n} rays meet it")
+    print(f"   {flags} pair(s) foul on the way off (>= {BLOCK * 100:.0f} % of the part's vertices meet the")
+    print(f"   earlier part); {nested} more overlap in footprint only -- nested, clear along the vector.")
+    print("   Rays along one straight vector: a part that must rotate to come off is not tested.")
+    # 2026-11-12: the count goes to a file check_goal.py gates at 0 -- printed only, it grew
+    # 0 -> 51 between 2026-09-16 and v081 without anyone seeing it
+    import json
+    import os
+    import time
+    _p = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
+        globals().get("__file__", "/Users/miroslavstatev/vehicle-3d-modeling/01_CAD/scripts/x.py"))))),
+        "01_CAD", "scripts", "data", "last_assembly.json")
+    with open(_p, "w", encoding="utf-8") as _f:
+        json.dump({"removal_fouls": flags, "nested_pairs": nested, "when": time.time()}, _f, indent=2)
 
     for s in solids.values():
         bpy.data.objects.remove(s, do_unlink=True)

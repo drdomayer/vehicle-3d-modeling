@@ -37,6 +37,9 @@ NOMINAL_THICKNESS_MM = 2.5    # 2.0-3.0 depending on panel size and stiffness
 
 # id: (object, side, design group, assembly step, install vector, manufacturing method, status key)
 #   install vector is the direction the part travels onto the car, in repo axes (+X forward).
+# 2026-11-12: sixteen vectors corrected against a RAY test (exploded_assembly.blocked_fraction) --
+# louvres and fins fit from below, lamp housings and ducts from inside, the tail grilles from inside;
+# each chosen as the direction whose removal meets nothing fitted earlier.
 # INSTALL_VECTOR is the direction a part TRAVELS while it is being fitted, in spec axes. Corrected
 # 2026-09-16 for the eight parts that are lowered onto the car from above: they carried "+Z", the
 # same value as the front splitter, which is pushed UP from underneath. Both cannot be right under
@@ -67,8 +70,8 @@ PARTS = [
     ("P02", "HOOD",                "-",  "FRONT", 5,  "-Z", "printed master -> composite", "HOOD"),
     ("P03", "FRONT_FENDER_L",      "L",  "FRONT", 5,  "-Y", "printed master -> composite", "FRONT_FENDER"),
     ("P04", "FRONT_FENDER_R",      "R",  "FRONT", 5,  "+Y", "printed master -> composite", "FRONT_FENDER"),
-    ("P05", "FENDER_CHANNEL_L",    "L",  "FRONT", 6,  "-Y", "direct print", "FRONT_FENDER"),
-    ("P06", "FENDER_CHANNEL_R",    "R",  "FRONT", 6,  "+Y", "direct print", "FRONT_FENDER"),
+    ("P05", "FENDER_CHANNEL_L",    "L",  "FRONT", 6,  "+Z", "direct print", "FRONT_FENDER"),
+    ("P06", "FENDER_CHANNEL_R",    "R",  "FRONT", 6,  "+Z", "direct print", "FRONT_FENDER"),
     ("P07", "ROCKER_L",            "L",  "SIDE",  8,  "-Y", "printed master -> composite", "ROCKER"),
     ("P08", "ROCKER_R",            "R",  "SIDE",  8,  "+Y", "printed master -> composite", "ROCKER"),
     # Split off the rocker on 2026-09-16. The rear wheel opening severs the sill rather than
@@ -86,8 +89,8 @@ PARTS = [
     ("P38", "MIRROR_CAP_R",        "R",  "SIDE",  10, "+Y", "direct print, ASA", "DOOR_SKIN"),
     ("P11", "SIDE_INTAKE_L",       "L",  "SIDE",  11, "-Y", "printed master -> composite", "SIDE_INTAKE"),
     ("P12", "SIDE_INTAKE_R",       "R",  "SIDE",  11, "+Y", "printed master -> composite", "SIDE_INTAKE"),
-    ("P31", "INTAKE_DUCT_L",       "L",  "SIDE",  12, "-Y", "direct print", "SIDE_INTAKE"),
-    ("P32", "INTAKE_DUCT_R",       "R",  "SIDE",  12, "+Y", "direct print", "SIDE_INTAKE"),
+    ("P31", "INTAKE_DUCT_L",       "L",  "SIDE",  12, "+Y", "direct print", "SIDE_INTAKE"),
+    ("P32", "INTAKE_DUCT_R",       "R",  "SIDE",  12, "-Y", "direct print", "SIDE_INTAKE"),
     ("P13", "INTAKE_BLADE_L",      "L",  "SIDE",  13, "-Y", "direct print or CNC", "SIDE_INTAKE"),
     ("P14", "INTAKE_BLADE_R",      "R",  "SIDE",  13, "+Y", "direct print or CNC", "SIDE_INTAKE"),
     ("P15", "REAR_HAUNCH_L",       "L",  "REAR",  14, "-Y", "printed master -> composite", "REAR_HAUNCH"),
@@ -107,16 +110,16 @@ PARTS = [
     ("P33", "ENGINE_COVER_LOUVRES","-",  "REAR",  18, "-Z", "direct print", "ENGINE_COVER"),
     ("P21", "REAR_FASCIA",         "-",  "REAR",  19, "-X", "printed master -> composite", "REAR_FASCIA"),
     ("P22", "DIFFUSER",            "-",  "REAR",  22, "-X", "printed master -> composite", "DIFFUSER"),
-    ("P56", "TAIL_VENT_GRILLE_L",  "L",  "REAR",  20, "-X", "direct print", "REAR_FASCIA"),
-    ("P57", "TAIL_VENT_GRILLE_R",  "R",  "REAR",  20, "-X", "direct print", "REAR_FASCIA"),
+    ("P56", "TAIL_VENT_GRILLE_L",  "L",  "REAR",  20, "+X", "direct print", "REAR_FASCIA"),
+    ("P57", "TAIL_VENT_GRILLE_R",  "R",  "REAR",  20, "+X", "direct print", "REAR_FASCIA"),
     # 2026-09-26: the diffuser has a rising floor for the first time, and fins standing in it
-    ("P44", "DIFFUSER_FIN_INNER_L", "L",  "REAR",  23, "-Z", "direct print", "DIFFUSER"),
-    ("P45", "DIFFUSER_FIN_INNER_R", "R",  "REAR",  23, "-Z", "direct print", "DIFFUSER"),
-    ("P46", "DIFFUSER_FIN_OUTER_L", "L",  "REAR",  23, "-Z", "direct print", "DIFFUSER"),
-    ("P47", "DIFFUSER_FIN_OUTER_R", "R",  "REAR",  23, "-Z", "direct print", "DIFFUSER"),
+    ("P44", "DIFFUSER_FIN_INNER_L", "L",  "REAR",  23, "+Z", "direct print", "DIFFUSER"),
+    ("P45", "DIFFUSER_FIN_INNER_R", "R",  "REAR",  23, "+Z", "direct print", "DIFFUSER"),
+    ("P46", "DIFFUSER_FIN_OUTER_L", "L",  "REAR",  23, "+Z", "direct print", "DIFFUSER"),
+    ("P47", "DIFFUSER_FIN_OUTER_R", "R",  "REAR",  23, "+Z", "direct print", "DIFFUSER"),
     # 2026-10-03 (v059): the third pair, three fins each side of the exhaust box as in ref-09
-    ("P58", "DIFFUSER_FIN_EDGE_L",  "L",  "REAR",  23, "-Z", "direct print", "DIFFUSER"),
-    ("P59", "DIFFUSER_FIN_EDGE_R",  "R",  "REAR",  23, "-Z", "direct print", "DIFFUSER"),
+    ("P58", "DIFFUSER_FIN_EDGE_L",  "L",  "REAR",  23, "+Z", "direct print", "DIFFUSER"),
+    ("P59", "DIFFUSER_FIN_EDGE_R",  "R",  "REAR",  23, "+Z", "direct print", "DIFFUSER"),
     # P23 REAR_SPOILER RETIRED 2026-10-05 (v060): the ducktail has been IN the tail profile since
     # v031 and its envelope sits 125.7 mm inside the body -- it is P21/P19's own surface, not a part.
     # Owner: "do all the outstanding things"; this was the register half of it. Number not reused.
@@ -124,7 +127,7 @@ PARTS = [
     ("P61", "SPLITTER_END_L",      "L",  "FRONT", 4,  "+X", "direct print", "FRONT_CLAMSHELL"),
     ("P62", "SPLITTER_END_R",      "R",  "FRONT", 4,  "+X", "direct print", "FRONT_CLAMSHELL"),
     ("P60", "BADGE_REAR",          "-",  "REAR",  21, "-X", "direct print", "REAR_FASCIA"),
-    ("P24", "HEADLIGHT_HOUSING_L", "L",  "LIGHTS", 25, "+X", "direct print, ASA", "HEADLIGHT"),
+    ("P24", "HEADLIGHT_HOUSING_L", "L",  "LIGHTS", 25, "-X", "direct print, ASA", "HEADLIGHT"),
     # v066: the eye bezels -- the eye's volume minus the lens's R48 visibility cone, which splits
     # each side into an inboard tip and an outboard blade. Bonded in after the housing.
     ("P65", "EYE_BEZEL_IN_L",      "L",  "LIGHTS", 25, "+X", "direct print, ASA", "HEADLIGHT"),
@@ -135,9 +138,12 @@ PARTS = [
     # LEGAL check pending: an outer cover in front of the E-marked module (docs/14 AD).
     ("P69", "EYE_COVER_L",         "L",  "LIGHTS", 26, "+X", "thermoformed clear PC over a printed buck", "HEADLIGHT"),
     ("P70", "EYE_COVER_R",         "R",  "LIGHTS", 26, "+X", "thermoformed clear PC over a printed buck", "HEADLIGHT"),
-    ("P25", "HEADLIGHT_HOUSING_R", "R",  "LIGHTS", 25, "+X", "direct print, ASA", "HEADLIGHT"),
-    ("P26", "TAIL_HOUSING_L",      "L",  "LIGHTS", 26, "-X", "direct print, ASA", "TAIL_LIGHT"),
-    ("P27", "TAIL_HOUSING_R",      "R",  "LIGHTS", 26, "-X", "direct print, ASA", "TAIL_LIGHT"),
+    ("P25", "HEADLIGHT_HOUSING_R", "R",  "LIGHTS", 25, "-X", "direct print, ASA", "HEADLIGHT"),
+    # 2026-11-12: step 26 -> 19, a SUB-ASSEMBLY with the rear fascia. The L-shaped housing comes out
+    # of P21 along no straight vector (the ray test: 7..100 % fouled in all six), so it is bonded
+    # into the fascia from inside on the bench and the two go on the car as one.
+    ("P26", "TAIL_HOUSING_L",      "L",  "LIGHTS", 19, "+X", "direct print, ASA", "TAIL_LIGHT"),
+    ("P27", "TAIL_HOUSING_R",      "R",  "LIGHTS", 19, "+X", "direct print, ASA", "TAIL_LIGHT"),
 ]
 
 # FINISH, 2026-10-02 -- what the shop applies after lamination, read off ref-09 and the poster:
@@ -199,14 +205,14 @@ ASSEMBLY_ORDER = [
     (16, "rear deck"),
     (17, "engine cover"),
     (18, "engine cover louvres"),
-    (19, "rear fascia"),
+    (19, "rear fascia, with the tail lamp housings bonded into it on the bench (P26/P27)"),
     (20, "rear corner vent grilles"),     # was the centre mask, retired 2026-09-30 (P34)
     (21, "plate recess, its lamp and the rear badge"),
     (22, "diffuser"),
     (23, "exhaust surround"),
     (24, "(rear spoiler -- retired 2026-10-05, it is the tail profile)"),
     (25, "headlight modules"),
-    (26, "tail light modules"),
+    (26, "tail light modules, from inside the housings; eye covers (P69/P70)"),
 ]
 
 NOT_YET = [

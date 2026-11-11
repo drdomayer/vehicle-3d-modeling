@@ -38,7 +38,11 @@ B = dict(
     door_front      = 440,    # donor shut line, DIMS door_front_x
     door_rear       = 1635,   # donor shut line, DIMS door_rear_x
     hoop            = 1760,   # donor roll hoop plane, DIMS hoop_x
-    cover_front     = 2000,   # ENGINE_COVER_to_DECK seam
+    # 2026-11-12: 2000 -> 2190. The seat humps P63/P64 run back to 2185 and ramp down onto what was
+    # the cover's front 185 mm -- a lid that opens under two fairings. The seam now lies 5 mm behind
+    # their tails: the humps sit wholly on the deck (the Boxster Spyder precedent, humps on the top
+    # lid), the cover opens clear, and the louvre aperture (2210..) is still inside it.
+    cover_front     = 2190,   # ENGINE_COVER_to_DECK seam
     fascia_front    = 3000,   # REAR_FASCIA_to_DECK seam
     rocker_top      = 330,    # ROCKER_to_UPPER_BODY seam, and DIFFUSER_to_FASCIA at the same Z
     hood_half_width = 380,    # HOOD_to_FRONT_BODY seam path, where it leaves the centre

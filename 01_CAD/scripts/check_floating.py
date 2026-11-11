@@ -94,6 +94,15 @@ def main():
     for n, pid, w, sh, v, why in rows:
         print(f"  {n:<26}{pid:<6}{w:>10.1f}{sh:>9.0f}   {v}{('  -- ' + why) if why else ''}")
     print(f"\n  {bad} element(s) stand proud of the skin where they should sit inside it.")
+    # 2026-11-12: to a file check_goal.py gates at 0 (v081 left P67/P68 proud and nothing failed)
+    import json
+    import os
+    import time
+    _p = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
+        globals().get("__file__", "/Users/miroslavstatev/vehicle-3d-modeling/01_CAD/scripts/x.py"))))),
+        "01_CAD", "scripts", "data", "last_floating.json")
+    with open(_p, "w", encoding="utf-8") as _f:
+        json.dump({"floating": bad, "when": time.time()}, _f, indent=2)
     print(f"  PROUD_MM {PROUD_MM}: a vertex closer than that to the skin is within the laminate.")
     return rows
 

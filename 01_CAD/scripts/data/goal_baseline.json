@@ -8,5 +8,7 @@
   "edge_defects": 0.0,
   "surf_x_mm": 3.995,
   "surf_z_mm": 7.311,
-  "curvature": 0.3225
+  "curvature": 0.3225,
+  "removal_fouls": 0.0,
+  "floating": 0.0
 }
